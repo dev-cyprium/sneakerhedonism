@@ -9,6 +9,10 @@
 @custom-variant 2xl (@media (width >= theme(--breakpoint-2xl)));
 
 @layer base {
+  body {
+    overflow-x: hidden;
+  }
+
   h1,
   h2,
   h3,

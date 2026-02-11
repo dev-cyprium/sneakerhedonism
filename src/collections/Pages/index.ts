@@ -13,6 +13,7 @@ import { Content } from '@/blocks/Content/config'
 import { ContentWithMedia } from '@/blocks/ContentWithMedia/config'
 import { FormBlock } from '@/blocks/Form/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
+import { Newsletter } from '@/blocks/Newsletter/config'
 import { hero } from '@/fields/hero'
 import { slugField } from 'payload'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
@@ -102,6 +103,7 @@ export const Pages: CollectionConfig = {
                 ThreeItemGrid,
                 Banner,
                 FormBlock,
+                Newsletter,
               ],
               required: true,
             },

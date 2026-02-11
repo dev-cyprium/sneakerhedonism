@@ -65,6 +65,13 @@ export const plugins: Plugin[] = [
         group: 'Content',
       },
       fields: ({ defaultFields }) => {
+        const placeholderField = {
+          name: 'placeholder',
+          type: 'text' as const,
+          label: 'Placeholder',
+        }
+        const blocksWithPlaceholder = ['text', 'email', 'textarea']
+
         return defaultFields.map((field) => {
           if ('name' in field && field.name === 'confirmationMessage') {
             return {
@@ -77,6 +84,21 @@ export const plugins: Plugin[] = [
                     HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
                   ]
                 },
+              }),
+            }
+          }
+          // Add placeholder field to text, email, and textarea blocks
+          if ('name' in field && field.name === 'fields' && field.type === 'blocks') {
+            return {
+              ...field,
+              blocks: field.blocks.map((block) => {
+                if (blocksWithPlaceholder.includes(block.slug)) {
+                  return {
+                    ...block,
+                    fields: [...block.fields, placeholderField],
+                  }
+                }
+                return block
               }),
             }
           }

@@ -17,9 +17,10 @@ export const Text: React.FC<
         [x: string]: any
       }>
     >
+    placeholder?: string
     register: UseFormRegister<FieldValues>
   }
-> = ({ name, defaultValue, errors, label, register, required: requiredFromProps, width }) => {
+> = ({ name, defaultValue, errors, label, placeholder, register, required: requiredFromProps, width }) => {
   return (
     <Width width={width}>
       <FormItem>
@@ -27,6 +28,7 @@ export const Text: React.FC<
         <Input
           defaultValue={defaultValue}
           id={name}
+          placeholder={placeholder || undefined}
           type="text"
           {...register(name, {
             required: requiredFromProps

@@ -6,6 +6,7 @@ import { ContentBlock } from '@/blocks/Content/Component'
 import { ContentWithMediaBlock } from '@/blocks/ContentWithMedia/Component'
 import { FormBlock } from '@/blocks/Form/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
+import { NewsletterBlock } from '@/blocks/Newsletter/Component'
 import { NovoBlock } from '@/blocks/Novo/Component'
 import { PogledajPonuduBlock } from '@/blocks/PogledajPonudu/Component'
 import { ThreeItemGridBlock } from '@/blocks/ThreeItemGrid/Component'
@@ -23,6 +24,7 @@ const blockComponents = {
   cta: CallToActionBlock,
   formBlock: FormBlock,
   mediaBlock: MediaBlock,
+  newsletter: NewsletterBlock,
   novo: NovoBlock,
   pogledajPonudu: PogledajPonuduBlock,
   threeItemGrid: ThreeItemGridBlock,
