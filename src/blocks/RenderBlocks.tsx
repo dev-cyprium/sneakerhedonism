@@ -9,6 +9,7 @@ import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { NewsletterBlock } from '@/blocks/Newsletter/Component'
 import { NovoBlock } from '@/blocks/Novo/Component'
 import { PogledajPonuduBlock } from '@/blocks/PogledajPonudu/Component'
+import { PopularnoBlock } from '@/blocks/Popularno/Component'
 import { ThreeItemGridBlock } from '@/blocks/ThreeItemGrid/Component'
 import { toKebabCase } from '@/utilities/toKebabCase'
 import React, { Fragment } from 'react'
@@ -27,6 +28,7 @@ const blockComponents = {
   newsletter: NewsletterBlock,
   novo: NovoBlock,
   pogledajPonudu: PogledajPonuduBlock,
+  popularno: PopularnoBlock,
   threeItemGrid: ThreeItemGridBlock,
 }
 

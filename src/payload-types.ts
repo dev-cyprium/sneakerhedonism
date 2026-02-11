@@ -482,6 +482,7 @@ export interface Page {
     | CarouselBlock
     | NovoBlock
     | PogledajPonuduBlock
+    | PopularnoBlock
     | ThreeItemGridBlock
     | BannerBlock
     | FormBlock
@@ -719,6 +720,16 @@ export interface PogledajPonuduBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'pogledajPonudu';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PopularnoBlock".
+ */
+export interface PopularnoBlock {
+  limit?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'popularno';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1326,6 +1337,7 @@ export interface PagesSelect<T extends boolean = true> {
         carousel?: T | CarouselBlockSelect<T>;
         novo?: T | NovoBlockSelect<T>;
         pogledajPonudu?: T | PogledajPonuduBlockSelect<T>;
+        popularno?: T | PopularnoBlockSelect<T>;
         threeItemGrid?: T | ThreeItemGridBlockSelect<T>;
         banner?: T | BannerBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
@@ -1477,6 +1489,15 @@ export interface PogledajPonuduBlockSelect<T extends boolean = true> {
         link?: T;
         id?: T;
       };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PopularnoBlock_select".
+ */
+export interface PopularnoBlockSelect<T extends boolean = true> {
+  limit?: T;
   id?: T;
   blockName?: T;
 }
