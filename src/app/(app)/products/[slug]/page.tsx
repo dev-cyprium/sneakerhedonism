@@ -1,18 +1,18 @@
-import type { Media, Product } from '@/payload-types'
+import type { Category, Media, Product } from '@/payload-types'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
-import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
+import { ProductGridItem } from '@/components/ProductGridItem'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React, { Suspense } from 'react'
-import { Button } from '@/components/ui/button'
-import { ChevronLeftIcon } from 'lucide-react'
 import { Metadata } from 'next'
+import { RichText } from '@/components/RichText'
+import { ChevronRight } from 'lucide-react'
 
 type Args = {
   params: Promise<{
@@ -109,6 +109,10 @@ export default async function ProductPage({ params }: Args) {
   const relatedProducts =
     product.relatedProducts?.filter((relatedProduct) => typeof relatedProduct === 'object') ?? []
 
+  const categories = product.categories?.filter(
+    (cat): cat is Category => typeof cat === 'object',
+  )
+
   return (
     <React.Fragment>
       <script
@@ -117,15 +121,13 @@ export default async function ProductPage({ params }: Args) {
         }}
         type="application/ld+json"
       />
-      <div className="container pt-8 pb-8">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link href="/shop">
-            <ChevronLeftIcon />
-            All products
-          </Link>
-        </Button>
-        <div className="flex flex-col gap-12 rounded-lg border p-8 md:py-12 lg:flex-row lg:gap-8 bg-primary-foreground">
-          <div className="h-full w-full basis-full lg:basis-1/2">
+      <div className="container pt-6 pb-8">
+        {/* Breadcrumbs */}
+        <Breadcrumbs categories={categories} productTitle={product.title} />
+
+        {/* Main product area */}
+        <div className="flex flex-col gap-8 lg:flex-row lg:gap-12 mt-6">
+          <div className="w-full lg:w-1/2">
             <Suspense
               fallback={
                 <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden" />
@@ -135,16 +137,28 @@ export default async function ProductPage({ params }: Args) {
             </Suspense>
           </div>
 
-          <div className="basis-full lg:basis-1/2">
+          <div className="w-full lg:w-1/2">
             <ProductDescription product={product} />
           </div>
         </div>
+
+        {/* Description section */}
+        {product.description && (
+          <div className="mt-12 border-t pt-8">
+            <h2 className="text-lg font-semibold mb-4 uppercase tracking-wide">Description</h2>
+            <RichText
+              className="prose max-w-none text-sm text-muted-foreground"
+              data={product.description}
+              enableGutter={false}
+            />
+          </div>
+        )}
       </div>
 
       {product.layout?.length ? <RenderBlocks blocks={product.layout} /> : <></>}
 
       {relatedProducts.length ? (
-        <div className="container">
+        <div className="container pb-12">
           <RelatedProducts products={relatedProducts as Product[]} />
         </div>
       ) : (
@@ -154,30 +168,61 @@ export default async function ProductPage({ params }: Args) {
   )
 }
 
+function Breadcrumbs({
+  categories,
+  productTitle,
+}: {
+  categories?: Category[]
+  productTitle: string
+}) {
+  return (
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
+      <Link href="/" className="hover:text-foreground transition-colors">
+        Home
+      </Link>
+      {categories?.map((cat) => {
+        const parent =
+          cat.parent && typeof cat.parent === 'object' ? (cat.parent as Category) : null
+        return (
+          <React.Fragment key={cat.id}>
+            {parent && (
+              <>
+                <ChevronRight className="size-3.5" />
+                <Link
+                  href={`/shop?category=${parent.slug}`}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {parent.title}
+                </Link>
+              </>
+            )}
+            <ChevronRight className="size-3.5" />
+            <Link
+              href={`/shop?category=${cat.slug}`}
+              className="hover:text-foreground transition-colors"
+            >
+              {cat.title}
+            </Link>
+          </React.Fragment>
+        )
+      })}
+      <ChevronRight className="size-3.5" />
+      <span className="text-foreground font-medium">{productTitle}</span>
+    </nav>
+  )
+}
+
 function RelatedProducts({ products }: { products: Product[] }) {
   if (!products.length) return null
 
   return (
-    <div className="py-8">
-      <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
-      <ul className="flex w-full gap-4 overflow-x-auto pt-1">
-        {products.map((product) => (
-          <li
-            className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5"
-            key={product.id}
-          >
-            <Link className="relative h-full w-full" href={`/products/${product.slug}`}>
-              <GridTileImage
-                label={{
-                  amount: product.priceInRSD!,
-                  title: product.title,
-                }}
-                media={product.meta?.image as Media}
-              />
-            </Link>
-          </li>
+    <div className="border-t pt-8">
+      <h2 className="mb-6 text-lg font-semibold uppercase tracking-wide">Related Products</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {products.slice(0, 4).map((product) => (
+          <ProductGridItem key={product.id} product={product} />
         ))}
-      </ul>
+      </div>
     </div>
   )
 }

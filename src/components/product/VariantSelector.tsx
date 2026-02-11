@@ -14,9 +14,9 @@ export function VariantSelector({ product }: { product: Product }) {
   const searchParams = useSearchParams()
   const variants = product.variants?.docs
   const variantTypes = product.variantTypes
-  const hasVariants = Boolean(product.enableVariants && variants?.length && variantTypes?.length)
+  const hasVariantTypes = Boolean(product.enableVariants && variantTypes?.some((t) => typeof t === 'object' && t.options?.docs?.length))
 
-  if (!hasVariants) {
+  if (!hasVariantTypes) {
     return null
   }
 
@@ -33,8 +33,8 @@ export function VariantSelector({ product }: { product: Product }) {
 
     return (
       <dl className="" key={type.id}>
-        <dt className="mb-4 text-sm">{type.label}</dt>
-        <dd className="flex flex-wrap gap-3">
+        <dt className="mb-3 text-sm font-medium">{type.label}</dt>
+        <dd className="flex flex-wrap gap-2">
           <React.Fragment>
             {options?.map((option) => {
               if (!option || typeof option !== 'object') {
@@ -59,14 +59,13 @@ export function VariantSelector({ product }: { product: Product }) {
 
               let isAvailableForSale = true
 
-              // Find a matching variant
-              if (variants) {
+              // Find a matching variant (if variant records exist)
+              if (variants && variants.length > 0) {
                 const matchingVariant = variants
                   .filter((variant) => typeof variant === 'object')
                   .find((variant) => {
                     if (!variant.options || !Array.isArray(variant.options)) return false
 
-                    // Check if all variant options match the current options in the URL
                     return variant.options.every((variantOption) => {
                       if (typeof variantOption !== 'object')
                         return currentOptions.includes(String(variantOption))
@@ -76,7 +75,6 @@ export function VariantSelector({ product }: { product: Product }) {
                   })
 
                 if (matchingVariant) {
-                  // If we found a matching variant, set the variant ID in the search params.
                   optionSearchParams.set('variant', String(matchingVariant.id))
 
                   if (matchingVariant.inventory && matchingVariant.inventory > 0) {
@@ -96,10 +94,11 @@ export function VariantSelector({ product }: { product: Product }) {
 
               return (
                 <Button
-                  variant={'ghost'}
+                  variant={'outline'}
                   aria-disabled={!isAvailableForSale}
-                  className={clsx('px-2', {
-                    'bg-primary/5 text-primary': isActive,
+                  className={clsx('min-w-[3rem] px-3 h-9 text-sm', {
+                    'border-accent-brand bg-accent-brand/5 text-accent-brand': isActive,
+                    'opacity-40 line-through': !isAvailableForSale,
                   })}
                   disabled={!isAvailableForSale}
                   key={option.id}

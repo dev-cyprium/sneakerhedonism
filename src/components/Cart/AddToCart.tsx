@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import type { Product, Variant } from '@/payload-types'
 
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
-import clsx from 'clsx'
 import { useSearchParams } from 'next/navigation'
 import React, { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
@@ -97,15 +96,13 @@ export function AddToCart({ product }: Props) {
   return (
     <Button
       aria-label="Add to cart"
-      variant={'outline'}
-      className={clsx({
-        'hover:opacity-90': true,
-      })}
+      className="w-full bg-accent-brand text-white hover:bg-accent-brand/90 font-semibold uppercase tracking-wide"
+      size="lg"
       disabled={disabled || isLoading}
       onClick={addToCart}
       type="submit"
     >
-      Add To Cart
+      Add to cart
     </Button>
   )
 }
