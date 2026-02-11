@@ -7,15 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
-import { useTheme } from '@/providers/Theme'
-import { Elements } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { Suspense, useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { cssVariables } from '@/cssVariables'
-import { CheckoutForm } from '@/components/forms/CheckoutForm'
 import { useAddresses, useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
@@ -25,36 +20,39 @@ import { AddressItem } from '@/components/addresses/AddressItem'
 import { FormItem } from '@/components/forms/FormItem'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-
-const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
-const stripe = loadStripe(apiKey)
+import { Truck, CreditCard } from 'lucide-react'
 
 export const CheckoutPage: React.FC = () => {
   const { user } = useAuth()
   const router = useRouter()
-  const { cart } = useCart()
+  const { cart, clearCart } = useCart()
   const [error, setError] = useState<null | string>(null)
-  const { theme } = useTheme()
-  /**
-   * State to manage the email input for guest checkout.
-   */
   const [email, setEmail] = useState('')
   const [emailEditable, setEmailEditable] = useState(true)
-  const [paymentData, setPaymentData] = useState<null | Record<string, unknown>>(null)
-  const { initiatePayment } = usePayments()
+  const { initiatePayment, confirmOrder } = usePayments()
   const { addresses } = useAddresses()
   const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
   const [billingAddress, setBillingAddress] = useState<Partial<Address>>()
   const [billingAddressSameAsShipping, setBillingAddressSameAsShipping] = useState(true)
   const [isProcessingPayment, setProcessingPayment] = useState(false)
+  const [showPayment, setShowPayment] = useState(false)
 
   const cartIsEmpty = !cart || !cart.items || !cart.items.length
+
+  const cartTotal = useMemo(() => {
+    if (!cart?.items?.length) return 0
+    return cart.items.reduce((total, item) => {
+      if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
+      const isVariant = Boolean(item.variant) && typeof item.variant === 'object'
+      const price = isVariant ? item.variant?.priceInRSD : item.product.priceInRSD
+      return total + (price || 0) * item.quantity
+    }, 0)
+  }, [cart?.items])
 
   const canGoToPayment = Boolean(
     (email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress),
   )
 
-  // On initial load wait for addresses to be loaded and check to see if we can prefill a default one
   useEffect(() => {
     if (!shippingAddress) {
       if (addresses && addresses.length > 0) {
@@ -76,42 +74,60 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [])
 
-  const initiatePaymentIntent = useCallback(
-    async (paymentID: string) => {
-      try {
-        const paymentData = (await initiatePayment(paymentID, {
-          additionalData: {
-            ...(email ? { customerEmail: email } : {}),
-            billingAddress,
-            shippingAddress: billingAddressSameAsShipping ? billingAddress : shippingAddress,
-          },
-        })) as Record<string, unknown>
+  const handleCodPayment = useCallback(async () => {
+    setProcessingPayment(true)
+    setError(null)
 
-        if (paymentData) {
-          setPaymentData(paymentData)
-        }
-      } catch (error) {
-        const errorData = error instanceof Error ? JSON.parse(error.message) : {}
-        let errorMessage = 'An error occurred while initiating payment.'
+    try {
+      const paymentData = (await initiatePayment('cod', {
+        additionalData: {
+          ...(email ? { customerEmail: email } : {}),
+          billingAddress,
+          shippingAddress: billingAddressSameAsShipping ? billingAddress : shippingAddress,
+        },
+      })) as Record<string, unknown>
 
-        if (errorData?.cause?.code === 'OutOfStock') {
-          errorMessage = 'One or more items in your cart are out of stock.'
-        }
-
-        setError(errorMessage)
-        toast.error(errorMessage)
+      if (!paymentData?.transactionID) {
+        throw new Error('Failed to initiate order.')
       }
-    },
-    [billingAddress, billingAddressSameAsShipping, shippingAddress],
-  )
 
-  if (!stripe) return null
+      const confirmResult = (await confirmOrder('cod', {
+        additionalData: {
+          transactionID: paymentData.transactionID,
+          ...(email ? { customerEmail: email } : {}),
+          shippingAddress: billingAddressSameAsShipping ? billingAddress : shippingAddress,
+        },
+      })) as Record<string, unknown>
+
+      if (confirmResult?.orderID) {
+        clearCart()
+        const redirectUrl = `/orders/${confirmResult.orderID}${email ? `?email=${email}` : ''}`
+        router.push(redirectUrl)
+      } else {
+        throw new Error('Failed to confirm order.')
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong.'
+      setError(msg)
+      toast.error(msg)
+      setProcessingPayment(false)
+    }
+  }, [
+    initiatePayment,
+    confirmOrder,
+    email,
+    billingAddress,
+    billingAddressSameAsShipping,
+    shippingAddress,
+    clearCart,
+    router,
+  ])
 
   if (cartIsEmpty && isProcessingPayment) {
     return (
       <div className="py-12 w-full items-center justify-center">
         <div className="prose dark:prose-invert text-center max-w-none self-center mb-8">
-          <p>Processing your payment...</p>
+          <p>Obrađujemo vašu porudžbinu...</p>
         </div>
         <LoadingSpinner />
       </div>
@@ -195,7 +211,7 @@ export const CheckoutPage: React.FC = () => {
               actions={
                 <Button
                   variant={'outline'}
-                  disabled={Boolean(paymentData)}
+                  disabled={isProcessingPayment}
                   onClick={(e) => {
                     e.preventDefault()
                     setBillingAddress(undefined)
@@ -223,7 +239,7 @@ export const CheckoutPage: React.FC = () => {
           <Checkbox
             id="shippingTheSameAsBilling"
             checked={billingAddressSameAsShipping}
-            disabled={Boolean(paymentData || (!user && (!email || Boolean(emailEditable))))}
+            disabled={isProcessingPayment || (!user && (!email || Boolean(emailEditable)))}
             onCheckedChange={(state) => {
               setBillingAddressSameAsShipping(state as boolean)
             }}
@@ -239,7 +255,7 @@ export const CheckoutPage: React.FC = () => {
                   actions={
                     <Button
                       variant={'outline'}
-                      disabled={Boolean(paymentData)}
+                      disabled={isProcessingPayment}
                       onClick={(e) => {
                         e.preventDefault()
                         setShippingAddress(undefined)
@@ -269,86 +285,77 @@ export const CheckoutPage: React.FC = () => {
           </>
         )}
 
-        {!paymentData && (
+        {!showPayment && (
           <Button
             className="self-start"
             disabled={!canGoToPayment}
             onClick={(e) => {
               e.preventDefault()
-              void initiatePaymentIntent('stripe')
+              setShowPayment(true)
             }}
           >
             Go to payment
           </Button>
         )}
 
-        {!paymentData?.['clientSecret'] && error && (
-          <div className="my-8">
+        {error && (
+          <div className="my-4">
             <Message error={error} />
-
-            <Button
-              onClick={(e) => {
-                e.preventDefault()
-                router.refresh()
-              }}
-              variant="default"
-            >
-              Try again
-            </Button>
           </div>
         )}
 
-        <Suspense fallback={<React.Fragment />}>
-          {/* @ts-ignore */}
-          {paymentData && paymentData?.['clientSecret'] && (
-            <div className="pb-16">
-              <h2 className="font-medium text-3xl">Payment</h2>
-              {error && <p>{`Error: ${error}`}</p>}
-              <Elements
-                options={{
-                  appearance: {
-                    theme: 'stripe',
-                    variables: {
-                      borderRadius: '6px',
-                      colorPrimary: '#858585',
-                      gridColumnSpacing: '20px',
-                      gridRowSpacing: '20px',
-                      colorBackground: theme === 'dark' ? '#0a0a0a' : cssVariables.colors.base0,
-                      colorDanger: cssVariables.colors.error500,
-                      colorDangerText: cssVariables.colors.error500,
-                      colorIcon:
-                        theme === 'dark' ? cssVariables.colors.base0 : cssVariables.colors.base1000,
-                      colorText: theme === 'dark' ? '#858585' : cssVariables.colors.base1000,
-                      colorTextPlaceholder: '#858585',
-                      fontFamily: 'Geist, sans-serif',
-                      fontSizeBase: '16px',
-                      fontWeightBold: '600',
-                      fontWeightNormal: '500',
-                      spacingUnit: '4px',
-                    },
-                  },
-                  clientSecret: paymentData['clientSecret'] as string,
+        {showPayment && (
+          <div className="pb-16">
+            <h2 className="font-medium text-3xl mb-6">Payment method</h2>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  void handleCodPayment()
                 }}
-                stripe={stripe}
+                disabled={isProcessingPayment}
+                className="flex items-center gap-4 p-5 rounded-lg border-2 border-primary/20 hover:border-primary/50 transition-colors text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="flex flex-col gap-8">
-                  <CheckoutForm
-                    customerEmail={email}
-                    billingAddress={billingAddress}
-                    setProcessingPayment={setProcessingPayment}
-                  />
-                  <Button
-                    variant="ghost"
-                    className="self-start"
-                    onClick={() => setPaymentData(null)}
-                  >
-                    Cancel payment
-                  </Button>
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                  <Truck className="w-6 h-6" />
                 </div>
-              </Elements>
+                <div className="flex-1">
+                  <p className="font-medium text-lg">Plaćanje pouzećem</p>
+                  <p className="text-sm text-primary/60">
+                    Platite kuriru prilikom preuzimanja paketa
+                  </p>
+                </div>
+                {isProcessingPayment ? (
+                  <LoadingSpinner />
+                ) : (
+                  <span className="text-sm font-medium text-primary/80">Izaberi</span>
+                )}
+              </button>
+
+              <div className="flex items-center gap-4 p-5 rounded-lg border-2 border-primary/10 opacity-50">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                  <CreditCard className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-lg">Kartica</p>
+                  <p className="text-sm text-primary/60">Uskoro dostupno</p>
+                </div>
+                <span className="text-xs font-medium bg-primary/10 px-3 py-1 rounded-full">
+                  Uskoro
+                </span>
+              </div>
             </div>
-          )}
-        </Suspense>
+
+            <Button
+              variant="ghost"
+              className="self-start mt-4"
+              disabled={isProcessingPayment}
+              onClick={() => setShowPayment(false)}
+            >
+              Back
+            </Button>
+          </div>
+        )}
       </div>
 
       {!cartIsEmpty && (
@@ -373,20 +380,24 @@ export const CheckoutPage: React.FC = () => {
               if (isVariant) {
                 price = variant?.priceInRSD
 
-                const imageVariant = product.gallery?.find((item: NonNullable<Product['gallery']>[number]) => {
-                  if (!item.variantOption) return false
-                  const variantOptionID =
-                    typeof item.variantOption === 'object'
-                      ? item.variantOption.id
-                      : item.variantOption
+                const imageVariant = product.gallery?.find(
+                  (item: NonNullable<Product['gallery']>[number]) => {
+                    if (!item.variantOption) return false
+                    const variantOptionID =
+                      typeof item.variantOption === 'object'
+                        ? item.variantOption.id
+                        : item.variantOption
 
-                  const hasMatch = variant?.options?.some((option: number | VariantOption) => {
-                    if (typeof option === 'object') return option.id === variantOptionID
-                    else return option === variantOptionID
-                  })
+                    const hasMatch = variant?.options?.some(
+                      (option: number | VariantOption) => {
+                        if (typeof option === 'object') return option.id === variantOptionID
+                        else return option === variantOptionID
+                      },
+                    )
 
-                  return hasMatch
-                })
+                    return hasMatch
+                  },
+                )
 
                 if (imageVariant && typeof imageVariant.image !== 'string') {
                   image = imageVariant.image
@@ -431,7 +442,7 @@ export const CheckoutPage: React.FC = () => {
           <hr />
           <div className="flex justify-between items-center gap-2">
             <span className="uppercase">Total</span>{' '}
-            <Price className="text-3xl font-medium" amount={cart.subtotal || 0} />
+            <Price className="text-3xl font-medium" amount={cartTotal} />
           </div>
         </div>
       )}

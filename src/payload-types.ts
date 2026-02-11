@@ -924,7 +924,10 @@ export interface Transaction {
         id?: string | null;
       }[]
     | null;
-  paymentMethod?: 'stripe' | null;
+  paymentMethod?: ('cod' | 'stripe') | null;
+  cod?: {
+    note?: string | null;
+  };
   stripe?: {
     customerID?: string | null;
     paymentIntentID?: string | null;
@@ -992,6 +995,7 @@ export interface Address {
   state?: string | null;
   postalCode?: string | null;
   country:
+    | 'RS'
     | 'US'
     | 'GB'
     | 'CA'
@@ -1743,6 +1747,11 @@ export interface TransactionsSelect<T extends boolean = true> {
         id?: T;
       };
   paymentMethod?: T;
+  cod?:
+    | T
+    | {
+        note?: T;
+      };
   stripe?:
     | T
     | {

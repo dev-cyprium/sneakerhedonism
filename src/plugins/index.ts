@@ -5,8 +5,10 @@ import { Plugin } from 'payload'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { ecommercePlugin } from '@payloadcms/plugin-ecommerce'
+import { defaultCountries } from '@payloadcms/plugin-ecommerce/client/react'
 
 import { stripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
+import { codAdapter } from '@/payments/cod-adapter'
 
 import { Page, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -102,11 +104,18 @@ export const plugins: Plugin[] = [
         },
       ],
     },
+    addresses: {
+      supportedCountries: [
+        { label: 'Serbia', value: 'RS' },
+        ...defaultCountries,
+      ],
+    },
     customers: {
       slug: 'users',
     },
     payments: {
       paymentMethods: [
+        codAdapter(),
         stripeAdapter({
           secretKey: process.env.STRIPE_SECRET_KEY!,
           publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,

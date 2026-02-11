@@ -46,6 +46,12 @@ export const Providers: React.FC<{
               },
             }}
             paymentMethods={[
+              {
+                name: 'cod',
+                label: 'Plaćanje pouzećem',
+                initiatePayment: true,
+                confirmOrder: true,
+              },
               stripeAdapterClient({
                 publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
               }),

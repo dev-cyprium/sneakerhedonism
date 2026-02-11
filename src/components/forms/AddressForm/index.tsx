@@ -4,7 +4,12 @@ import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
-import { defaultCountries as supportedCountries } from '@payloadcms/plugin-ecommerce/client/react'
+import { defaultCountries } from '@payloadcms/plugin-ecommerce/client/react'
+
+const supportedCountries = [
+  { label: 'Serbia', value: 'RS' },
+  ...defaultCountries,
+]
 import { Address, Config } from '@/payload-types'
 import {
   Select,
@@ -56,7 +61,7 @@ export const AddressForm: React.FC<Props> = ({
     formState: { errors },
     setValue,
   } = useForm<AddressFormValues>({
-    defaultValues: initialData,
+    defaultValues: { country: 'RS', ...initialData },
   })
 
   const { createAddress, updateAddress } = useAddresses()
@@ -193,7 +198,7 @@ export const AddressForm: React.FC<Props> = ({
               setValue('country', value, { shouldValidate: true })
             }}
             required
-            defaultValue={initialData?.country || ''}
+            defaultValue={initialData?.country || 'RS'}
           >
             <SelectTrigger id="country" className="w-full">
               <SelectValue placeholder="Country" />

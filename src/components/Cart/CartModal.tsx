@@ -38,6 +38,16 @@ export function CartModal() {
     return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
   }, [cart])
 
+  const cartTotal = useMemo(() => {
+    if (!cart?.items?.length) return 0
+    return cart.items.reduce((total, item) => {
+      if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
+      const isVariant = Boolean(item.variant) && typeof item.variant === 'object'
+      const price = isVariant ? item.variant?.priceInRSD : item.product.priceInRSD
+      return total + (price || 0) * item.quantity
+    }, 0)
+  }, [cart?.items])
+
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
@@ -164,11 +174,11 @@ export function CartModal() {
 
               <div className="px-4">
                 <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  {typeof cart?.subtotal === 'number' && (
+                  {cartTotal > 0 && (
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
                       <p>Total</p>
                       <Price
-                        amount={cart?.subtotal}
+                        amount={cartTotal}
                         className="text-right text-base text-black dark:text-white"
                       />
                     </div>
