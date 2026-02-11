@@ -91,6 +91,17 @@ export const plugins: Plugin[] = [
       isAdmin,
       isDocumentOwner,
     },
+    currencies: {
+      defaultCurrency: 'RSD',
+      supportedCurrencies: [
+        {
+          code: 'RSD',
+          decimals: 0,
+          label: 'Serbian Dinar',
+          symbol: 'рсд',
+        },
+      ],
+    },
     customers: {
       slug: 'users',
     },

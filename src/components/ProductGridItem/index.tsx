@@ -11,9 +11,9 @@ type Props = {
 }
 
 export const ProductGridItem: React.FC<Props> = ({ product }) => {
-  const { gallery, priceInUSD, title } = product
+  const { gallery, priceInRSD, title } = product
 
-  let price = priceInUSD
+  let price = priceInRSD
 
   const variants = product.variants?.docs
 
@@ -22,10 +22,10 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
     if (
       variant &&
       typeof variant === 'object' &&
-      variant?.priceInUSD &&
-      typeof variant.priceInUSD === 'number'
+      variant?.priceInRSD &&
+      typeof variant.priceInRSD === 'number'
     ) {
-      price = variant.priceInUSD
+      price = variant.priceInRSD
     }
   }
 

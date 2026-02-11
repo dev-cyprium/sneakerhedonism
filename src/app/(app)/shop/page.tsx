@@ -19,6 +19,18 @@ export default async function ShopPage({ searchParams }: Props) {
   const { q: searchValue, sort, category } = await searchParams
   const payload = await getPayload({ config: configPromise })
 
+  // Resolve category slug to ID
+  let categoryId: number | undefined
+  if (category) {
+    const slug = Array.isArray(category) ? category[0] : category
+    const categoryResult = await payload.find({
+      collection: 'categories',
+      where: { slug: { equals: slug } },
+      limit: 1,
+    })
+    categoryId = categoryResult.docs[0]?.id
+  }
+
   const products = await payload.find({
     collection: 'products',
     draft: false,
@@ -28,10 +40,10 @@ export default async function ShopPage({ searchParams }: Props) {
       slug: true,
       gallery: true,
       categories: true,
-      priceInUSD: true,
+      priceInRSD: true,
     },
     ...(sort ? { sort } : { sort: 'title' }),
-    ...(searchValue || category
+    ...(searchValue || categoryId
       ? {
           where: {
             and: [
@@ -58,11 +70,11 @@ export default async function ShopPage({ searchParams }: Props) {
                     },
                   ]
                 : []),
-              ...(category
+              ...(categoryId
                 ? [
                     {
                       categories: {
-                        contains: category,
+                        equals: categoryId,
                       },
                     },
                   ]

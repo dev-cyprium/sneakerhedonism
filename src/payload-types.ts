@@ -251,7 +251,7 @@ export interface Order {
   transactions?: (number | Transaction)[] | null;
   status?: OrderStatus;
   amount?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'RSD' | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -293,8 +293,8 @@ export interface Product {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  priceInUSDEnabled?: boolean | null;
-  priceInUSD?: number | null;
+  priceInRSDEnabled?: boolean | null;
+  priceInRSD?: number | null;
   relatedProducts?: (number | Product)[] | null;
   meta?: {
     title?: string | null;
@@ -479,6 +479,7 @@ export interface Page {
     | MediaBlock
     | ArchiveBlock
     | CarouselBlock
+    | NovoBlock
     | ThreeItemGridBlock
     | BannerBlock
     | FormBlock
@@ -643,6 +644,16 @@ export interface CarouselBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'carousel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "NovoBlock".
+ */
+export interface NovoBlock {
+  limit?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'novo';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -892,8 +903,8 @@ export interface Variant {
   product: number | Product;
   options: (number | VariantOption)[];
   inventory?: number | null;
-  priceInUSDEnabled?: boolean | null;
-  priceInUSD?: number | null;
+  priceInRSDEnabled?: boolean | null;
+  priceInRSD?: number | null;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -937,7 +948,7 @@ export interface Transaction {
   order?: (number | null) | Order;
   cart?: (number | null) | Cart;
   amount?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'RSD' | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -960,7 +971,7 @@ export interface Cart {
   purchasedAt?: string | null;
   status?: ('active' | 'purchased' | 'abandoned') | null;
   subtotal?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'RSD' | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1228,6 +1239,7 @@ export interface PagesSelect<T extends boolean = true> {
         mediaBlock?: T | MediaBlockSelect<T>;
         archive?: T | ArchiveBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
+        novo?: T | NovoBlockSelect<T>;
         threeItemGrid?: T | ThreeItemGridBlockSelect<T>;
         banner?: T | BannerBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
@@ -1330,6 +1342,15 @@ export interface CarouselBlockSelect<T extends boolean = true> {
   selectedDocs?: T;
   populatedDocs?: T;
   populatedDocsTotal?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "NovoBlock_select".
+ */
+export interface NovoBlockSelect<T extends boolean = true> {
+  limit?: T;
   id?: T;
   blockName?: T;
 }
@@ -1574,8 +1595,8 @@ export interface VariantsSelect<T extends boolean = true> {
   product?: T;
   options?: T;
   inventory?: T;
-  priceInUSDEnabled?: T;
-  priceInUSD?: T;
+  priceInRSDEnabled?: T;
+  priceInRSD?: T;
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;
@@ -1631,8 +1652,8 @@ export interface ProductsSelect<T extends boolean = true> {
   enableVariants?: T;
   variantTypes?: T;
   variants?: T;
-  priceInUSDEnabled?: T;
-  priceInUSD?: T;
+  priceInRSDEnabled?: T;
+  priceInRSD?: T;
   relatedProducts?: T;
   meta?:
     | T

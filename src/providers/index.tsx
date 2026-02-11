@@ -17,6 +17,17 @@ export const Providers: React.FC<{
           <SonnerProvider />
           <EcommerceProvider
             enableVariants={true}
+            currenciesConfig={{
+              defaultCurrency: 'RSD',
+              supportedCurrencies: [
+                {
+                  code: 'RSD',
+                  decimals: 0,
+                  label: 'Serbian Dinar',
+                  symbol: 'рсд',
+                },
+              ],
+            }}
             api={{
               cartsFetchQuery: {
                 depth: 2,

@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { Banner } from '@/blocks/Banner/config'
 import { Carousel } from '@/blocks/Carousel/config'
+import { Novo } from '@/blocks/Novo/config'
 import { ThreeItemGrid } from '@/blocks/ThreeItemGrid/config'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { adminOnly } from '@/access/adminOnly'
@@ -93,6 +94,7 @@ export const Pages: CollectionConfig = {
                 MediaBlock,
                 Archive,
                 Carousel,
+                Novo,
                 ThreeItemGrid,
                 Banner,
                 FormBlock,
