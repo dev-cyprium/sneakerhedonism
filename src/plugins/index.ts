@@ -10,7 +10,7 @@ import { defaultCountries } from '@payloadcms/plugin-ecommerce/client/react'
 import { stripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
 import { codAdapter } from '@/payments/cod-adapter'
 
-import { Page, Product } from '@/payload-types'
+import { Page, Post, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 import { ProductsCollection } from '@/collections/Products'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
@@ -19,14 +19,18 @@ import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
 
-const generateTitle: GenerateTitle<Product | Page> = ({ doc }) => {
-  return doc?.title ? `${doc.title} | Payload Ecommerce Template` : 'Payload Ecommerce Template'
+const generateTitle: GenerateTitle<Product | Page | Post> = ({ doc }) => {
+  return doc?.title ? `${doc.title} | Sneaker Hedonism` : 'Sneaker Hedonism'
 }
 
-const generateURL: GenerateURL<Product | Page> = ({ doc }) => {
+const generateURL: GenerateURL<Product | Page | Post> = ({ doc, collectionSlug }) => {
   const url = getServerSideURL()
 
-  return doc?.slug ? `${url}/${doc.slug}` : url
+  if (!doc?.slug) return url
+
+  if (collectionSlug === 'posts') return `${url}/blog/${doc.slug}`
+
+  return `${url}/${doc.slug}`
 }
 
 export const plugins: Plugin[] = [

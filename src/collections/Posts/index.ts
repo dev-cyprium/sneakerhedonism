@@ -1,25 +1,9 @@
 import type { CollectionConfig } from 'payload'
 
-import { Banner } from '@/blocks/Banner/config'
-import { EmbedSocial } from '@/blocks/EmbedSocial/config'
-import { Carousel } from '@/blocks/Carousel/config'
-import { Novo } from '@/blocks/Novo/config'
-import { PogledajPonudu } from '@/blocks/PogledajPonudu/config'
-import { Popularno } from '@/blocks/Popularno/config'
-import { ThreeItemGrid } from '@/blocks/ThreeItemGrid/config'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { adminOnly } from '@/access/adminOnly'
-import { Archive } from '@/blocks/ArchiveBlock/config'
-import { CallToAction } from '@/blocks/CallToAction/config'
-import { Content } from '@/blocks/Content/config'
-import { ContentWithMedia } from '@/blocks/ContentWithMedia/config'
-import { FormBlock } from '@/blocks/Form/config'
-import { LatestPosts } from '@/blocks/LatestPosts/config'
-import { MediaBlock } from '@/blocks/MediaBlock/config'
-import { Newsletter } from '@/blocks/Newsletter/config'
-import { hero } from '@/fields/hero'
-import { slugField } from 'payload'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
+import { slugField } from 'payload'
 import {
   MetaDescriptionField,
   MetaImageField,
@@ -27,10 +11,18 @@ import {
   OverviewField,
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
-import { revalidatePage, revalidateDelete } from './hooks/revalidatePage'
+import {
+  BlocksFeature,
+  lexicalEditor,
+} from '@payloadcms/richtext-lexical'
+import { Banner } from '@/blocks/Banner/config'
+import { Code } from '@/blocks/Code/config'
+import { MediaBlock } from '@/blocks/MediaBlock/config'
+import { ImageCarousel } from '@/blocks/ImageCarousel/config'
+import { revalidatePost, revalidatePostDelete } from './hooks/revalidatePost'
 
-export const Pages: CollectionConfig = {
-  slug: 'pages',
+export const Posts: CollectionConfig = {
+  slug: 'posts',
   access: {
     create: adminOnly,
     delete: adminOnly,
@@ -39,19 +31,19 @@ export const Pages: CollectionConfig = {
   },
   admin: {
     group: 'Content',
-    defaultColumns: ['title', 'slug', 'updatedAt'],
+    defaultColumns: ['title', 'slug', 'author', 'publishedOn', 'updatedAt'],
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
           slug: data?.slug,
-          collection: 'pages',
+          collection: 'posts',
           req,
         }),
     },
     preview: (data, { req }) =>
       generatePreviewPath({
         slug: data?.slug as string,
-        collection: 'pages',
+        collection: 'posts',
         req,
       }),
     useAsTitle: 'title',
@@ -63,8 +55,42 @@ export const Pages: CollectionConfig = {
       required: true,
     },
     {
+      name: 'excerpt',
+      type: 'textarea',
+      label: 'Excerpt',
+      admin: {
+        description: 'Short summary shown on blog listing cards and used for SEO.',
+      },
+    },
+    {
+      name: 'featuredImage',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Featured Image',
+    },
+    {
+      name: 'author',
+      type: 'relationship',
+      relationTo: 'users',
+      label: 'Author',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'tags',
+      type: 'relationship',
+      relationTo: 'tags',
+      hasMany: true,
+      label: 'Tags',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'publishedOn',
       type: 'date',
+      label: 'Published On',
       admin: {
         date: {
           pickerAppearance: 'dayAndTime',
@@ -86,35 +112,23 @@ export const Pages: CollectionConfig = {
       type: 'tabs',
       tabs: [
         {
-          fields: [hero],
-          label: 'Hero',
-        },
-        {
+          label: 'Content',
           fields: [
             {
-              name: 'layout',
-              type: 'blocks',
-              blocks: [
-                CallToAction,
-                Content,
-                ContentWithMedia,
-                MediaBlock,
-                Archive,
-                Carousel,
-                Novo,
-                PogledajPonudu,
-                Popularno,
-                ThreeItemGrid,
-                Banner,
-                FormBlock,
-                LatestPosts,
-                Newsletter,
-                EmbedSocial,
-              ],
+              name: 'content',
+              type: 'richText',
               required: true,
+              label: false,
+              editor: lexicalEditor({
+                features: ({ rootFeatures }) => [
+                  ...rootFeatures,
+                  BlocksFeature({
+                    blocks: [MediaBlock, Banner, Code, ImageCarousel],
+                  }),
+                ],
+              }),
             },
           ],
-          label: 'Content',
         },
         {
           name: 'meta',
@@ -131,13 +145,9 @@ export const Pages: CollectionConfig = {
             MetaImageField({
               relationTo: 'media',
             }),
-
             MetaDescriptionField({}),
             PreviewField({
-              // if the `generateUrl` function is configured
               hasGenerateFn: true,
-
-              // field paths to match the target field for data
               titlePath: 'meta.title',
               descriptionPath: 'meta.description',
             }),
@@ -148,8 +158,8 @@ export const Pages: CollectionConfig = {
     slugField(),
   ],
   hooks: {
-    afterChange: [revalidatePage],
-    afterDelete: [revalidateDelete],
+    afterChange: [revalidatePost],
+    afterDelete: [revalidatePostDelete],
   },
   versions: {
     drafts: {

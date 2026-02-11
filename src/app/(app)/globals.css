@@ -338,3 +338,11 @@ input,
 button {
   @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-neutral-600 dark:focus-visible:ring-offset-neutral-900;
 }
+
+/* Blog post content — constrain inline images, centered */
+.blog-prose img {
+  max-width: 40%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  margin-inline: auto;
+}

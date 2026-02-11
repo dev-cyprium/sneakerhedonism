@@ -1,13 +1,16 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import {
+  BlockquoteFeature,
   BoldFeature,
   EXPERIMENTAL_TableFeature,
+  HeadingFeature,
   IndentFeature,
   ItalicFeature,
   LinkFeature,
   OrderedListFeature,
   UnderlineFeature,
   UnorderedListFeature,
+  UploadFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 import path from 'path'
@@ -17,6 +20,8 @@ import { fileURLToPath } from 'url'
 import { Categories } from '@/collections/Categories'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
+import { Posts } from '@/collections/Posts'
+import { Tags } from '@/collections/Tags'
 import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
@@ -37,7 +42,7 @@ export default buildConfig({
     },
     user: Users.slug,
   },
-  collections: [Users, Pages, Categories, Media],
+  collections: [Users, Pages, Posts, Tags, Categories, Media],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
@@ -46,13 +51,16 @@ export default buildConfig({
   editor: lexicalEditor({
     features: () => {
       return [
+        HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
         UnderlineFeature(),
         BoldFeature(),
         ItalicFeature(),
+        BlockquoteFeature(),
         OrderedListFeature(),
         UnorderedListFeature(),
+        UploadFeature(),
         LinkFeature({
-          enabledCollections: ['pages'],
+          enabledCollections: ['pages', 'posts'],
           fields: ({ defaultFields }) => {
             const defaultFieldsWithoutUrl = defaultFields.filter((field) => {
               if ('name' in field && field.name === 'url') return false

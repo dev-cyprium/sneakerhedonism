@@ -4,8 +4,10 @@ import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { CarouselBlock } from '@/blocks/Carousel/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
 import { EmbedSocialBlock } from '@/blocks/EmbedSocial/Component'
+import { ImageCarouselBlock } from '@/blocks/ImageCarousel/Component'
 import { ContentWithMediaBlock } from '@/blocks/ContentWithMedia/Component'
 import { FormBlock } from '@/blocks/Form/Component'
+import { LatestPostsBlock } from '@/blocks/LatestPosts/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { NewsletterBlock } from '@/blocks/Newsletter/Component'
 import { NovoBlock } from '@/blocks/Novo/Component'
@@ -26,6 +28,8 @@ const blockComponents = {
   cta: CallToActionBlock,
   embedSocial: EmbedSocialBlock,
   formBlock: FormBlock,
+  imageCarousel: ImageCarouselBlock,
+  latestPosts: LatestPostsBlock,
   mediaBlock: MediaBlock,
   newsletter: NewsletterBlock,
   novo: NovoBlock,
