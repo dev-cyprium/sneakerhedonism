@@ -481,6 +481,7 @@ export interface Page {
     | ArchiveBlock
     | CarouselBlock
     | NovoBlock
+    | PogledajPonuduBlock
     | ThreeItemGridBlock
     | BannerBlock
     | FormBlock
@@ -696,6 +697,27 @@ export interface NovoBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'novo';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PogledajPonuduBlock".
+ */
+export interface PogledajPonuduBlock {
+  heading?: string | null;
+  items?:
+    | {
+        image: number | Media;
+        label: string;
+        /**
+         * URL to link to (e.g. /products?category=patike)
+         */
+        link: string;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'pogledajPonudu';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1287,6 +1309,7 @@ export interface PagesSelect<T extends boolean = true> {
         archive?: T | ArchiveBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
         novo?: T | NovoBlockSelect<T>;
+        pogledajPonudu?: T | PogledajPonuduBlockSelect<T>;
         threeItemGrid?: T | ThreeItemGridBlockSelect<T>;
         banner?: T | BannerBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
@@ -1420,6 +1443,23 @@ export interface CarouselBlockSelect<T extends boolean = true> {
  */
 export interface NovoBlockSelect<T extends boolean = true> {
   limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PogledajPonuduBlock_select".
+ */
+export interface PogledajPonuduBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        image?: T;
+        label?: T;
+        link?: T;
+        id?: T;
+      };
   id?: T;
   blockName?: T;
 }
