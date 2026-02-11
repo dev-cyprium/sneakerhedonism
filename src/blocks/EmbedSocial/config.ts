@@ -4,6 +4,20 @@ export const EmbedSocial: Block = {
   slug: 'embedSocial',
   fields: [
     {
+      name: 'title',
+      type: 'text',
+      required: true,
+      label: 'Title',
+      defaultValue: 'Instagram',
+    },
+    {
+      name: 'instagramUrl',
+      type: 'text',
+      required: true,
+      label: 'Instagram URL',
+      defaultValue: 'https://www.instagram.com/_sneakerhedonism_/',
+    },
+    {
       name: 'embedCode',
       type: 'code',
       required: true,

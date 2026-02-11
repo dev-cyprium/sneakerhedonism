@@ -987,6 +987,8 @@ export interface NewsletterBlock {
  * via the `definition` "EmbedSocialBlock".
  */
 export interface EmbedSocialBlock {
+  title: string;
+  instagramUrl: string;
   /**
    * Paste your EmbedSocial embed code here (the full script + div snippet)
    */
@@ -1562,6 +1564,8 @@ export interface NewsletterBlockSelect<T extends boolean = true> {
  * via the `definition` "EmbedSocialBlock_select".
  */
 export interface EmbedSocialBlockSelect<T extends boolean = true> {
+  title?: T;
+  instagramUrl?: T;
   embedCode?: T;
   id?: T;
   blockName?: T;
