@@ -5,6 +5,7 @@ import Image from 'next/image'
 import React, { Suspense } from 'react'
 
 import type { Header, Media } from '@/payload-types'
+import type { NormalizedNavItem } from './index'
 
 import { LogoIcon } from '@/components/icons/logo'
 import { AnnouncementBar } from './AnnouncementBar'
@@ -14,10 +15,10 @@ import { MobileMenu } from './MobileMenu'
 
 type Props = {
   header: Header
+  navItems: NormalizedNavItem[]
 }
 
-export function HeaderClient({ header }: Props) {
-  const menu = header.navItems || []
+export function HeaderClient({ header, navItems }: Props) {
   const logo = header.logo as Media | undefined
 
   return (
@@ -28,7 +29,7 @@ export function HeaderClient({ header }: Props) {
           {/* Mobile hamburger */}
           <div className="block flex-none md:hidden">
             <Suspense fallback={null}>
-              <MobileMenu menu={menu} />
+              <MobileMenu menu={navItems} />
             </Suspense>
           </div>
 
@@ -48,7 +49,7 @@ export function HeaderClient({ header }: Props) {
           </Link>
 
           {/* Desktop nav — centered */}
-          <DesktopNav items={menu} />
+          <DesktopNav items={navItems} />
 
           {/* Icons */}
           <HeaderIcons />

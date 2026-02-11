@@ -1,17 +1,17 @@
 'use client'
 
-import { CMSLink } from '@/components/Link'
 import { cn } from '@/utilities/cn'
 import { ChevronDown } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React, { useCallback, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import type { Header } from '@/payload-types'
+import type { NormalizedNavItem } from './index'
 
 interface Props {
-  items: Header['navItems']
+  items: NormalizedNavItem[]
 }
 
 export function DesktopNav({ items }: Props) {
@@ -39,7 +39,7 @@ export function DesktopNav({ items }: Props) {
         {items.map((item) => {
           const hasChildren = item.children && item.children.length > 0
           const isActive =
-            item.link.url && item.link.url !== '/' ? pathname.includes(item.link.url) : false
+            item.href && item.href !== '/' ? pathname.includes(item.href) : false
           const isOpen = openDropdown === item.id
 
           if (hasChildren) {
@@ -47,7 +47,7 @@ export function DesktopNav({ items }: Props) {
               <li
                 key={item.id}
                 className="relative"
-                onMouseEnter={() => open(item.id || null)}
+                onMouseEnter={() => open(item.id)}
                 onMouseLeave={close}
               >
                 <button
@@ -56,7 +56,7 @@ export function DesktopNav({ items }: Props) {
                     { active: isActive || isOpen },
                   )}
                 >
-                  <span className="navLink-bar">{item.link.label}</span>
+                  <span className="navLink-bar">{item.label}</span>
                   <ChevronDown className="h-3.5 w-3.5 opacity-60" />
                 </button>
                 <AnimatePresence>
@@ -71,19 +71,18 @@ export function DesktopNav({ items }: Props) {
                       <ul className="flex flex-col gap-1">
                         {item.children!.map((child) => (
                           <li key={child.id}>
-                            <CMSLink
-                              {...child.link}
-                              label={null}
-                              appearance="inline"
+                            <Link
+                              href={child.href}
+                              {...(child.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                               className="block py-2 text-sm text-dropdown-text hover:text-white transition-colors"
                             >
-                              {child.link.label}
+                              {child.label}
                               {child.badge && (
                                 <span className="ml-2 inline-block rounded bg-accent-brand px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
                                   {child.badge}
                                 </span>
                               )}
-                            </CMSLink>
+                            </Link>
                           </li>
                         ))}
                       </ul>
@@ -96,17 +95,16 @@ export function DesktopNav({ items }: Props) {
 
           return (
             <li key={item.id}>
-              <CMSLink
-                {...item.link}
-                label={null}
-                appearance="inline"
+              <Link
+                href={item.href}
+                {...(item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                 className={cn(
                   'navLink flex items-center px-5 py-5 text-[15px] font-extrabold uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
                   { active: isActive },
                 )}
               >
-                <span className="navLink-bar">{item.link.label}</span>
-              </CMSLink>
+                <span className="navLink-bar">{item.label}</span>
+              </Link>
             </li>
           )
         })}

@@ -597,6 +597,14 @@ export interface Category {
   id: number;
   title: string;
   /**
+   * Leave empty for top-level categories
+   */
+  parent?: (number | null) | Category;
+  /**
+   * Shows a "NEW" badge in navigation
+   */
+  isNew?: boolean | null;
+  /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
@@ -1361,6 +1369,8 @@ export interface FormBlockSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  parent?: T;
+  isNew?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -1794,7 +1804,8 @@ export interface Header {
   logo?: (number | null) | Media;
   navItems?:
     | {
-        link: {
+        navType?: ('link' | 'category' | 'categoryWithChildren') | null;
+        link?: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
           reference?: {
@@ -1804,6 +1815,11 @@ export interface Header {
           url?: string | null;
           label: string;
         };
+        category?: (number | null) | Category;
+        /**
+         * Select a top-level category. Its subcategories will auto-populate as dropdown children.
+         */
+        parentCategory?: (number | null) | Category;
         children?:
           | {
               link: {
@@ -1861,6 +1877,7 @@ export interface HeaderSelect<T extends boolean = true> {
   navItems?:
     | T
     | {
+        navType?: T;
         link?:
           | T
           | {
@@ -1870,6 +1887,8 @@ export interface HeaderSelect<T extends boolean = true> {
               url?: T;
               label?: T;
             };
+        category?: T;
+        parentCategory?: T;
         children?:
           | T
           | {

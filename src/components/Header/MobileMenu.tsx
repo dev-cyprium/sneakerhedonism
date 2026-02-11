@@ -1,8 +1,7 @@
 'use client'
 
-import type { Header } from '@/payload-types'
+import type { NormalizedNavItem } from './index'
 
-import { CMSLink } from '@/components/Link'
 import { Button } from '@/components/ui/button'
 import {
   Accordion,
@@ -25,7 +24,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 interface Props {
-  menu: Header['navItems']
+  menu: NormalizedNavItem[]
 }
 
 export function MobileMenu({ menu }: Props) {
@@ -69,27 +68,26 @@ export function MobileMenu({ menu }: Props) {
 
                 if (hasChildren) {
                   return (
-                    <AccordionItem key={item.id} value={item.id || ''}>
+                    <AccordionItem key={item.id} value={item.id}>
                       <AccordionTrigger className="text-sm uppercase font-nav tracking-wide">
-                        {item.link.label}
+                        {item.label}
                       </AccordionTrigger>
                       <AccordionContent>
                         <ul className="flex flex-col gap-2 pl-4">
                           {item.children!.map((child) => (
                             <li key={child.id}>
-                              <CMSLink
-                                {...child.link}
-                                label={null}
-                                appearance="inline"
+                              <Link
+                                href={child.href}
+                                {...(child.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                                 className="text-sm text-nav-text hover:text-nav-text-hover font-nav"
                               >
-                                {child.link.label}
+                                {child.label}
                                 {child.badge && (
                                   <span className="ml-2 inline-block rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">
                                     {child.badge}
                                   </span>
                                 )}
-                              </CMSLink>
+                              </Link>
                             </li>
                           ))}
                         </ul>
@@ -100,7 +98,13 @@ export function MobileMenu({ menu }: Props) {
 
                 return (
                   <div key={item.id} className="py-4 border-b last:border-b-0">
-                    <CMSLink {...item.link} appearance="inline" className="text-sm uppercase font-nav tracking-wide" />
+                    <Link
+                      href={item.href}
+                      {...(item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                      className="text-sm uppercase font-nav tracking-wide"
+                    >
+                      {item.label}
+                    </Link>
                   </div>
                 )
               })}
