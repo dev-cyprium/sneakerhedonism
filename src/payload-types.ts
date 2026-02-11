@@ -487,6 +487,7 @@ export interface Page {
     | BannerBlock
     | FormBlock
     | NewsletterBlock
+    | EmbedSocialBlock
   )[];
   meta?: {
     title?: string | null;
@@ -983,6 +984,19 @@ export interface NewsletterBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "EmbedSocialBlock".
+ */
+export interface EmbedSocialBlock {
+  /**
+   * Paste your EmbedSocial embed code here (the full script + div snippet)
+   */
+  embedCode: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'embedSocial';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "variants".
  */
 export interface Variant {
@@ -1342,6 +1356,7 @@ export interface PagesSelect<T extends boolean = true> {
         banner?: T | BannerBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
         newsletter?: T | NewsletterBlockSelect<T>;
+        embedSocial?: T | EmbedSocialBlockSelect<T>;
       };
   meta?:
     | T
@@ -1539,6 +1554,15 @@ export interface NewsletterBlockSelect<T extends boolean = true> {
   heading?: T;
   description?: T;
   form?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "EmbedSocialBlock_select".
+ */
+export interface EmbedSocialBlockSelect<T extends boolean = true> {
+  embedCode?: T;
   id?: T;
   blockName?: T;
 }
