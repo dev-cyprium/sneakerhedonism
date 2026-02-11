@@ -476,6 +476,7 @@ export interface Page {
   layout: (
     | CallToActionBlock
     | ContentBlock
+    | ContentWithMediaBlock
     | MediaBlock
     | ArchiveBlock
     | CarouselBlock
@@ -545,6 +546,47 @@ export interface ContentBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'content';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentWithMediaBlock".
+ */
+export interface ContentWithMediaBlock {
+  richText?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  media: number | Media;
+  mediaPosition?: ('left' | 'right') | null;
+  enableLink?: boolean | null;
+  link?: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?: {
+      relationTo: 'pages';
+      value: number | Page;
+    } | null;
+    url?: string | null;
+    label: string;
+    /**
+     * Choose how the link should be rendered.
+     */
+    appearance?: ('default' | 'outline') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contentWithMedia';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1240,6 +1282,7 @@ export interface PagesSelect<T extends boolean = true> {
     | {
         cta?: T | CallToActionBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
+        contentWithMedia?: T | ContentWithMediaBlockSelect<T>;
         mediaBlock?: T | MediaBlockSelect<T>;
         archive?: T | ArchiveBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
@@ -1307,6 +1350,28 @@ export interface ContentBlockSelect<T extends boolean = true> {
               appearance?: T;
             };
         id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentWithMediaBlock_select".
+ */
+export interface ContentWithMediaBlockSelect<T extends boolean = true> {
+  richText?: T;
+  media?: T;
+  mediaPosition?: T;
+  enableLink?: T;
+  link?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
+        appearance?: T;
       };
   id?: T;
   blockName?: T;

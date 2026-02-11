@@ -3,6 +3,7 @@ import { BannerBlock } from '@/blocks/Banner/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { CarouselBlock } from '@/blocks/Carousel/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
+import { ContentWithMediaBlock } from '@/blocks/ContentWithMedia/Component'
 import { FormBlock } from '@/blocks/Form/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { NovoBlock } from '@/blocks/Novo/Component'
@@ -17,6 +18,7 @@ const blockComponents = {
   banner: BannerBlock,
   carousel: CarouselBlock,
   content: ContentBlock,
+  contentWithMedia: ContentWithMediaBlock,
   cta: CallToActionBlock,
   formBlock: FormBlock,
   mediaBlock: MediaBlock,
