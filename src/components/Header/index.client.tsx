@@ -1,16 +1,16 @@
 'use client'
-import { CMSLink } from '@/components/Link'
-import { Cart } from '@/components/Cart'
-import { OpenCartButton } from '@/components/Cart/OpenCart'
+
 import Link from 'next/link'
+import Image from 'next/image'
 import React, { Suspense } from 'react'
 
-import { MobileMenu } from './MobileMenu'
-import type { Header } from 'src/payload-types'
+import type { Header, Media } from '@/payload-types'
 
 import { LogoIcon } from '@/components/icons/logo'
-import { usePathname } from 'next/navigation'
-import { cn } from '@/utilities/cn'
+import { AnnouncementBar } from './AnnouncementBar'
+import { DesktopNav } from './DesktopNav'
+import { HeaderIcons } from './HeaderIcons'
+import { MobileMenu } from './MobileMenu'
 
 type Props = {
   header: Header
@@ -18,49 +18,41 @@ type Props = {
 
 export function HeaderClient({ header }: Props) {
   const menu = header.navItems || []
-  const pathname = usePathname()
+  const logo = header.logo as Media | undefined
 
   return (
-    <div className="relative z-20 border-b">
-      <nav className="flex items-center md:items-end justify-between container pt-2">
-        <div className="block flex-none md:hidden">
-          <Suspense fallback={null}>
-            <MobileMenu menu={menu} />
-          </Suspense>
-        </div>
-        <div className="flex w-full items-end justify-between">
-          <div className="flex w-full items-end gap-6 md:w-1/3">
-            <Link className="flex w-full items-center justify-center pt-4 pb-4 md:w-auto" href="/">
-              <LogoIcon className="w-6 h-auto" />
-            </Link>
-            {menu.length ? (
-              <ul className="hidden gap-4 text-sm md:flex md:items-center">
-                {menu.map((item) => (
-                  <li key={item.id}>
-                    <CMSLink
-                      {...item.link}
-                      size={'clear'}
-                      className={cn('relative navLink', {
-                        active:
-                          item.link.url && item.link.url !== '/'
-                            ? pathname.includes(item.link.url)
-                            : false,
-                      })}
-                      appearance="nav"
-                    />
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-
-          <div className="flex justify-end md:w-1/3 gap-4">
-            <Suspense fallback={<OpenCartButton />}>
-              <Cart />
+    <>
+      <AnnouncementBar enabled={header.announcementEnabled} text={header.announcementText} />
+      <header className="sticky top-0 z-20 border-b border-header-border bg-background">
+        <nav className="flex items-center justify-between container py-3">
+          <div className="block flex-none md:hidden">
+            <Suspense fallback={null}>
+              <MobileMenu menu={menu} />
             </Suspense>
           </div>
-        </div>
-      </nav>
-    </div>
+
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link className="flex items-center" href="/">
+                {logo?.url ? (
+                  <Image
+                    src={logo.url}
+                    alt={logo.alt || 'Logo'}
+                    width={logo.width || 32}
+                    height={logo.height || 32}
+                    className="h-8 w-auto"
+                  />
+                ) : (
+                  <LogoIcon className="w-6 h-auto" />
+                )}
+              </Link>
+              <DesktopNav items={menu} />
+            </div>
+
+            <HeaderIcons />
+          </div>
+        </nav>
+      </header>
+    </>
   )
 }
