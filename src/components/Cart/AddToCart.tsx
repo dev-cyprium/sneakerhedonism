@@ -16,9 +16,10 @@ export function AddToCart({ product }: Props) {
   const searchParams = useSearchParams()
 
   const variants = product.variants?.docs || []
+  const hasVariantDocs = variants.length > 0
 
   const selectedVariant = useMemo<Variant | undefined>(() => {
-    if (product.enableVariants && variants.length) {
+    if (product.enableVariants && hasVariantDocs) {
       const variantId = searchParams.get('variant')
 
       const validVariant = variants.find((variant) => {
@@ -34,7 +35,7 @@ export function AddToCart({ product }: Props) {
     }
 
     return undefined
-  }, [product.enableVariants, searchParams, variants])
+  }, [product.enableVariants, hasVariantDocs, searchParams, variants])
 
   const addToCart = useCallback(
     (e: React.FormEvent<HTMLButtonElement>) => {
@@ -60,7 +61,7 @@ export function AddToCart({ product }: Props) {
         : undefined
 
       if (productID === product.id) {
-        if (product.enableVariants) {
+        if (product.enableVariants && hasVariantDocs) {
           return variantID === selectedVariant?.id
         }
         return true
@@ -70,13 +71,13 @@ export function AddToCart({ product }: Props) {
     if (existingItem) {
       const existingQuantity = existingItem.quantity
 
-      if (product.enableVariants) {
+      if (product.enableVariants && hasVariantDocs) {
         return existingQuantity >= (selectedVariant?.inventory || 0)
       }
       return existingQuantity >= (product.inventory || 0)
     }
 
-    if (product.enableVariants) {
+    if (product.enableVariants && hasVariantDocs) {
       if (!selectedVariant) {
         return true
       }
@@ -91,7 +92,7 @@ export function AddToCart({ product }: Props) {
     }
 
     return false
-  }, [selectedVariant, cart?.items, product])
+  }, [selectedVariant, hasVariantDocs, cart?.items, product])
 
   return (
     <Button

@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import type { Product } from '@/payload-types'
 
 import { createUrl } from '@/utilities/createUrl'
@@ -82,6 +81,9 @@ export function VariantSelector({ product }: { product: Product }) {
                   } else {
                     isAvailableForSale = false
                   }
+                } else {
+                  // No variant record for this option — not available
+                  isAvailableForSale = false
                 }
               }
 
@@ -93,24 +95,28 @@ export function VariantSelector({ product }: { product: Product }) {
                 searchParams.get(optionKeyLowerCase) === String(optionID)
 
               return (
-                <Button
-                  variant={'outline'}
+                <button
+                  type="button"
                   aria-disabled={!isAvailableForSale}
-                  className={clsx('min-w-[3rem] px-3 h-9 text-sm', {
-                    'border-accent-brand bg-accent-brand/5 text-accent-brand': isActive,
-                    'opacity-40 line-through': !isAvailableForSale,
-                  })}
-                  disabled={!isAvailableForSale}
+                  className={clsx(
+                    'relative inline-flex items-center justify-center min-w-[3rem] px-3 h-9 text-sm rounded-md border font-medium transition-colors',
+                    isAvailableForSale
+                      ? isActive
+                        ? 'border-accent-brand bg-accent-brand/5 text-accent-brand'
+                        : 'border-input bg-card hover:bg-accent hover:bg-primary-foreground text-foreground cursor-pointer'
+                      : 'border-input/50 bg-muted/50 text-muted-foreground/50 line-through cursor-not-allowed',
+                  )}
                   key={option.id}
                   onClick={() => {
+                    if (!isAvailableForSale) return
                     router.replace(`${optionUrl}`, {
                       scroll: false,
                     })
                   }}
-                  title={`${option.label} ${!isAvailableForSale ? ' (Out of Stock)' : ''}`}
+                  title={`${option.label}${!isAvailableForSale ? ' (Out of Stock)' : ''}`}
                 >
                   {option.label}
-                </Button>
+                </button>
               )
             })}
           </React.Fragment>

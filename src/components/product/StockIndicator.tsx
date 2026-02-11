@@ -11,9 +11,10 @@ export const StockIndicator: React.FC<Props> = ({ product }) => {
   const searchParams = useSearchParams()
 
   const variants = product.variants?.docs || []
+  const hasVariantDocs = variants.length > 0
 
   const selectedVariant = useMemo<Variant | undefined>(() => {
-    if (product.enableVariants && variants.length) {
+    if (product.enableVariants && hasVariantDocs) {
       const variantId = searchParams.get('variant')
       const validVariant = variants.find((variant) => {
         if (typeof variant === 'object') {
@@ -28,18 +29,19 @@ export const StockIndicator: React.FC<Props> = ({ product }) => {
     }
 
     return undefined
-  }, [product.enableVariants, searchParams, variants])
+  }, [product.enableVariants, hasVariantDocs, searchParams, variants])
 
   const stockQuantity = useMemo(() => {
-    if (product.enableVariants) {
+    if (product.enableVariants && hasVariantDocs) {
       if (selectedVariant) {
         return selectedVariant.inventory || 0
       }
+      return null // Variant docs exist but none selected yet
     }
     return product.inventory || 0
-  }, [product.enableVariants, selectedVariant, product.inventory])
+  }, [product.enableVariants, hasVariantDocs, selectedVariant, product.inventory])
 
-  if (product.enableVariants && !selectedVariant) {
+  if (stockQuantity === null) {
     return null
   }
 
