@@ -50,7 +50,8 @@ export function DesktopNav({ items }: Props) {
                 onMouseEnter={() => open(item.id)}
                 onMouseLeave={close}
               >
-                <button
+                <Link
+                  href={item.href}
                   className={cn(
                     'navLink flex items-center gap-1.5 px-5 py-6 text-[18px] font-black uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
                     { active: isActive || isOpen },
@@ -58,7 +59,7 @@ export function DesktopNav({ items }: Props) {
                 >
                   <span className="navLink-bar">{item.label}</span>
                   <ChevronDown className="h-4 w-4 opacity-60" />
-                </button>
+                </Link>
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div

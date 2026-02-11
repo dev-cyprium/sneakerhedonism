@@ -19,8 +19,8 @@ export default async function ShopPage({ searchParams }: Props) {
   const { q: searchValue, sort, category } = await searchParams
   const payload = await getPayload({ config: configPromise })
 
-  // Resolve category slug to ID
-  let categoryId: number | undefined
+  // Resolve category slug to IDs (include children for parent categories)
+  let categoryIds: number[] = []
   if (category) {
     const slug = Array.isArray(category) ? category[0] : category
     const categoryResult = await payload.find({
@@ -28,7 +28,17 @@ export default async function ShopPage({ searchParams }: Props) {
       where: { slug: { equals: slug } },
       limit: 1,
     })
-    categoryId = categoryResult.docs[0]?.id
+    const cat = categoryResult.docs[0]
+    if (cat) {
+      categoryIds.push(cat.id)
+      // Also fetch child categories
+      const children = await payload.find({
+        collection: 'categories',
+        where: { parent: { equals: cat.id } },
+        limit: 100,
+      })
+      categoryIds.push(...children.docs.map((c) => c.id))
+    }
   }
 
   const products = await payload.find({
@@ -43,7 +53,7 @@ export default async function ShopPage({ searchParams }: Props) {
       priceInRSD: true,
     },
     ...(sort ? { sort } : { sort: 'title' }),
-    ...(searchValue || categoryId
+    ...(searchValue || categoryIds.length
       ? {
           where: {
             and: [
@@ -70,11 +80,11 @@ export default async function ShopPage({ searchParams }: Props) {
                     },
                   ]
                 : []),
-              ...(categoryId
+              ...(categoryIds.length
                 ? [
                     {
                       categories: {
-                        equals: categoryId,
+                        in: categoryIds,
                       },
                     },
                   ]
