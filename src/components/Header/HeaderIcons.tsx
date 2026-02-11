@@ -18,21 +18,21 @@ export function HeaderIcons() {
           className="text-nav-text hover:text-nav-text-hover transition-colors"
           aria-label="Account"
         >
-          <User className="h-[22px] w-[22px] stroke-[1.5]" />
+          <User className="h-[26px] w-[26px] stroke-[1.5]" />
         </Link>
         <Link
           href="/wishlist"
           className="text-nav-text hover:text-nav-text-hover transition-colors"
           aria-label="Wishlist"
         >
-          <Heart className="h-[22px] w-[22px] stroke-[1.5]" />
+          <Heart className="h-[26px] w-[26px] stroke-[1.5]" />
         </Link>
         <Link
           href="/shop"
           className="text-nav-text hover:text-nav-text-hover transition-colors"
           aria-label="Search"
         >
-          <Search className="h-[22px] w-[22px] stroke-[1.5]" />
+          <Search className="h-[26px] w-[26px] stroke-[1.5]" />
         </Link>
       </div>
       <Suspense fallback={<OpenCartButton />}>

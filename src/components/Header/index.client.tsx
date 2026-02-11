@@ -34,17 +34,17 @@ export function HeaderClient({ header, navItems }: Props) {
           </div>
 
           {/* Logo */}
-          <Link className="flex items-center shrink-0 py-3" href="/">
+          <Link className="flex items-center shrink-0 py-4" href="/">
             {logo?.url ? (
               <Image
                 src={logo.url}
                 alt={logo.alt || 'Logo'}
                 width={logo.width || 160}
                 height={logo.height || 32}
-                className="h-6 w-auto"
+                className="h-7 w-auto"
               />
             ) : (
-              <LogoIcon className="w-6 h-auto" />
+              <LogoIcon className="w-7 h-auto" />
             )}
           </Link>
 

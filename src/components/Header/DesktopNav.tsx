@@ -52,12 +52,12 @@ export function DesktopNav({ items }: Props) {
               >
                 <button
                   className={cn(
-                    'navLink flex items-center gap-1.5 px-5 py-5 text-[15px] font-extrabold uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
+                    'navLink flex items-center gap-1.5 px-5 py-6 text-[18px] font-black uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
                     { active: isActive || isOpen },
                   )}
                 >
                   <span className="navLink-bar">{item.label}</span>
-                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                  <ChevronDown className="h-4 w-4 opacity-60" />
                 </button>
                 <AnimatePresence>
                   {isOpen && (
@@ -99,7 +99,7 @@ export function DesktopNav({ items }: Props) {
                 href={item.href}
                 {...(item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                 className={cn(
-                  'navLink flex items-center px-5 py-5 text-[15px] font-extrabold uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
+                  'navLink flex items-center px-5 py-6 text-[18px] font-black uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
                   { active: isActive },
                 )}
               >
