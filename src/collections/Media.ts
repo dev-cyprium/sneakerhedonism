@@ -5,12 +5,6 @@ import {
   InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const filename = fileURLToPath(import.meta.url)
-const dirname = path.dirname(filename)
-
 export const Media: CollectionConfig = {
   admin: {
     group: 'Content',
@@ -35,7 +29,5 @@ export const Media: CollectionConfig = {
       }),
     },
   ],
-  upload: {
-    staticDir: path.resolve(dirname, '../../public/media'),
-  },
+  upload: true,
 }

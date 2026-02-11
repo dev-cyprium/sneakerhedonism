@@ -1,8 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@config '../../../tailwind.config.mjs';
-
 @custom-variant dark (&:is([data-theme='dark'] *));
 @custom-variant sm (@media (width >= theme(--breakpoint-sm)));
 @custom-variant md (@media (width >= theme(--breakpoint-md)));
@@ -43,8 +41,84 @@
   --breakpoint-lg: 64rem;
   --breakpoint-xl: 80rem;
   --breakpoint-2xl: 86rem;
+
   --font-mono: var(--font-geist-mono);
   --font-sans: var(--font-geist-sans);
+  --font-nav: var(--font-lato);
+
+  --animate-in: in 0.2s ease-out;
+  --animate-out: out 0.2s ease-out;
+  --animate-fade-in: fadeIn 0.3s ease-in-out;
+  --animate-fade-out: fadeOut 0.3s ease-in-out;
+  --animate-carousel: marquee 60s linear infinite;
+  --animate-slide-in-from-left: slide-in-from-left 0.2s ease-out;
+  --animate-slide-out-to-left: slide-out-to-left 0.2s ease-out;
+  --animate-slide-in-from-right: slide-in-from-right 0.2s ease-out;
+  --animate-slide-out-to-right: slide-out-to-right 0.2s ease-out;
+  --animate-blink: blink 1.4s both infinite;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes in {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0%); }
+}
+
+@keyframes out {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes slide-in-from-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slide-out-to-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes slide-in-from-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slide-out-to-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
 }
 
 @layer utilities {
@@ -127,6 +201,8 @@
   --nav-text-hover: oklch(28% 0 0deg);
   --header-border: oklch(72% 0 0deg / 0.2);
   --accent-brand: oklch(62% 0.2 250deg);
+  --dropdown-bg: oklch(25% 0 0deg);
+  --dropdown-text: oklch(90% 0 0deg);
 }
 
 [data-theme='dark'] {
@@ -169,6 +245,8 @@
   --nav-text-hover: oklch(95% 0 0deg);
   --header-border: oklch(50% 0 0deg / 0.2);
   --accent-brand: oklch(65% 0.2 250deg);
+  --dropdown-bg: oklch(25% 0 0deg);
+  --dropdown-text: oklch(90% 0 0deg);
 }
 
 @theme inline {
@@ -215,6 +293,8 @@
   --color-nav-text-hover: var(--nav-text-hover);
   --color-header-border: var(--header-border);
   --color-accent-brand: var(--accent-brand);
+  --color-dropdown-bg: var(--dropdown-bg);
+  --color-dropdown-text: var(--dropdown-text);
 }
 
 @layer base {
@@ -223,6 +303,20 @@
   }
   body {
     @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+  }
+  .prose {
+    --tw-prose-body: var(--foreground);
+    --tw-prose-headings: var(--foreground);
+
+    h1 {
+      font-size: 4rem;
+      font-weight: normal;
+      margin-bottom: 0.25em;
+    }
+
+    a {
+      color: inherit;
+    }
   }
 }
 

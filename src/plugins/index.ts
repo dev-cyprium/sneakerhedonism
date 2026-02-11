@@ -1,5 +1,6 @@
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { seoPlugin } from '@payloadcms/plugin-seo'
+import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -27,6 +28,23 @@ const generateURL: GenerateURL<Product | Page> = ({ doc }) => {
 }
 
 export const plugins: Plugin[] = [
+  s3Storage({
+    collections: {
+      media: {
+        prefix: 'media',
+      },
+    },
+    bucket: process.env.R2_BUCKET!,
+    config: {
+      credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+      },
+      endpoint: process.env.R2_ENDPOINT!,
+      region: 'auto',
+      forcePathStyle: true,
+    },
+  }),
   seoPlugin({
     generateTitle,
     generateURL,

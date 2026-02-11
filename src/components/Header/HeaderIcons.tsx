@@ -11,28 +11,28 @@ export function HeaderIcons() {
   const { user } = useAuth()
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="hidden md:flex items-center gap-4">
+    <div className="flex items-center gap-5">
+      <div className="hidden md:flex items-center gap-5">
         <Link
           href={user ? '/account' : '/login'}
           className="text-nav-text hover:text-nav-text-hover transition-colors"
           aria-label="Account"
         >
-          <User className="h-5 w-5" />
+          <User className="h-[22px] w-[22px] stroke-[1.5]" />
         </Link>
         <Link
           href="/wishlist"
           className="text-nav-text hover:text-nav-text-hover transition-colors"
           aria-label="Wishlist"
         >
-          <Heart className="h-5 w-5" />
+          <Heart className="h-[22px] w-[22px] stroke-[1.5]" />
         </Link>
         <Link
           href="/shop"
           className="text-nav-text hover:text-nav-text-hover transition-colors"
           aria-label="Search"
         >
-          <Search className="h-5 w-5" />
+          <Search className="h-[22px] w-[22px] stroke-[1.5]" />
         </Link>
       </div>
       <Suspense fallback={<OpenCartButton />}>

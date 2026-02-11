@@ -24,33 +24,34 @@ export function HeaderClient({ header }: Props) {
     <>
       <AnnouncementBar enabled={header.announcementEnabled} text={header.announcementText} />
       <header className="sticky top-0 z-20 border-b border-header-border bg-background">
-        <nav className="flex items-center justify-between container py-3">
+        <nav className="relative z-20 flex items-center justify-between container">
+          {/* Mobile hamburger */}
           <div className="block flex-none md:hidden">
             <Suspense fallback={null}>
               <MobileMenu menu={menu} />
             </Suspense>
           </div>
 
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link className="flex items-center" href="/">
-                {logo?.url ? (
-                  <Image
-                    src={logo.url}
-                    alt={logo.alt || 'Logo'}
-                    width={logo.width || 32}
-                    height={logo.height || 32}
-                    className="h-8 w-auto"
-                  />
-                ) : (
-                  <LogoIcon className="w-6 h-auto" />
-                )}
-              </Link>
-              <DesktopNav items={menu} />
-            </div>
+          {/* Logo */}
+          <Link className="flex items-center shrink-0 py-3" href="/">
+            {logo?.url ? (
+              <Image
+                src={logo.url}
+                alt={logo.alt || 'Logo'}
+                width={logo.width || 160}
+                height={logo.height || 32}
+                className="h-6 w-auto"
+              />
+            ) : (
+              <LogoIcon className="w-6 h-auto" />
+            )}
+          </Link>
 
-            <HeaderIcons />
-          </div>
+          {/* Desktop nav — centered */}
+          <DesktopNav items={menu} />
+
+          {/* Icons */}
+          <HeaderIcons />
         </nav>
       </header>
     </>

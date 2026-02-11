@@ -16,9 +16,9 @@ const buttonVariants = cva(
           'border border-input bg-card shadow-xs hover:bg-accent hover:bg-primary-foreground',
         secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
         ghost:
-          'text-nav-text hover:text-nav-text-hover [&.active]:text-nav-text-hover py-2 px-4 uppercase font-mono tracking-widest text-xs',
+          'text-nav-text hover:text-nav-text-hover [&.active]:text-nav-text-hover py-2 px-4 uppercase font-nav tracking-wide text-xs',
         link: 'text-primary underline-offset-4 hover:underline',
-        nav: 'text-nav-text hover:text-nav-text-hover [&.active]:text-nav-text-hover p-0 pt-2 pb-6 uppercase font-mono tracking-widest text-xs',
+        nav: 'text-nav-text hover:text-nav-text-hover [&.active]:text-nav-text-hover p-0 py-5 uppercase font-nav tracking-wide text-[15px] font-bold',
       },
       size: {
         clear: '',

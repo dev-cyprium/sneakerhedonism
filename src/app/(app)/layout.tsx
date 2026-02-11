@@ -9,6 +9,13 @@ import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+import { Lato } from 'next/font/google'
+
+const lato = Lato({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '700', '900'],
+  variable: '--font-lato',
+})
 import React from 'react'
 import './globals.css'
 
@@ -42,7 +49,7 @@ const twitterSite = TWITTER_SITE ? ensureStartsWith(TWITTER_SITE, 'https://') : 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
-      className={[GeistSans.variable, GeistMono.variable].filter(Boolean).join(' ')}
+      className={[GeistSans.variable, GeistMono.variable, lato.variable].filter(Boolean).join(' ')}
       lang="en"
       suppressHydrationWarning
     >

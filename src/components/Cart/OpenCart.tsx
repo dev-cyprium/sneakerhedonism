@@ -15,7 +15,7 @@ export function OpenCartButton({
       aria-label="Cart"
       {...rest}
     >
-      <ShoppingBag className="h-5 w-5" />
+      <ShoppingBag className="h-[22px] w-[22px] stroke-[1.5]" />
       {quantity ? (
         <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent-brand text-[10px] font-bold leading-none text-white">
           {quantity}

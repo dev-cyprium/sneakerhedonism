@@ -70,7 +70,7 @@ export function MobileMenu({ menu }: Props) {
                 if (hasChildren) {
                   return (
                     <AccordionItem key={item.id} value={item.id || ''}>
-                      <AccordionTrigger className="text-sm uppercase font-mono tracking-widest">
+                      <AccordionTrigger className="text-sm uppercase font-nav tracking-wide">
                         {item.link.label}
                       </AccordionTrigger>
                       <AccordionContent>
@@ -81,7 +81,7 @@ export function MobileMenu({ menu }: Props) {
                                 {...child.link}
                                 label={null}
                                 appearance="inline"
-                                className="text-sm text-nav-text hover:text-nav-text-hover font-mono uppercase tracking-wider"
+                                className="text-sm text-nav-text hover:text-nav-text-hover font-nav"
                               >
                                 {child.link.label}
                                 {child.badge && (
@@ -100,7 +100,7 @@ export function MobileMenu({ menu }: Props) {
 
                 return (
                   <div key={item.id} className="py-4 border-b last:border-b-0">
-                    <CMSLink {...item.link} appearance="inline" className="text-sm uppercase font-mono tracking-widest" />
+                    <CMSLink {...item.link} appearance="inline" className="text-sm uppercase font-nav tracking-wide" />
                   </div>
                 )
               })}
@@ -111,14 +111,14 @@ export function MobileMenu({ menu }: Props) {
         <div className="border-t pt-4 flex flex-col gap-3 md:hidden">
           <Link
             href="/shop"
-            className="flex items-center gap-3 text-sm uppercase font-mono tracking-widest text-nav-text hover:text-nav-text-hover"
+            className="flex items-center gap-3 text-sm uppercase font-nav tracking-wide text-nav-text hover:text-nav-text-hover"
           >
             <Search className="h-4 w-4" />
             Pretraga
           </Link>
           <Link
             href="/wishlist"
-            className="flex items-center gap-3 text-sm uppercase font-mono tracking-widest text-nav-text hover:text-nav-text-hover"
+            className="flex items-center gap-3 text-sm uppercase font-nav tracking-wide text-nav-text hover:text-nav-text-hover"
           >
             <Heart className="h-4 w-4" />
             Lista zelja
@@ -127,7 +127,7 @@ export function MobileMenu({ menu }: Props) {
 
         {user ? (
           <div className="mt-6 border-t pt-4">
-            <h2 className="text-sm uppercase font-mono tracking-widest mb-4">Moj nalog</h2>
+            <h2 className="text-sm uppercase font-nav tracking-wide mb-4">Moj nalog</h2>
             <ul className="flex flex-col gap-2">
               <li>
                 <Link href="/orders" className="text-sm text-nav-text hover:text-nav-text-hover">
@@ -153,7 +153,7 @@ export function MobileMenu({ menu }: Props) {
           </div>
         ) : (
           <div className="mt-6 border-t pt-4">
-            <h2 className="text-sm uppercase font-mono tracking-widest mb-4">Nalog</h2>
+            <h2 className="text-sm uppercase font-nav tracking-wide mb-4">Nalog</h2>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button asChild className="w-full sm:flex-1" variant="outline">
                 <Link href="/login">Prijavi se</Link>

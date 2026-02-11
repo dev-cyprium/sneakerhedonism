@@ -3,8 +3,10 @@
 import { CMSLink } from '@/components/Link'
 import { cn } from '@/utilities/cn'
 import { ChevronDown } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
-import React from 'react'
+import React, { useCallback, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import type { Header } from '@/payload-types'
 
@@ -14,64 +16,119 @@ interface Props {
 
 export function DesktopNav({ items }: Props) {
   const pathname = usePathname()
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const open = useCallback((id: string | null) => {
+    if (closeTimeout.current) {
+      clearTimeout(closeTimeout.current)
+      closeTimeout.current = null
+    }
+    setOpenDropdown(id)
+  }, [])
+
+  const close = useCallback(() => {
+    closeTimeout.current = setTimeout(() => setOpenDropdown(null), 100)
+  }, [])
 
   if (!items?.length) return null
 
   return (
-    <ul className="hidden gap-4 text-sm md:flex md:items-center">
-      {items.map((item) => {
-        const hasChildren = item.children && item.children.length > 0
-        const isActive =
-          item.link.url && item.link.url !== '/' ? pathname.includes(item.link.url) : false
+    <>
+      <ul className="relative z-20 hidden md:flex items-stretch gap-0 font-nav">
+        {items.map((item) => {
+          const hasChildren = item.children && item.children.length > 0
+          const isActive =
+            item.link.url && item.link.url !== '/' ? pathname.includes(item.link.url) : false
+          const isOpen = openDropdown === item.id
 
-        if (hasChildren) {
+          if (hasChildren) {
+            return (
+              <li
+                key={item.id}
+                className="relative"
+                onMouseEnter={() => open(item.id || null)}
+                onMouseLeave={close}
+              >
+                <button
+                  className={cn(
+                    'navLink flex items-center gap-1.5 px-5 py-5 text-[15px] font-extrabold uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
+                    { active: isActive || isOpen },
+                  )}
+                >
+                  <span className="navLink-bar">{item.link.label}</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                </button>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className="absolute left-0 top-full z-50 min-w-[220px] rounded-lg bg-dropdown-bg py-4 px-6 shadow-xl"
+                    >
+                      <ul className="flex flex-col gap-1">
+                        {item.children!.map((child) => (
+                          <li key={child.id}>
+                            <CMSLink
+                              {...child.link}
+                              label={null}
+                              appearance="inline"
+                              className="block py-2 text-sm text-dropdown-text hover:text-white transition-colors"
+                            >
+                              {child.link.label}
+                              {child.badge && (
+                                <span className="ml-2 inline-block rounded bg-accent-brand px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                                  {child.badge}
+                                </span>
+                              )}
+                            </CMSLink>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </li>
+            )
+          }
+
           return (
-            <li key={item.id} className="group/nav relative">
-              <button
+            <li key={item.id}>
+              <CMSLink
+                {...item.link}
+                label={null}
+                appearance="inline"
                 className={cn(
-                  'relative navLink flex items-center gap-1 text-nav-text hover:text-nav-text-hover p-0 pt-2 pb-6 uppercase font-mono tracking-widest text-xs cursor-pointer',
+                  'navLink flex items-center px-5 py-5 text-[15px] font-extrabold uppercase tracking-wide text-nav-text hover:text-nav-text-hover transition-colors',
                   { active: isActive },
                 )}
               >
-                {item.link.label}
-                <ChevronDown className="h-3 w-3 transition-transform group-hover/nav:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full z-50 min-w-[200px] border border-header-border bg-background p-4 shadow-md opacity-0 transition-all group-hover/nav:visible group-hover/nav:opacity-100">
-                <ul className="flex flex-col gap-2">
-                  {item.children!.map((child) => (
-                    <li key={child.id}>
-                      <CMSLink
-                        {...child.link}
-                        label={null}
-                        appearance="inline"
-                        className="text-sm text-nav-text hover:text-nav-text-hover font-mono uppercase tracking-wider"
-                      >
-                        {child.link.label}
-                        {child.badge && (
-                          <span className="ml-2 inline-block rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">
-                            {child.badge}
-                          </span>
-                        )}
-                      </CMSLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <span className="navLink-bar">{item.link.label}</span>
+              </CMSLink>
             </li>
           )
-        }
+        })}
+      </ul>
 
-        return (
-          <li key={item.id}>
-            <CMSLink
-              {...item.link}
-              size="clear"
-              className={cn('relative navLink', { active: isActive })}
-              appearance="nav"
-            />
-          </li>
-        )
-      })}
-    </ul>
+      {/* Dim overlay — portaled outside header stacking context so it doesn't dim the nav */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {openDropdown && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="fixed inset-0 z-10 bg-black/40"
+                onMouseEnter={() => setOpenDropdown(null)}
+              />
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+    </>
   )
 }
