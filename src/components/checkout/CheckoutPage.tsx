@@ -44,7 +44,10 @@ export const CheckoutPage: React.FC = () => {
     return cart.items.reduce((total, item) => {
       if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
       const isVariant = Boolean(item.variant) && typeof item.variant === 'object'
-      const price = isVariant ? item.variant?.priceInRSD : item.product.priceInRSD
+      const price =
+        isVariant && item.variant?.priceInRSD != null
+          ? item.variant.priceInRSD
+          : item.product.priceInRSD
       return total + (price || 0) * item.quantity
     }, 0)
   }, [cart?.items])
@@ -378,7 +381,7 @@ export const CheckoutPage: React.FC = () => {
               const isVariant = Boolean(variant) && typeof variant === 'object'
 
               if (isVariant) {
-                price = variant?.priceInRSD
+                price = variant?.priceInRSD != null ? variant.priceInRSD : product?.priceInRSD
 
                 const imageVariant = product.gallery?.find(
                   (item: NonNullable<Product['gallery']>[number]) => {

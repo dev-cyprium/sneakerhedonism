@@ -1,9 +1,10 @@
-import type { Product, Variant } from '@/payload-types'
+import type { Product } from '@/payload-types'
 
 import Link from 'next/link'
 import React from 'react'
 import { Media } from '@/components/Media'
 import { Price } from '@/components/Price'
+import { cn } from '@/utilities/cn'
 
 type Props = {
   product: Partial<Product>
@@ -28,8 +29,12 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
     }
   }
 
-  const image =
-    gallery?.[0]?.image && typeof gallery[0]?.image !== 'string' ? gallery[0]?.image : false
+  const images = gallery
+    ?.map((item) => (item.image && typeof item.image !== 'string' ? item.image : null))
+    .filter(Boolean) ?? []
+
+  const firstImage = images[0] ?? null
+  const secondImage = images[1] ?? null
 
   return (
     <Link
@@ -38,15 +43,41 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
     >
       {/* Image area */}
       <div className="relative aspect-square overflow-hidden p-3">
-        {image ? (
+        {firstImage && (
           <Media
             className="relative h-full w-full"
             height={400}
-            imgClassName="h-full w-full object-contain transition duration-500 ease-out group-hover:scale-105"
-            resource={image}
+            imgClassName={cn(
+              'h-full w-full object-contain transition duration-500 ease-out',
+              secondImage
+                ? 'group-hover:opacity-0 group-hover:scale-105'
+                : 'group-hover:scale-105',
+            )}
+            resource={firstImage}
             width={400}
           />
-        ) : null}
+        )}
+        {secondImage && (
+          <Media
+            className="absolute inset-0 h-full w-full p-3"
+            height={400}
+            imgClassName="h-full w-full object-contain transition duration-500 ease-out opacity-0 scale-105 group-hover:opacity-100 group-hover:scale-100"
+            resource={secondImage}
+            width={400}
+          />
+        )}
+
+        {/* Image count indicator */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1">
+            {images.slice(0, 5).map((_, i) => (
+              <span
+                key={i}
+                className="block h-1 w-1 rounded-full bg-foreground/30"
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Info */}

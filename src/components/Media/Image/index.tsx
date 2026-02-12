@@ -60,23 +60,32 @@ export const Image: React.FC<MediaProps> = (props) => {
         .join(', ')
 
   return (
-    <NextImage
-      alt={alt || ''}
-      className={cn(imgClassName)}
-      fill={fill}
-      height={!fill ? height || heightFromProps : undefined}
-      onClick={onClick}
-      onLoad={() => {
-        setIsLoading(false)
-        if (typeof onLoadFromProps === 'function') {
-          onLoadFromProps()
-        }
-      }}
-      priority={priority}
-      quality={90}
-      sizes={sizes}
-      src={src}
-      width={!fill ? width || widthFromProps : undefined}
-    />
+    <div className={cn('relative', fill ? 'h-full w-full' : 'inline-block')}>
+      {isLoading && (
+        <div className="absolute inset-0 animate-pulse bg-muted" />
+      )}
+      <NextImage
+        alt={alt || ''}
+        className={cn(
+          imgClassName,
+          'transition-opacity duration-300',
+          isLoading ? 'opacity-0' : 'opacity-100',
+        )}
+        fill={fill}
+        height={!fill ? height || heightFromProps : undefined}
+        onClick={onClick}
+        onLoad={() => {
+          setIsLoading(false)
+          if (typeof onLoadFromProps === 'function') {
+            onLoadFromProps()
+          }
+        }}
+        priority={priority}
+        quality={90}
+        sizes={sizes}
+        src={src}
+        width={!fill ? width || widthFromProps : undefined}
+      />
+    </div>
   )
 }

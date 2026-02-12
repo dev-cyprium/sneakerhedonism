@@ -37,6 +37,8 @@ export const Providers: React.FC<{
                     title: true,
                     gallery: true,
                     inventory: true,
+                    meta: true,
+                    enableVariants: true,
                   },
                   variants: {
                     title: true,
