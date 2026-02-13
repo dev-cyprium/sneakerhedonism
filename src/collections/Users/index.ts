@@ -84,5 +84,27 @@ export const Users: CollectionConfig = {
         defaultColumns: ['id'],
       },
     },
+    {
+      name: 'wishlist',
+      type: 'array',
+      admin: {
+        description: 'Lista želja — proizvodi koje korisnik želi da kupi',
+        readOnly: true,
+      },
+      fields: [
+        {
+          name: 'product',
+          type: 'relationship',
+          relationTo: 'products',
+          required: true,
+        },
+        {
+          name: 'variant',
+          type: 'relationship',
+          relationTo: 'variants',
+          required: false,
+        },
+      ],
+    },
   ],
 }

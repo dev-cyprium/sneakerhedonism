@@ -8,6 +8,7 @@ import { cn } from '@/utilities/cn'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
+import { AddToWishlist } from '@/components/Wishlist/AddToWishlist'
 import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import { resolveProductDisplayPriceInfo } from '@/lib/resolvePrice'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -66,13 +67,14 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
   const hasMultiple = images.length > 1
 
   return (
-    <Link
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/60 bg-background transition-shadow duration-300 hover:shadow-lg"
-      href={`/products/${product.slug}`}
-    >
-      {/* Image area — carousel for multiple images, single Media for one */}
-      <div className="relative aspect-square overflow-hidden p-3">
-        {priceInfo?.saleInfo && (
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border/60 bg-background transition-shadow duration-300 hover:shadow-lg">
+      <Link
+        className="flex flex-col flex-1 min-h-0"
+        href={`/products/${product.slug}`}
+      >
+        {/* Image area — carousel for multiple images, single Media for one */}
+        <div className="relative aspect-square overflow-hidden p-3">
+          {priceInfo?.saleInfo && (
           <span
             className="absolute left-4 top-4 z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-brand px-1.5 py-1 text-xs font-bold leading-tight text-primary-foreground"
             aria-label={`${priceInfo.saleInfo.discountPercent}% off`}
@@ -202,6 +204,15 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
           </div>
         )}
       </div>
-    </Link>
+      </Link>
+      <div className="absolute right-4 top-4 z-10">
+        <AddToWishlist
+          productId={product.id as number}
+          stopPropagation
+          size="sm"
+          className="bg-background/90 backdrop-blur-sm"
+        />
+      </div>
+    </div>
   )
 }

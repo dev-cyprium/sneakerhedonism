@@ -9,9 +9,11 @@ import React, { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 type Props = {
   product: Product
+  /** Override variant from URL — used when rendering AddToCart outside product page (e.g. wishlist) */
+  variant?: Variant
 }
 
-export function AddToCart({ product }: Props) {
+export function AddToCart({ product, variant: variantOverride }: Props) {
   const { addItem, cart, isLoading } = useCart()
   const searchParams = useSearchParams()
 
@@ -19,6 +21,7 @@ export function AddToCart({ product }: Props) {
   const hasVariantDocs = variants.length > 0
 
   const selectedVariant = useMemo<Variant | undefined>(() => {
+    if (variantOverride) return variantOverride
     if (product.enableVariants && hasVariantDocs) {
       const variantId = searchParams.get('variant')
 
@@ -35,7 +38,7 @@ export function AddToCart({ product }: Props) {
     }
 
     return undefined
-  }, [product.enableVariants, hasVariantDocs, searchParams, variants])
+  }, [variantOverride, product.enableVariants, hasVariantDocs, searchParams, variants])
 
   const addToCart = useCallback(
     (e: React.FormEvent<HTMLButtonElement>) => {

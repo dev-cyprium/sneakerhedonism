@@ -18,6 +18,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { useAuth } from '@/providers/Auth'
+import { useWishlist } from '@/providers/Wishlist'
 import { Heart, MenuIcon, Search } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
@@ -29,6 +30,7 @@ interface Props {
 
 export function MobileMenu({ menu }: Props) {
   const { user } = useAuth()
+  const { count } = useWishlist()
 
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -122,10 +124,15 @@ export function MobileMenu({ menu }: Props) {
           </Link>
           <Link
             href="/wishlist"
-            className="flex items-center gap-3 text-sm uppercase font-nav tracking-wide text-nav-text hover:text-nav-text-hover"
+            className="relative flex items-center gap-3 text-sm uppercase font-nav tracking-wide text-nav-text hover:text-nav-text-hover"
           >
-            <Heart className="h-4 w-4" />
+            <Heart className={`h-4 w-4 ${count ? 'fill-current' : ''}`} />
             Lista zelja
+            {count ? (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-brand px-1.5 text-[10px] font-bold leading-none text-primary-foreground">
+                {count}
+              </span>
+            ) : null}
           </Link>
         </div>
 

@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import React, { Suspense, useMemo } from 'react'
 
+import { AddToWishlist } from '@/components/Wishlist/AddToWishlist'
 import { StockIndicator } from '@/components/product/StockIndicator'
 import type { ResolvedSizeGuide } from '@/lib/resolveSizeGuide'
 import { SizeGuide } from './SizeGuide'
@@ -132,10 +133,19 @@ export function ProductDescription({
         </Suspense>
       )}
 
-      {/* Add to cart */}
-      <Suspense fallback={null}>
-        <AddToCart product={product} />
-      </Suspense>
+      {/* Add to cart + Wishlist */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <Suspense fallback={null}>
+            <AddToCart product={product} />
+          </Suspense>
+        </div>
+        <AddToWishlist
+          productId={product.id}
+          variantId={selectedVariant?.id}
+          size="lg"
+        />
+      </div>
 
       {/* Size guide + Stock */}
       <div className="flex items-center gap-4">

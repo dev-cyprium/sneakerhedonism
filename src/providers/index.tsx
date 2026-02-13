@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/providers/Auth'
+import { WishlistProvider } from '@/providers/Wishlist'
 import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
 import React from 'react'
 
@@ -12,6 +13,7 @@ export const Providers: React.FC<{
   return (
     <ThemeProvider>
       <AuthProvider>
+        <WishlistProvider>
         <HeaderThemeProvider>
           <SonnerProvider />
           <EcommerceProvider
@@ -69,6 +71,7 @@ export const Providers: React.FC<{
             {children}
           </EcommerceProvider>
         </HeaderThemeProvider>
+        </WishlistProvider>
       </AuthProvider>
     </ThemeProvider>
   )
