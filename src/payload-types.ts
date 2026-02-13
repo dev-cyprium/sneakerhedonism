@@ -533,6 +533,7 @@ export interface Page {
     | ThreeItemGridBlock
     | BannerBlock
     | FormBlock
+    | BlogFeedBlock
     | LatestPostsBlock
     | NewsletterBlock
     | EmbedSocialBlock
@@ -1054,6 +1055,20 @@ export interface Form {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlogFeedBlock".
+ */
+export interface BlogFeedBlock {
+  heading?: string | null;
+  /**
+   * Number of posts to show (default: 50)
+   */
+  postsPerPage?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'blogFeed';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1606,6 +1621,7 @@ export interface PagesSelect<T extends boolean = true> {
         threeItemGrid?: T | ThreeItemGridBlockSelect<T>;
         banner?: T | BannerBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
+        blogFeed?: T | BlogFeedBlockSelect<T>;
         latestPosts?: T | LatestPostsBlockSelect<T>;
         newsletter?: T | NewsletterBlockSelect<T>;
         embedSocial?: T | EmbedSocialBlockSelect<T>;
@@ -1810,6 +1826,16 @@ export interface FormBlockSelect<T extends boolean = true> {
   form?: T;
   enableIntro?: T;
   introContent?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlogFeedBlock_select".
+ */
+export interface BlogFeedBlockSelect<T extends boolean = true> {
+  heading?: T;
+  postsPerPage?: T;
   id?: T;
   blockName?: T;
 }
