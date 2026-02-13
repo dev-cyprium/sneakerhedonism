@@ -7,7 +7,6 @@ import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/
 import { ecommercePlugin } from '@payloadcms/plugin-ecommerce'
 import { defaultCountries } from '@payloadcms/plugin-ecommerce/client/react'
 
-import { stripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
 import { codAdapter } from '@/payments/cod-adapter'
 import { eccAdapter } from '@/payments/ecc-adapter'
 
@@ -145,11 +144,6 @@ export const plugins: Plugin[] = [
       paymentMethods: [
         codAdapter(),
         eccAdapter(),
-        stripeAdapter({
-          secretKey: process.env.STRIPE_SECRET_KEY!,
-          publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-          webhookSecret: process.env.STRIPE_WEBHOOKS_SIGNING_SECRET!,
-        }),
       ],
     },
     products: {

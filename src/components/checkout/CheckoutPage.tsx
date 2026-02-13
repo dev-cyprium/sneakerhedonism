@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAddresses, useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
@@ -26,6 +26,7 @@ import { Truck, CreditCard } from 'lucide-react'
 export const CheckoutPage: React.FC = () => {
   const { user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { cart, clearCart } = useCart()
   const [error, setError] = useState<null | string>(null)
   const [email, setEmail] = useState('')
@@ -77,6 +78,16 @@ export const CheckoutPage: React.FC = () => {
       setEmailEditable(true)
     }
   }, [])
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'payment_failed') {
+      const msg = 'Plaćanje karticom nije uspelo. Pokušajte ponovo ili izaberite drugi način plaćanja.'
+      setError(msg)
+      toast.error(msg)
+      router.replace('/checkout', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const handleEccPayment = useCallback(async () => {
     setProcessingPayment(true)

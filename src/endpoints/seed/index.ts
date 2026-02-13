@@ -87,14 +87,12 @@ export const seed = async ({
   // the custom `/api/seed` endpoint does not
   payload.logger.info(`— Clearing collections and globals...`)
 
-  // clear the database
+  // clear the database (header and footer both have navItems)
   await Promise.all(
     globals.map((global) =>
       payload.updateGlobal({
         slug: global,
-        data: {
-          navItems: [],
-        },
+        data: { navItems: [] } as Record<string, unknown>,
         depth: 0,
         context: {
           disableRevalidate: true,
@@ -358,11 +356,7 @@ export const seed = async ({
     data: {
       currency: 'RSD',
       customer: customer.id,
-      paymentMethod: 'stripe',
-      stripe: {
-        customerID: 'cus_123',
-        paymentIntentID: 'pi_123',
-      },
+      paymentMethod: 'cod',
       status: 'pending',
       billingAddress: baseAddressUSData,
     },
@@ -373,11 +367,7 @@ export const seed = async ({
     data: {
       currency: 'RSD',
       customer: customer.id,
-      paymentMethod: 'stripe',
-      stripe: {
-        customerID: 'cus_123',
-        paymentIntentID: 'pi_123',
-      },
+      paymentMethod: 'cod',
       status: 'succeeded',
       billingAddress: baseAddressUSData,
     },
