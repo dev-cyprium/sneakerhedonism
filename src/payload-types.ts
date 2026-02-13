@@ -355,6 +355,8 @@ export interface Media {
   focalY?: number | null;
 }
 /**
+ * Managed via Variant Groups. Add options when editing a variant type (e.g. BROJ, VELICINE).
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "variantOptions".
  */
@@ -372,6 +374,8 @@ export interface VariantOption {
   deletedAt?: string | null;
 }
 /**
+ * Variant groups (e.g. BROJ, VELICINE). Add options for each group when editing.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "variantTypes".
  */
@@ -1013,6 +1017,8 @@ export interface EmbedSocialBlock {
   blockType: 'embedSocial';
 }
 /**
+ * Product variants (size, color, etc.). Orphaned variants can be removed from the list below.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "variants".
  */
