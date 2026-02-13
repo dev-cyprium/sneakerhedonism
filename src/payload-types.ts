@@ -210,6 +210,16 @@ export interface User {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
+  /**
+   * Lista želja — proizvodi koje korisnik želi da kupi
+   */
+  wishlist?:
+    | {
+        product: number | Product;
+        variant?: (number | null) | Variant;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1122,7 +1132,7 @@ export interface Transaction {
         id?: string | null;
       }[]
     | null;
-  paymentMethod?: ('cod' | 'ecc' | 'stripe') | null;
+  paymentMethod?: ('cod' | 'ecc') | null;
   cod?: {
     note?: string | null;
   };
@@ -1132,10 +1142,6 @@ export interface Transaction {
     proxyPan?: string | null;
     rrn?: string | null;
     xid?: string | null;
-  };
-  stripe?: {
-    customerID?: string | null;
-    paymentIntentID?: string | null;
   };
   billingAddress?: {
     title?: string | null;
@@ -1323,21 +1329,50 @@ export interface SizeGuide {
    * Categories (brands) this guide applies to. Leave empty to use as the default site guide.
    */
   categories?: (number | Category)[] | null;
-  rows: {
-    /**
-     * e.g. "38.5", "S", "M"
-     */
-    size: string;
-    /**
-     * Dužina (cm)
-     */
-    length: number;
-    /**
-     * Širina (cm)
-     */
-    width: number;
-    id?: string | null;
-  }[];
+  /**
+   * Choose the size table format. Clothes use length/width in cm; footwear use EU, US, and CM.
+   */
+  rowType: 'clothes' | 'footwear';
+  /**
+   * Size rows for apparel (length/width in cm).
+   */
+  clothesRows?:
+    | {
+        /**
+         * e.g. "S", "M", "L"
+         */
+        size: string;
+        /**
+         * Dužina (cm)
+         */
+        length: number;
+        /**
+         * Širina (cm)
+         */
+        width: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Size rows for footwear (EU, US, CM).
+   */
+  footwearRows?:
+    | {
+        /**
+         * EU size (e.g. 38, 39, 40)
+         */
+        eu: number;
+        /**
+         * US size (e.g. 7, 7.5, 8)
+         */
+        us: number;
+        /**
+         * Foot length (cm)
+         */
+        cm: number;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1502,6 +1537,13 @@ export interface UsersSelect<T extends boolean = true> {
   orders?: T;
   cart?: T;
   addresses?: T;
+  wishlist?:
+    | T
+    | {
+        product?: T;
+        variant?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1878,12 +1920,21 @@ export interface MediaSelect<T extends boolean = true> {
 export interface SizeGuidesSelect<T extends boolean = true> {
   title?: T;
   categories?: T;
-  rows?:
+  rowType?: T;
+  clothesRows?:
     | T
     | {
         size?: T;
         length?: T;
         width?: T;
+        id?: T;
+      };
+  footwearRows?:
+    | T
+    | {
+        eu?: T;
+        us?: T;
+        cm?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -2234,12 +2285,6 @@ export interface TransactionsSelect<T extends boolean = true> {
         proxyPan?: T;
         rrn?: T;
         xid?: T;
-      };
-  stripe?:
-    | T
-    | {
-        customerID?: T;
-        paymentIntentID?: T;
       };
   billingAddress?:
     | T
