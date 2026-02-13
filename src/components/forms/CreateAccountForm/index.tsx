@@ -47,7 +47,7 @@ export const CreateAccountForm: React.FC = () => {
       })
 
       if (!response.ok) {
-        const message = response.statusText || 'There was an error creating the account.'
+        const message = response.statusText || 'Došlo je do greške pri kreiranju naloga.'
         setError(message)
         return
       }
@@ -62,34 +62,27 @@ export const CreateAccountForm: React.FC = () => {
         await login(data)
         clearTimeout(timer)
         if (redirect) router.push(redirect)
-        else router.push(`/account?success=${encodeURIComponent('Account created successfully')}`)
+        else router.push(`/account?success=${encodeURIComponent('Nalog je uspešno kreiran')}`)
       } catch (_) {
         clearTimeout(timer)
-        setError('There was an error with the credentials provided. Please try again.')
+        setError('Došlo je do greške sa unetim podacima. Molimo pokušajte ponovo.')
       }
     },
     [login, router, searchParams],
   )
 
   return (
-    <form className="max-w-lg py-4" onSubmit={handleSubmit(onSubmit)}>
-      <div className="prose dark:prose-invert mb-6">
-        <p>
-          {`This is where new customers can signup and create a new account. To manage all users, `}
-          <Link href="/admin/collections/users">login to the admin dashboard</Link>.
-        </p>
-      </div>
-
+    <form onSubmit={handleSubmit(onSubmit)}>
       <Message error={error} />
 
-      <div className="flex flex-col gap-8 mb-8">
+      <div className="flex flex-col gap-5 mb-6">
         <FormItem>
           <Label htmlFor="email" className="mb-2">
-            Email Address
+            Email adresa
           </Label>
           <Input
             id="email"
-            {...register('email', { required: 'Email is required.' })}
+            {...register('email', { required: 'Email je obavezan.' })}
             type="email"
           />
           {errors.email && <FormError message={errors.email.message} />}
@@ -97,11 +90,11 @@ export const CreateAccountForm: React.FC = () => {
 
         <FormItem>
           <Label htmlFor="password" className="mb-2">
-            New password
+            Nova lozinka
           </Label>
           <Input
             id="password"
-            {...register('password', { required: 'Password is required.' })}
+            {...register('password', { required: 'Lozinka je obavezna.' })}
             type="password"
           />
           {errors.password && <FormError message={errors.password.message} />}
@@ -109,29 +102,34 @@ export const CreateAccountForm: React.FC = () => {
 
         <FormItem>
           <Label htmlFor="passwordConfirm" className="mb-2">
-            Confirm Password
+            Potvrdite lozinku
           </Label>
           <Input
             id="passwordConfirm"
             {...register('passwordConfirm', {
-              required: 'Please confirm your password.',
-              validate: (value) => value === password.current || 'The passwords do not match',
+              required: 'Molimo potvrdite lozinku.',
+              validate: (value) => value === password.current || 'Lozinke se ne poklapaju',
             })}
             type="password"
           />
           {errors.passwordConfirm && <FormError message={errors.passwordConfirm.message} />}
         </FormItem>
       </div>
-      <Button disabled={loading} type="submit" variant="default">
-        {loading ? 'Processing' : 'Create Account'}
+      <Button
+        disabled={loading}
+        type="submit"
+        variant="default"
+        className="w-full py-6 text-base font-medium"
+      >
+        {loading ? 'Obrada...' : 'Kreirajte nalog'}
       </Button>
 
-      <div className="prose dark:prose-invert mt-8">
-        <p>
-          {'Already have an account? '}
-          <Link href={`/login${allParams}`}>Login</Link>
-        </p>
-      </div>
+      <p className="text-center text-sm text-muted-foreground mt-6">
+        {'Već imate nalog? '}
+        <Link href={`/login${allParams}`} className="font-medium text-foreground underline underline-offset-4 hover:text-primary">
+          Prijavite se
+        </Link>
+      </p>
     </form>
   )
 }

@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { deepMergeSimple } from 'payload/shared'
 import { FormError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
+import { cn } from '@/utilities/cn'
 
 type AddressFormValues = {
   title?: string | null
@@ -47,6 +48,10 @@ type Props = {
    * If true, the form will not submit to the API.
    */
   skipSubmission?: boolean
+  /**
+   * Compact layout for modals - tighter spacing, grouped fields.
+   */
+  compact?: boolean
 }
 
 export const AddressForm: React.FC<Props> = ({
@@ -54,6 +59,7 @@ export const AddressForm: React.FC<Props> = ({
   initialData,
   callback,
   skipSubmission,
+  compact = false,
 }) => {
   const {
     register,
@@ -85,128 +91,122 @@ export const AddressForm: React.FC<Props> = ({
     [initialData, skipSubmission, callback, addressID, updateAddress, createAddress],
   )
 
+  const gap = compact ? 'gap-3' : 'gap-4'
+  const mb = compact ? 'mb-5' : 'mb-8'
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="flex flex-col md:flex-row gap-4">
-          <FormItem className="shrink">
-            <Label htmlFor="title">Title</Label>
-
-            <Select
-              {...register('title')}
-              onValueChange={(value) => {
-                setValue('title', value, { shouldValidate: true })
-              }}
-              defaultValue={initialData?.title || ''}
-            >
-              <SelectTrigger id="title">
-                <SelectValue placeholder="Title" />
-              </SelectTrigger>
-              <SelectContent>
-                {titles.map((title) => (
-                  <SelectItem key={title} value={title}>
-                    {title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.title && <FormError message={errors.title.message} />}
-          </FormItem>
-
-          <FormItem>
-            <Label htmlFor="firstName">First name*</Label>
+      <div className={cn('flex flex-col', gap, mb)}>
+        {/* Name row */}
+        <div className={cn('flex flex-col sm:flex-row', gap)}>
+          {!compact && (
+            <FormItem className="shrink-0 sm:w-24">
+              <Label htmlFor="title">Titula</Label>
+              <Select
+                {...register('title')}
+                onValueChange={(value) => setValue('title', value, { shouldValidate: true })}
+                defaultValue={initialData?.title || ''}
+              >
+                <SelectTrigger id="title">
+                  <SelectValue placeholder="Titula" />
+                </SelectTrigger>
+                <SelectContent>
+                  {titles.map((title) => (
+                    <SelectItem key={title} value={title}>
+                      {title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.title && <FormError message={errors.title.message} />}
+            </FormItem>
+          )}
+          <FormItem className={compact ? 'sm:flex-1' : 'flex-1'}>
+            <Label htmlFor="firstName">Ime*</Label>
             <Input
               id="firstName"
               autoComplete="given-name"
-              {...register('firstName', { required: 'First name is required.' })}
+              {...register('firstName', { required: 'Ime je obavezno.' })}
             />
             {errors.firstName && <FormError message={errors.firstName.message} />}
           </FormItem>
-
-          <FormItem>
-            <Label htmlFor="lastName">Last name*</Label>
+          <FormItem className={compact ? 'sm:flex-1' : 'flex-1'}>
+            <Label htmlFor="lastName">Prezime*</Label>
             <Input
               autoComplete="family-name"
               id="lastName"
-              {...register('lastName', { required: 'Last name is required.' })}
+              {...register('lastName', { required: 'Prezime je obavezno.' })}
             />
             {errors.lastName && <FormError message={errors.lastName.message} />}
           </FormItem>
         </div>
 
+        {/* Phone */}
         <FormItem>
-          <Label htmlFor="phone">Phone*</Label>
+          <Label htmlFor="phone">Telefon*</Label>
           <Input
             type="tel"
             id="phone"
             autoComplete="mobile tel"
-            {...register('phone', { required: 'Phone number is required.' })}
+            {...register('phone', { required: 'Broj telefona je obavezan.' })}
           />
           {errors.phone && <FormError message={errors.phone.message} />}
         </FormItem>
 
+        {/* Address */}
         <FormItem>
-          <Label htmlFor="company">Company</Label>
-          <Input id="company" autoComplete="organization" {...register('company')} />
-          {errors.company && <FormError message={errors.company.message} />}
-        </FormItem>
-
-        <FormItem>
-          <Label htmlFor="addressLine1">Address line 1*</Label>
+          <Label htmlFor="addressLine1">Adresa (ulica i broj)*</Label>
           <Input
             id="addressLine1"
             autoComplete="address-line1"
-            {...register('addressLine1', { required: 'Address line 1 is required.' })}
+            {...register('addressLine1', { required: 'Adresa je obavezna.' })}
           />
           {errors.addressLine1 && <FormError message={errors.addressLine1.message} />}
         </FormItem>
 
         <FormItem>
-          <Label htmlFor="addressLine2">Address line 2</Label>
+          <Label htmlFor="addressLine2">Adresa (nastavak)</Label>
           <Input id="addressLine2" autoComplete="address-line2" {...register('addressLine2')} />
           {errors.addressLine2 && <FormError message={errors.addressLine2.message} />}
         </FormItem>
 
-        <FormItem>
-          <Label htmlFor="city">City*</Label>
-          <Input
-            id="city"
-            autoComplete="address-level2"
-            {...register('city', { required: 'City is required.' })}
-          />
-          {errors.city && <FormError message={errors.city.message} />}
-        </FormItem>
+        {/* City, postal, state row */}
+        <div className={cn('grid grid-cols-1 sm:grid-cols-3', gap)}>
+          <FormItem>
+            <Label htmlFor="city">Grad*</Label>
+            <Input
+              id="city"
+              autoComplete="address-level2"
+              {...register('city', { required: 'Grad je obavezan.' })}
+            />
+            {errors.city && <FormError message={errors.city.message} />}
+          </FormItem>
+          <FormItem>
+            <Label htmlFor="postalCode">Poštanski broj*</Label>
+            <Input
+              id="postalCode"
+              {...register('postalCode', { required: 'Poštanski broj je obavezan.' })}
+            />
+            {errors.postalCode && <FormError message={errors.postalCode.message} />}
+          </FormItem>
+          <FormItem>
+            <Label htmlFor="state">Pokrajina</Label>
+            <Input id="state" autoComplete="address-level1" {...register('state')} />
+            {errors.state && <FormError message={errors.state.message} />}
+          </FormItem>
+        </div>
 
+        {/* Country */}
         <FormItem>
-          <Label htmlFor="state">State</Label>
-          <Input id="state" autoComplete="address-level1" {...register('state')} />
-          {errors.state && <FormError message={errors.state.message} />}
-        </FormItem>
-
-        <FormItem>
-          <Label htmlFor="postalCode">Zip Code*</Label>
-          <Input
-            id="postalCode"
-            {...register('postalCode', { required: 'Postal code is required.' })}
-          />
-          {errors.postalCode && <FormError message={errors.postalCode.message} />}
-        </FormItem>
-
-        <FormItem>
-          <Label htmlFor="country">Country*</Label>
-
+          <Label htmlFor="country">Država*</Label>
           <Select
-            {...register('country', {
-              required: 'Country is required.',
-            })}
-            onValueChange={(value) => {
-              setValue('country', value, { shouldValidate: true })
-            }}
+            {...register('country', { required: 'Država je obavezna.' })}
+            onValueChange={(value) => setValue('country', value, { shouldValidate: true })}
             required
             defaultValue={initialData?.country || 'RS'}
           >
             <SelectTrigger id="country" className="w-full">
-              <SelectValue placeholder="Country" />
+              <SelectValue placeholder="Država" />
             </SelectTrigger>
             <SelectContent>
               {supportedCountries.map((country) => {
@@ -217,7 +217,6 @@ export const AddressForm: React.FC<Props> = ({
                     : typeof country.label === 'string'
                       ? country.label
                       : value
-
                 return (
                   <SelectItem key={value} value={value}>
                     {label}
@@ -228,9 +227,20 @@ export const AddressForm: React.FC<Props> = ({
           </Select>
           {errors.country && <FormError message={errors.country.message} />}
         </FormItem>
+
+        {/* Company - optional, only in full form */}
+        {!compact && (
+          <FormItem>
+            <Label htmlFor="company">Firma</Label>
+            <Input id="company" autoComplete="organization" {...register('company')} />
+            {errors.company && <FormError message={errors.company.message} />}
+          </FormItem>
+        )}
       </div>
 
-      <Button type="submit">Submit</Button>
+      <Button type="submit" className={compact ? 'w-full' : ''}>
+        Potvrdi
+      </Button>
     </form>
   )
 }

@@ -18,6 +18,7 @@ type Props = {
   initialData?: Partial<Omit<Address, 'country'>> & { country?: string }
   buttonText?: string
   modalTitle?: string
+  modalDescription?: string
   callback?: (address: Partial<Address>) => void
   skipSubmission?: boolean
   disabled?: boolean
@@ -28,6 +29,7 @@ export const CreateAddressModal: React.FC<Props> = ({
   initialData,
   buttonText = 'Add a new address',
   modalTitle = 'Add a new address',
+  modalDescription = 'This address will be connected to your account.',
   callback,
   skipSubmission,
   disabled,
@@ -54,13 +56,14 @@ export const CreateAddressModal: React.FC<Props> = ({
       <DialogTrigger asChild disabled={disabled}>
         <Button variant={'outline'}>{buttonText}</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{modalTitle}</DialogTitle>
-          <DialogDescription>This address will be connected to your account.</DialogDescription>
+      <DialogContent className="sm:max-w-md p-5">
+        <DialogHeader className="gap-1 pb-4">
+          <DialogTitle className="text-base">{modalTitle}</DialogTitle>
+          <DialogDescription className="text-xs">{modalDescription}</DialogDescription>
         </DialogHeader>
 
         <AddressForm
+          compact
           addressID={addressID}
           initialData={initialData}
           callback={handleCallback}

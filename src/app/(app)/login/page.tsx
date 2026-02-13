@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 import { RenderParams } from '@/components/RenderParams'
-import Link from 'next/link'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import React from 'react'
 
 import { headers as getHeaders } from 'next/headers'
@@ -16,30 +16,30 @@ export default async function Login() {
   const { user } = await payload.auth({ headers })
 
   if (user) {
-    redirect(`/account?warning=${encodeURIComponent('You are already logged in.')}`)
+    redirect(`/account?warning=${encodeURIComponent('Već ste prijavljeni.')}`)
   }
 
   return (
-    <div className="container">
-      <div className="max-w-xl mx-auto my-12">
+    <div className="container py-16 flex flex-col items-center min-h-[60vh]">
+      <div className="w-full max-w-md">
         <RenderParams />
-
-        <h1 className="mb-4 text-[1.8rem]">Log in</h1>
-        <p className="mb-8">
-          {`This is where your customers will login to manage their account, review their order history, and more. To manage all users, `}
-          <Link href="/admin/collections/users">login to the admin dashboard</Link>.
-        </p>
-        <LoginForm />
+        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+          <h1 className="text-2xl font-semibold mb-2">Prijavite se</h1>
+          <p className="text-muted-foreground text-sm mb-6">
+            Pristupite nalogu i upravljajte porudžbinama
+          </p>
+          <LoginForm />
+        </div>
       </div>
     </div>
   )
 }
 
 export const metadata: Metadata = {
-  description: 'Login or create an account to get started.',
-  openGraph: {
-    title: 'Login',
+  description: 'Prijavite se ili kreirajte nalog da biste počeli.',
+  openGraph: mergeOpenGraph({
+    title: 'Prijava',
     url: '/login',
-  },
-  title: 'Login',
+  }),
+  title: 'Prijava',
 }

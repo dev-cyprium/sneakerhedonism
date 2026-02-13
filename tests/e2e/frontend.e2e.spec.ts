@@ -581,7 +581,7 @@ test.describe('Frontend', () => {
     await expect(reduceQuantityButton).toBeVisible()
     await reduceQuantityButton.click()
 
-    const emptyCartMessage = page.getByText('Your cart is empty.')
+    const emptyCartMessage = page.getByText('Vaša korpa je prazna.')
     await expect(emptyCartMessage).toBeVisible()
   }
 
@@ -601,7 +601,7 @@ test.describe('Frontend', () => {
       const emailInput = page.locator('input[type="email"]')
       await emailInput.fill(guestEmail)
 
-      const continueGuestBtn = page.getByRole('button', { name: /continue as guest/i })
+      const continueGuestBtn = page.getByRole('button', { name: /nastavi kao gost/i })
       await continueGuestBtn.click()
     }
 

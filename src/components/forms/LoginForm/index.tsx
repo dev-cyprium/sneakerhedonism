@@ -38,54 +38,65 @@ export const LoginForm: React.FC = () => {
         if (redirect?.current) router.push(redirect.current)
         else router.push('/account')
       } catch (_) {
-        setError('There was an error with the credentials provided. Please try again.')
+        setError('Došlo je do greške sa unetim podacima. Molimo pokušajte ponovo.')
       }
     },
     [login, router],
   )
 
   return (
-    <form className="" onSubmit={handleSubmit(onSubmit)}>
-      <Message className="classes.message" error={error} />
-      <div className="flex flex-col gap-8">
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Message error={error} />
+      <div className="flex flex-col gap-5 mb-6">
         <FormItem>
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
-            {...register('email', { required: 'Email is required.' })}
+            {...register('email', { required: 'Email je obavezan.' })}
           />
           {errors.email && <FormError message={errors.email.message} />}
         </FormItem>
 
         <FormItem>
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Lozinka</Label>
           <Input
             id="password"
             type="password"
-            {...register('password', { required: 'Please provide a password.' })}
+            {...register('password', { required: 'Molimo unesite lozinku.' })}
           />
           {errors.password && <FormError message={errors.password.message} />}
         </FormItem>
 
-        <div className="text-primary/70 mb-6 prose prose-a:hover:text-primary dark:prose-invert">
-          <p>
-            Forgot your password?{' '}
-            <Link href={`/recover-password${allParams}`}>Click here to reset it</Link>
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground -mt-1">
+          Zaboravili ste lozinku?{' '}
+          <Link
+            href={`/recover-password${allParams}`}
+            className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+          >
+            Kliknite ovde da je resetujete
+          </Link>
+        </p>
       </div>
 
-      <div className="flex gap-4 justify-between">
-        <Button asChild variant="outline" size="lg">
-          <Link href={`/create-account${allParams}`} className="grow max-w-[50%]">
-            Create an account
-          </Link>
-        </Button>
-        <Button className="grow" disabled={isLoading} size="lg" type="submit" variant="default">
-          {isLoading ? 'Processing' : 'Continue'}
-        </Button>
-      </div>
+      <Button
+        disabled={isLoading}
+        type="submit"
+        variant="default"
+        className="w-full py-6 text-base font-medium"
+      >
+        {isLoading ? 'Obrada...' : 'Prijavite se'}
+      </Button>
+
+      <p className="text-center text-sm text-muted-foreground mt-6">
+        {'Nemate nalog? '}
+        <Link
+          href={`/create-account${allParams}`}
+          className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+        >
+          Kreirajte nalog
+        </Link>
+      </p>
     </form>
   )
 }

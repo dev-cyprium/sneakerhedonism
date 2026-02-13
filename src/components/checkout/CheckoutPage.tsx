@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAddresses, useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
@@ -38,6 +38,7 @@ export const CheckoutPage: React.FC = () => {
   const [billingAddressSameAsShipping, setBillingAddressSameAsShipping] = useState(true)
   const [isProcessingPayment, setProcessingPayment] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
+  const addressSectionRef = useRef<HTMLDivElement>(null)
 
   const cartIsEmpty = !cart || !cart.items || !cart.items.length
 
@@ -103,7 +104,7 @@ export const CheckoutPage: React.FC = () => {
       })) as Record<string, unknown>
 
       if (!paymentData?.transactionID || !paymentData?.gatewayUrl || !paymentData?.formFields) {
-        throw new Error('Failed to initiate card payment.')
+        throw new Error('Nije uspelo pokretanje plaćanja karticom.')
       }
 
       const form = document.createElement('form')
@@ -123,7 +124,7 @@ export const CheckoutPage: React.FC = () => {
       document.body.appendChild(form)
       form.submit()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Something went wrong.'
+      const msg = err instanceof Error ? err.message : 'Nešto nije u redu.'
       setError(msg)
       toast.error(msg)
       setProcessingPayment(false)
@@ -150,7 +151,7 @@ export const CheckoutPage: React.FC = () => {
       })) as Record<string, unknown>
 
       if (!paymentData?.transactionID) {
-        throw new Error('Failed to initiate order.')
+        throw new Error('Nije uspelo pokretanje porudžbine.')
       }
 
       const confirmResult = (await confirmOrder('cod', {
@@ -166,10 +167,10 @@ export const CheckoutPage: React.FC = () => {
         const redirectUrl = `/orders/${confirmResult.orderID}${email ? `?email=${email}` : ''}`
         router.push(redirectUrl)
       } else {
-        throw new Error('Failed to confirm order.')
+        throw new Error('Nije uspelo potvrđivanje porudžbine.')
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Something went wrong.'
+      const msg = err instanceof Error ? err.message : 'Nešto nije u redu.'
       setError(msg)
       toast.error(msg)
       setProcessingPayment(false)
@@ -199,8 +200,8 @@ export const CheckoutPage: React.FC = () => {
   if (cartIsEmpty) {
     return (
       <div className="prose dark:prose-invert py-12 w-full items-center">
-        <p>Your cart is empty.</p>
-        <Link href="/search">Continue shopping?</Link>
+        <p>Vaša korpa je prazna.</p>
+        <Link href="/search">Nastavite kupovinu?</Link>
       </div>
     )
   }
@@ -208,17 +209,17 @@ export const CheckoutPage: React.FC = () => {
   return (
     <div className="flex flex-col items-stretch justify-stretch my-8 md:flex-row grow gap-10 md:gap-6 lg:gap-8">
       <div className="basis-full lg:basis-2/3 flex flex-col gap-8 justify-stretch">
-        <h2 className="font-medium text-3xl">Contact</h2>
+        <h2 className="font-medium text-3xl">Kontakt</h2>
         {!user && (
-          <div className=" bg-accent dark:bg-black rounded-lg p-4 w-full flex items-center">
-            <div className="prose dark:prose-invert">
+          <div className="bg-accent dark:bg-black rounded-lg p-4 w-full flex items-center">
+            <div className="prose dark:prose-invert flex flex-wrap items-center gap-x-2 gap-y-1">
               <Button asChild className="no-underline text-inherit" variant="outline">
-                <Link href="/login">Log in</Link>
+                <Link href="/login">Prijavite se</Link>
               </Button>
-              <p className="mt-0">
-                <span className="mx-2">or</span>
-                <Link href="/create-account">create an account</Link>
-              </p>
+              <span className="mx-0">ili</span>
+              <Link href="/create-account" className="underline">
+                napravite nalog
+              </Link>
             </div>
           </div>
         )}
@@ -227,9 +228,9 @@ export const CheckoutPage: React.FC = () => {
             <div>
               <p>{user.email}</p>{' '}
               <p>
-                Not you?{' '}
+                Niste vi?{' '}
                 <Link className="underline" href="/logout">
-                  Log out
+                  Odjavite se
                 </Link>
               </p>
             </div>
@@ -237,10 +238,10 @@ export const CheckoutPage: React.FC = () => {
         ) : (
           <div className="bg-accent dark:bg-black rounded-lg p-4 ">
             <div>
-              <p className="mb-4">Enter your email to checkout as a guest.</p>
+              <p className="mb-4">Unesite email adresu za kupovinu kao gost.</p>
 
               <FormItem className="mb-6">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">Email adresa</Label>
                 <Input
                   disabled={!emailEditable}
                   id="email"
@@ -256,16 +257,24 @@ export const CheckoutPage: React.FC = () => {
                 onClick={(e) => {
                   e.preventDefault()
                   setEmailEditable(false)
+                  addressSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }}
                 variant="default"
               >
-                Continue as guest
+                Nastavi kao gost
               </Button>
             </div>
           </div>
         )}
 
-        <h2 className="font-medium text-3xl">Address</h2>
+        <div id="checkout-address-section" ref={addressSectionRef}>
+          <h2 className="font-medium text-3xl">Adresa</h2>
+          {!user && email && !emailEditable && !billingAddress && (
+            <p className="text-muted-foreground mt-2 mb-4">
+              Dodajte adresu za dostavu ispod da biste nastavili.
+            </p>
+          )}
+        </div>
 
         {billingAddress ? (
           <div>
@@ -279,17 +288,24 @@ export const CheckoutPage: React.FC = () => {
                     setBillingAddress(undefined)
                   }}
                 >
-                  Remove
+                  Ukloni
                 </Button>
               }
               address={billingAddress}
             />
           </div>
         ) : user ? (
-          <CheckoutAddresses heading="Billing address" setAddress={setBillingAddress} />
+          <CheckoutAddresses heading="Adresa za naplatu" setAddress={setBillingAddress} />
         ) : (
           <CreateAddressModal
             disabled={!email || Boolean(emailEditable)}
+            buttonText={!user && email && !emailEditable ? 'Dodaj adresu za dostavu' : 'Dodaj novu adresu'}
+            modalTitle="Adresa za dostavu"
+            modalDescription={
+              !user && email && !emailEditable
+                ? 'Unesite adresu za dostavu kako bismo mogli da pošaljemo vašu porudžbinu.'
+                : 'Ova adresa će biti povezana sa vašim nalogom.'
+            }
             callback={(address) => {
               setBillingAddress(address)
             }}
@@ -306,7 +322,7 @@ export const CheckoutPage: React.FC = () => {
               setBillingAddressSameAsShipping(state as boolean)
             }}
           />
-          <Label htmlFor="shippingTheSameAsBilling">Shipping is the same as billing</Label>
+          <Label htmlFor="shippingTheSameAsBilling">Adresa dostave je ista kao adresa za naplatu</Label>
         </div>
 
         {!billingAddressSameAsShipping && (
@@ -323,7 +339,7 @@ export const CheckoutPage: React.FC = () => {
                         setShippingAddress(undefined)
                       }}
                     >
-                      Remove
+                      Ukloni
                     </Button>
                   }
                   address={shippingAddress}
@@ -331,12 +347,19 @@ export const CheckoutPage: React.FC = () => {
               </div>
             ) : user ? (
               <CheckoutAddresses
-                heading="Shipping address"
-                description="Please select a shipping address."
+                heading="Adresa za dostavu"
+                description="Izaberite adresu za dostavu."
                 setAddress={setShippingAddress}
               />
             ) : (
               <CreateAddressModal
+                buttonText={!user && email && !emailEditable ? 'Dodaj adresu za dostavu' : 'Dodaj novu adresu'}
+                modalTitle="Adresa za dostavu"
+                modalDescription={
+                  !user && email && !emailEditable
+                    ? 'Unesite adresu za dostavu kako bismo mogli da pošaljemo vašu porudžbinu.'
+                    : 'Ova adresa će biti povezana sa vašim nalogom.'
+                }
                 callback={(address) => {
                   setShippingAddress(address)
                 }}
@@ -356,7 +379,7 @@ export const CheckoutPage: React.FC = () => {
               setShowPayment(true)
             }}
           >
-            Go to payment
+            Na plaćanje
           </Button>
         )}
 
@@ -368,7 +391,7 @@ export const CheckoutPage: React.FC = () => {
 
         {showPayment && (
           <div className="pb-16">
-            <h2 className="font-medium text-3xl mb-6">Payment method</h2>
+            <h2 className="font-medium text-3xl mb-6">Način plaćanja</h2>
             <div className="flex flex-col gap-4">
               <button
                 onClick={(e) => {
@@ -425,7 +448,7 @@ export const CheckoutPage: React.FC = () => {
               disabled={isProcessingPayment}
               onClick={() => setShowPayment(false)}
             >
-              Back
+              Nazad
             </Button>
           </div>
         )}
@@ -433,7 +456,7 @@ export const CheckoutPage: React.FC = () => {
 
       {!cartIsEmpty && (
         <div className="basis-full lg:basis-1/3 lg:pl-8 p-8 border-none bg-primary/5 flex flex-col gap-8 rounded-lg">
-          <h2 className="text-3xl font-medium">Your cart</h2>
+          <h2 className="text-3xl font-medium">Vaša korpa</h2>
           {cart?.items?.map((item, index) => {
             if (typeof item.product === 'object' && item.product) {
               const {
@@ -516,7 +539,7 @@ export const CheckoutPage: React.FC = () => {
           })}
           <hr />
           <div className="flex justify-between items-center gap-2">
-            <span className="uppercase">Total</span>{' '}
+            <span className="uppercase">Ukupno</span>{' '}
             <Price className="text-3xl font-medium" amount={cartTotal} />
           </div>
         </div>

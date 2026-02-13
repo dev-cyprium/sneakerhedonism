@@ -16,23 +16,30 @@ export default async function CreateAccount() {
   const { user } = await payload.auth({ headers })
 
   if (user) {
-    redirect(`/account?warning=${encodeURIComponent('You are already logged in.')}`)
+    redirect(`/account?warning=${encodeURIComponent('Već ste prijavljeni.')}`)
   }
 
   return (
-    <div className="container py-16">
-      <h1 className="text-xl mb-4">Create Account</h1>
-      <RenderParams />
-      <CreateAccountForm />
+    <div className="container py-16 flex flex-col items-center min-h-[60vh]">
+      <div className="w-full max-w-md">
+        <RenderParams />
+        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+          <h1 className="text-2xl font-semibold mb-2">Kreirajte nalog</h1>
+          <p className="text-muted-foreground text-sm mb-6">
+            Postanite deo Sneaker Hedonism zajednice
+          </p>
+          <CreateAccountForm />
+        </div>
+      </div>
     </div>
   )
 }
 
 export const metadata: Metadata = {
-  description: 'Create an account or log in to your existing account.',
+  description: 'Kreirajte nalog ili se prijavite na postojeći nalog.',
   openGraph: mergeOpenGraph({
-    title: 'Account',
+    title: 'Nalog',
     url: '/account',
   }),
-  title: 'Account',
+  title: 'Nalog',
 }
