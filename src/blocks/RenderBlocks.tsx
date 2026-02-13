@@ -8,6 +8,7 @@ import { FAQBlock } from '@/blocks/FAQ/Component'
 import { ImageCarouselBlock } from '@/blocks/ImageCarousel/Component'
 import { ContentWithMediaBlock } from '@/blocks/ContentWithMedia/Component'
 import { FormBlock } from '@/blocks/Form/Component'
+import { BlogFeedBlock } from '@/blocks/BlogFeed/Component'
 import { LatestPostsBlock } from '@/blocks/LatestPosts/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { NewsletterBlock } from '@/blocks/Newsletter/Component'
@@ -31,6 +32,7 @@ const blockComponents = {
   faq: FAQBlock,
   formBlock: FormBlock,
   imageCarousel: ImageCarouselBlock,
+  blogFeed: BlogFeedBlock,
   latestPosts: LatestPostsBlock,
   mediaBlock: MediaBlock,
   newsletter: NewsletterBlock,

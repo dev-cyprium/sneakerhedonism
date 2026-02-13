@@ -15,6 +15,7 @@ import { CallToAction } from '@/blocks/CallToAction/config'
 import { Content } from '@/blocks/Content/config'
 import { ContentWithMedia } from '@/blocks/ContentWithMedia/config'
 import { FormBlock } from '@/blocks/Form/config'
+import { BlogFeed } from '@/blocks/BlogFeed/config'
 import { LatestPosts } from '@/blocks/LatestPosts/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
 import { Newsletter } from '@/blocks/Newsletter/config'
@@ -109,6 +110,7 @@ export const Pages: CollectionConfig = {
                 ThreeItemGrid,
                 Banner,
                 FormBlock,
+                BlogFeed,
                 LatestPosts,
                 Newsletter,
                 EmbedSocial,

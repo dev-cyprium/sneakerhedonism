@@ -1,99 +1,58 @@
 import type { Metadata } from 'next'
 
+import { RenderBlocks } from '@/blocks/RenderBlocks'
+import { RenderHero } from '@/heros/RenderHero'
+import { generateMeta } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import Link from 'next/link'
+import { draftMode } from 'next/headers'
 import React from 'react'
 
-import type { Post, Media as MediaType, Tag } from '@/payload-types'
-import { Media } from '@/components/Media'
+import { notFound } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Blog | Sneaker Hedonism',
-  description: 'Najnoviji članci i vesti iz sveta patika.',
-}
+const BLOG_PAGE_SLUG = 'blog'
 
 export default async function BlogPage() {
-  const payload = await getPayload({ config: configPromise })
+  const page = await queryPageBySlug({ slug: BLOG_PAGE_SLUG })
 
-  const posts = await payload.find({
-    collection: 'posts',
-    depth: 1,
-    limit: 50,
-    overrideAccess: false,
-    pagination: false,
-    where: {
-      _status: { equals: 'published' },
-    },
-    sort: '-publishedOn',
-  })
+  if (!page) {
+    return notFound()
+  }
+
+  const { hero, layout } = page
 
   return (
     <article className="pt-16 pb-24">
-      <div className="container mb-12">
-        <h1 className="text-4xl font-bold tracking-tight">Blog</h1>
-      </div>
-
-      {posts.docs.length === 0 ? (
-        <div className="container">
-          <p className="text-muted-foreground">Nema objavljenih članaka.</p>
-        </div>
-      ) : (
-        <div className="container grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.docs.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      )}
+      <RenderHero {...hero} />
+      <RenderBlocks blocks={layout} />
     </article>
   )
 }
 
-function PostCard({ post }: { post: Post }) {
-  const image = post.featuredImage as MediaType | undefined
-  const tags = (post.tags ?? []) as Tag[]
-  const date = post.publishedOn
-    ? new Date(post.publishedOn).toLocaleDateString('sr-Latn-RS', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : null
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await queryPageBySlug({ slug: BLOG_PAGE_SLUG })
+  return generateMeta({ doc: page })
+}
 
-  return (
-    <Link
-      href={`/blog/${post.slug}`}
-      className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-accent-brand"
-    >
-      {image && (
-        <div className="relative aspect-[16/10] overflow-hidden">
-          <Media
-            resource={image}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        </div>
-      )}
-      <div className="flex flex-1 flex-col gap-2 p-5">
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="rounded-full bg-accent-brand/10 px-2.5 py-0.5 text-xs font-medium text-accent-brand"
-              >
-                {tag.title}
-              </span>
-            ))}
-          </div>
-        )}
-        <h2 className="text-lg font-semibold leading-snug group-hover:text-accent-brand transition-colors">
-          {post.title}
-        </h2>
-        {post.excerpt && (
-          <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
-        )}
-        {date && <time className="mt-auto pt-2 text-xs text-muted-foreground">{date}</time>}
-      </div>
-    </Link>
-  )
+const queryPageBySlug = async ({ slug }: { slug: string }) => {
+  const { isEnabled: draft } = await draftMode()
+
+  const payload = await getPayload({ config: configPromise })
+
+  const result = await payload.find({
+    collection: 'pages',
+    depth: 2,
+    draft,
+    limit: 1,
+    overrideAccess: draft,
+    pagination: false,
+    where: {
+      and: [
+        { slug: { equals: slug } },
+        ...(draft ? [] : [{ _status: { equals: 'published' } }]),
+      ],
+    },
+  })
+
+  return result.docs?.[0] || null
 }
