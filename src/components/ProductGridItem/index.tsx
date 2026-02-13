@@ -34,7 +34,9 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
     if (!api) return
     const onSelect = () => setCurrent(api.selectedScrollSnap())
     api.on('select', onSelect)
-    return () => api.off('select', onSelect)
+    return () => {
+      api.off('select', onSelect)
+    }
   }, [api])
 
   const scrollTo = useCallback(

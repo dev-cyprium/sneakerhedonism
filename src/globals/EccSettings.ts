@@ -87,15 +87,5 @@ export const EccSettings: GlobalConfig = {
         description: 'Language locale for the bank payment page.',
       },
     },
-    {
-      name: 'callbackPath',
-      type: 'text',
-      defaultValue: '/wc-api/WC_ecc',
-      label: 'Callback Path',
-      admin: {
-        description:
-          'The URL path configured in the bank portal for callbacks. Change this if you update it on the bank side.',
-      },
-    },
   ],
 }

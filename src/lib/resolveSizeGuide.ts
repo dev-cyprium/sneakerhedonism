@@ -56,13 +56,14 @@ export async function resolveSizeGuideForProduct(
     depth: 1,
   })
 
+  const defaultSizeGuide = siteSettings?.defaultSizeGuide
   const defaultGuideId =
-    siteSettings?.defaultSizeGuide &&
-    typeof siteSettings.defaultSizeGuide === 'object'
-      ? siteSettings.defaultSizeGuide.id
-      : siteSettings?.defaultSizeGuide
+    defaultSizeGuide &&
+    (typeof defaultSizeGuide === 'object'
+      ? defaultSizeGuide.id
+      : defaultSizeGuide)
 
-  if (defaultGuideId) {
+  if (defaultGuideId != null && typeof defaultGuideId !== 'object') {
     const defaultGuide = await payload.findByID({
       collection: 'size-guides',
       id: defaultGuideId,

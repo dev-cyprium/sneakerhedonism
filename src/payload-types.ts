@@ -2434,10 +2434,6 @@ export interface EccSetting {
    * Language locale for the bank payment page.
    */
   locale?: string | null;
-  /**
-   * The URL path configured in the bank portal for callbacks. Change this if you update it on the bank side.
-   */
-  callbackPath?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2531,7 +2527,6 @@ export interface EccSettingsSelect<T extends boolean = true> {
   delay?: T;
   gatewayUrl?: T;
   locale?: T;
-  callbackPath?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
