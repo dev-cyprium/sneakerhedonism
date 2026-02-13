@@ -19,16 +19,30 @@ import type { ResolvedSizeGuide } from '@/lib/resolveSizeGuide'
 import { SizeGuide } from './SizeGuide'
 import { VariantSelector } from './VariantSelector'
 
+const DEFAULT_PLACEHOLDER = 'NEMA KRATKOG OPISA'
+
+function extractTextFromLexicalNode(node: unknown): string {
+  if (!node || typeof node !== 'object') return ''
+  const n = node as Record<string, unknown>
+  if (typeof n.text === 'string') return n.text
+  const children = n.children
+  if (Array.isArray(children)) {
+    return children.map(extractTextFromLexicalNode).join('')
+  }
+  return ''
+}
+
 function hasShortDescriptionContent(
   data: Product['shortDescription'],
 ): data is NonNullable<Product['shortDescription']> {
   if (!data?.root?.children?.length) return false
-  const first = data.root.children[0]
-  if (!first || typeof first !== 'object') return false
-  const textChild = (first as { children?: Array<{ text?: string }> }).children?.[0]
-  const text =
-    typeof textChild === 'object' && textChild && 'text' in textChild ? textChild.text : ''
-  return Boolean(text?.trim())
+  const allText = data.root.children
+    .map(extractTextFromLexicalNode)
+    .join('')
+    .trim()
+  if (!allText) return false
+  if (allText === DEFAULT_PLACEHOLDER) return false
+  return true
 }
 
 export function ProductDescription({
@@ -106,7 +120,7 @@ export function ProductDescription({
           enableGutter={false}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">NEMA KRATKOG OPISA</p>
+        <p className="text-sm text-muted-foreground">{DEFAULT_PLACEHOLDER}</p>
       )}
 
       <hr />
