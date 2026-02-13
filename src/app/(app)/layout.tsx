@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Analytics } from '@vercel/analytics/next'
 
 import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/components/Footer'
@@ -68,6 +69,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <main>{children}</main>
           <Footer />
         </Providers>
+        <Analytics />
       </body>
     </html>
   )
