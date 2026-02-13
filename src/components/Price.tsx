@@ -1,4 +1,5 @@
 'use client'
+import { formatRSD } from '@/lib/formatRSD'
 import { useCurrency } from '@payloadcms/plugin-ecommerce/client/react'
 import React, { useMemo } from 'react'
 
@@ -23,10 +24,6 @@ type PriceRange = {
 }
 
 type Props = BaseProps & (PriceFixed | PriceRange)
-
-function formatRSD(value: number): string {
-  return `${value.toLocaleString()} RSD`
-}
 
 export const Price = ({
   amount,

@@ -4,14 +4,11 @@ import React, { useEffect, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { createUrl } from '@/utilities/createUrl'
 import { Slider } from '@/components/ui/slider'
+import { formatRSD } from '@/lib/formatRSD'
 
 type Props = {
   min: number
   max: number
-}
-
-function formatPrice(price: number): string {
-  return price.toLocaleString('sr-RS') + ' RSD'
 }
 
 export function PriceRangeFilter({ min, max }: Props) {
@@ -61,8 +58,8 @@ export function PriceRangeFilter({ min, max }: Props) {
       />
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm">
-          Cena: <span className="font-semibold">{formatPrice(range[0])}</span> &mdash;{' '}
-          <span className="font-semibold">{formatPrice(range[1])}</span>
+          Cena: <span className="font-semibold">{formatRSD(range[0])}</span> &mdash;{' '}
+          <span className="font-semibold">{formatRSD(range[1])}</span>
         </p>
         <button
           onClick={handleFilter}
