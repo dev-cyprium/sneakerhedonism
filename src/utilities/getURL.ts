@@ -3,6 +3,10 @@ import { canUseDOM } from './canUseDOM'
 export const getServerSideURL = () => {
   let url = process.env.NEXT_PUBLIC_SERVER_URL
 
+  if (!url && process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+  }
+
   if (!url && process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
   }
@@ -21,6 +25,10 @@ export const getClientSideURL = () => {
     const port = window.location.port
 
     return `${protocol}//${domain}${port ? `:${port}` : ''}`
+  }
+
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
   }
 
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
