@@ -115,12 +115,12 @@ export function ProductDescription({
       {/* Short description (rich text) - shown in product card */}
       {hasShortDescriptionContent(product.shortDescription) ? (
         <RichText
-          className="text-sm text-muted-foreground"
+          className="mx-0 max-w-none text-base text-muted-foreground text-left"
           data={product.shortDescription}
           enableGutter={false}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">{DEFAULT_PLACEHOLDER}</p>
+        <p className="text-base text-muted-foreground">{DEFAULT_PLACEHOLDER}</p>
       )}
 
       <hr />
