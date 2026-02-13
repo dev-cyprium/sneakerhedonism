@@ -19,7 +19,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText 
     <div className="relative z-0 w-full -mt-[10.4rem] h-[350px] md:h-[400px] overflow-hidden" data-theme="dark">
       {/* Background image */}
       {media && typeof media === 'object' && (
-        <Media fill imgClassName="object-cover" priority resource={media} />
+        <Media className="absolute inset-0 h-full w-full" fill imgClassName="object-cover" priority resource={media} />
       )}
 
       {/* Dark overlay */}

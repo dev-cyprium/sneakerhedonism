@@ -39,6 +39,11 @@ export const plugins: Plugin[] = [
     collections: {
       media: {
         prefix: 'media',
+        generateFileURL: ({ filename, prefix = 'media' }) => {
+          const base = process.env.R2_PUBLIC_URL || process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+          const path = [prefix, encodeURIComponent(filename)].filter(Boolean).join('/')
+          return `${base.replace(/\/$/, '')}/${path}`
+        },
       },
     },
     bucket: process.env.R2_BUCKET!,

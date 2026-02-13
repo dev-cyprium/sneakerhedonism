@@ -28,6 +28,7 @@ export const Image: React.FC<MediaProps> = (props) => {
   } = props
 
   const [isLoading, setIsLoading] = React.useState(true)
+  const [useUnoptimized, setUseUnoptimized] = React.useState(false)
 
   let width: number | undefined | null
   let height: number | undefined | null
@@ -59,6 +60,8 @@ export const Image: React.FC<MediaProps> = (props) => {
         .map(([, value]) => `(max-width: ${value}px) ${value}px`)
         .join(', ')
 
+  if (!src) return null
+
   return (
     <div className={cn('relative', fill ? 'h-full w-full' : 'inline-block')}>
       {isLoading && (
@@ -74,6 +77,7 @@ export const Image: React.FC<MediaProps> = (props) => {
         fill={fill}
         height={!fill ? height || heightFromProps : undefined}
         onClick={onClick}
+        onError={() => setUseUnoptimized(true)}
         onLoad={() => {
           setIsLoading(false)
           if (typeof onLoadFromProps === 'function') {
@@ -84,6 +88,7 @@ export const Image: React.FC<MediaProps> = (props) => {
         quality={90}
         sizes={sizes}
         src={src}
+        unoptimized={useUnoptimized}
         width={!fill ? width || widthFromProps : undefined}
       />
     </div>
