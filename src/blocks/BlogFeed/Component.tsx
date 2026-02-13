@@ -29,7 +29,7 @@ export const BlogFeedBlock: React.FC<
       sort: 'title',
     }),
     (async () => {
-      const where: { _status: { equals: 'published' }; tags?: { contains: number } } = {
+      const where: { _status: { equals: 'published' }; tags?: { in: number[] } } = {
         _status: { equals: 'published' },
       }
       if (category !== SVE_SLUG) {
@@ -42,7 +42,7 @@ export const BlogFeedBlock: React.FC<
           where: { slug: { equals: category } },
         })
         const tagId = tagBySlug.docs[0]?.id
-        if (tagId) where.tags = { contains: tagId }
+        if (tagId) where.tags = { in: [tagId] }
       }
       return payload.find({
         collection: 'posts',
