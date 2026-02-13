@@ -4,6 +4,7 @@ import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { CarouselBlock } from '@/blocks/Carousel/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
 import { EmbedSocialBlock } from '@/blocks/EmbedSocial/Component'
+import { FAQBlock } from '@/blocks/FAQ/Component'
 import { ImageCarouselBlock } from '@/blocks/ImageCarousel/Component'
 import { ContentWithMediaBlock } from '@/blocks/ContentWithMedia/Component'
 import { FormBlock } from '@/blocks/Form/Component'
@@ -27,6 +28,7 @@ const blockComponents = {
   contentWithMedia: ContentWithMediaBlock,
   cta: CallToActionBlock,
   embedSocial: EmbedSocialBlock,
+  faq: FAQBlock,
   formBlock: FormBlock,
   imageCarousel: ImageCarouselBlock,
   latestPosts: LatestPostsBlock,

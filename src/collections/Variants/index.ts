@@ -1,13 +1,27 @@
-import { APIError } from 'payload'
-import type { CollectionConfig } from 'payload'
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
+import { APIError } from 'payload'
 
 export const VariantsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
+  fields: [
+    ...(defaultCollection.fields ?? []),
+    {
+      name: 'salePriceInRSD',
+      type: 'number',
+      admin: {
+        description: 'Optional sale price for this variant. When set, variant is shown as on sale.',
+        condition: (data) => Boolean(data?.priceInRSD),
+      },
+      label: 'Sale price (RSD)',
+      min: 0,
+      required: false,
+    },
+  ],
   admin: {
     ...defaultCollection?.admin,
     group: 'Ecommerce',
-    description: 'Product variants (size, color, etc.). Orphaned variants can be removed from the list below.',
+    description:
+      'Product variants (size, color, etc.). Orphaned variants can be removed from the list below.',
     components: {
       ...defaultCollection?.admin?.components,
       afterList: ['@/components/admin/UnusedVariantsManager#UnusedVariantsManager'],

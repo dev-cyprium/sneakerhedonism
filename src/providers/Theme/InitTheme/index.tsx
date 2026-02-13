@@ -1,14 +1,11 @@
 import Script from 'next/script'
 import React from 'react'
 
-import { defaultTheme, themeLocalStorageKey } from '../shared'
+import { defaultTheme, themeLocalStorageKey, themeToggleEnabled } from '../shared'
 
 export const InitTheme: React.FC = () => {
-  return (
-    // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
-    <Script
-      dangerouslySetInnerHTML={{
-        __html: `
+  const scriptContent = themeToggleEnabled
+    ? `
   (function () {
     function getImplicitPreference() {
       var mediaQuery = '(prefers-color-scheme: dark)'
@@ -41,7 +38,14 @@ export const InitTheme: React.FC = () => {
 
     document.documentElement.setAttribute('data-theme', themeToSet)
   })();
-  `,
+  `
+    : `document.documentElement.setAttribute('data-theme', '${defaultTheme}')`
+
+  return (
+    // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
+    <Script
+      dangerouslySetInnerHTML={{
+        __html: scriptContent.trim(),
       }}
       id="theme-script"
       strategy="beforeInteractive"

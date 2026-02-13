@@ -4,15 +4,17 @@ import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
 import { ProductGridItem } from '@/components/ProductGridItem'
+import { RichText } from '@/components/RichText'
+import { resolveProductDisplayPrice } from '@/lib/resolvePrice'
+import { resolveSizeGuideForProduct } from '@/lib/resolveSizeGuide'
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { ChevronRight } from 'lucide-react'
+import { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getPayload } from 'payload'
 import React, { Suspense } from 'react'
-import { Metadata } from 'next'
-import { RichText } from '@/components/RichText'
-import { ChevronRight } from 'lucide-react'
 
 type Args = {
   params: Promise<{
@@ -81,16 +83,7 @@ export default async function ProductPage({ params }: Args) {
       })
     : product.inventory! > 0
 
-  let price = product.priceInRSD
-
-  if (product.enableVariants && product?.variants?.docs?.length) {
-    price = product?.variants?.docs?.reduce((acc, variant) => {
-      if (typeof variant === 'object' && variant?.priceInRSD && acc && variant?.priceInRSD > acc) {
-        return variant.priceInRSD
-      }
-      return acc
-    }, price)
-  }
+  const price = resolveProductDisplayPrice(product)
 
   const productJsonLd = {
     name: product.title,
@@ -98,20 +91,24 @@ export default async function ProductPage({ params }: Args) {
     '@type': 'Product',
     description: product.description,
     image: metaImage?.url,
-    offers: {
-      '@type': 'AggregateOffer',
-      availability: hasStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      price: price,
-      priceCurrency: 'RSD',
-    },
+    offers:
+      price != null
+        ? {
+            '@type': 'AggregateOffer',
+            availability: hasStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            price,
+            priceCurrency: 'RSD',
+          }
+        : undefined,
   }
 
   const relatedProducts =
     product.relatedProducts?.filter((relatedProduct) => typeof relatedProduct === 'object') ?? []
 
-  const categories = product.categories?.filter(
-    (cat): cat is Category => typeof cat === 'object',
-  )
+  const payload = await getPayload({ config: configPromise })
+  const sizeGuide = await resolveSizeGuideForProduct(payload, product)
+
+  const categories = product.categories?.filter((cat): cat is Category => typeof cat === 'object')
 
   return (
     <React.Fragment>
@@ -138,7 +135,7 @@ export default async function ProductPage({ params }: Args) {
           </div>
 
           <div className="w-full lg:w-1/2">
-            <ProductDescription product={product} />
+            <ProductDescription product={product} sizeGuide={sizeGuide} />
           </div>
         </div>
 
@@ -176,7 +173,10 @@ function Breadcrumbs({
   productTitle: string
 }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap"
+    >
       <Link href="/" className="hover:text-foreground transition-colors">
         Home
       </Link>
@@ -253,6 +253,7 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
       variants: {
         title: true,
         priceInRSD: true,
+        salePriceInRSD: true,
         inventory: true,
         options: true,
       },

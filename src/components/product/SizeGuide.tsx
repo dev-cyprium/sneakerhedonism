@@ -1,6 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -9,8 +8,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Ruler } from 'lucide-react'
+import type { ResolvedSizeGuide } from '@/lib/resolveSizeGuide'
 
-const sizes = [
+const DEFAULT_SIZES = [
   { size: 'S', length: 66, width: 53 },
   { size: 'M', length: 70, width: 58 },
   { size: 'L', length: 72, width: 60 },
@@ -18,7 +18,12 @@ const sizes = [
   { size: 'XXL', length: 75, width: 66 },
 ]
 
-export function SizeGuide() {
+export function SizeGuide({ sizeGuide }: { sizeGuide?: ResolvedSizeGuide | null }) {
+  const { title, rows } = sizeGuide ?? {
+    title: 'Vodič za veličine',
+    rows: DEFAULT_SIZES,
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -32,7 +37,7 @@ export function SizeGuide() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Vodič za veličine</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -44,7 +49,7 @@ export function SizeGuide() {
               </tr>
             </thead>
             <tbody>
-              {sizes.map((row) => (
+              {rows.map((row) => (
                 <tr key={row.size} className="border-b last:border-b-0">
                   <td className="py-2 px-3 font-medium">{row.size}</td>
                   <td className="py-2 px-3">{row.length}</td>

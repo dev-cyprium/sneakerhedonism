@@ -9,6 +9,7 @@ import Link from 'next/link'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/components/ui/carousel'
+import { resolveProductDisplayPriceInfo } from '@/lib/resolvePrice'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type Props = {
@@ -16,18 +17,8 @@ type Props = {
 }
 
 export const ProductGridItem: React.FC<Props> = ({ product }) => {
-  const { gallery, priceInRSD, title } = product
-
-  let price = priceInRSD
-
-  const variants = product.variants?.docs
-
-  if (variants && variants.length > 0) {
-    const variant = variants[0]
-    if (variant && typeof variant === 'object' && variant.priceInRSD != null) {
-      price = variant.priceInRSD
-    }
-  }
+  const { gallery, title } = product
+  const priceInfo = resolveProductDisplayPriceInfo(product)
 
   const images =
     gallery
@@ -79,6 +70,14 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
     >
       {/* Image area — carousel for multiple images, single Media for one */}
       <div className="relative aspect-square overflow-hidden p-3">
+        {priceInfo?.saleInfo && (
+          <span
+            className="absolute left-4 top-4 z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-brand px-1.5 py-1 text-xs font-bold leading-tight text-primary-foreground"
+            aria-label={`${priceInfo.saleInfo.discountPercent}% off`}
+          >
+            -{priceInfo.saleInfo.discountPercent}%
+          </span>
+        )}
         {hasMultiple ? (
           <div
             className="relative h-full w-full"
@@ -98,7 +97,10 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
             >
               <CarouselContent className="ml-0 h-full">
                 {images.map((img, i) => (
-                  <CarouselItem key={img?.id ?? i} className="pl-0">
+                  <CarouselItem
+                    key={typeof img === 'object' && img && 'id' in img ? img.id : i}
+                    className="pl-0"
+                  >
                     <div className="relative flex h-full w-full items-center justify-center">
                       <Media
                         className="h-full w-full"
@@ -173,8 +175,29 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
         <h3 className="text-[15px] font-medium leading-snug text-foreground line-clamp-2">
           {title}
         </h3>
-        {typeof price === 'number' && (
-          <Price className="text-[15px] font-bold text-accent-brand" amount={price} as="span" />
+        {priceInfo != null && (
+          <div className="flex flex-wrap items-baseline gap-2">
+            {priceInfo.saleInfo ? (
+              <>
+                <Price
+                  className="text-[15px] text-muted-foreground line-through"
+                  amount={priceInfo.saleInfo.originalPrice}
+                  as="span"
+                />
+                <Price
+                  className="text-[15px] font-bold text-accent-brand"
+                  amount={priceInfo.saleInfo.salePrice}
+                  as="span"
+                />
+              </>
+            ) : (
+              <Price
+                className="text-[15px] font-bold text-accent-brand"
+                amount={priceInfo.amount}
+                as="span"
+              />
+            )}
+          </div>
         )}
       </div>
     </Link>

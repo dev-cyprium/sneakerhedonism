@@ -1,6 +1,7 @@
 'use client'
 
 import { Price } from '@/components/Price'
+import { resolveItemPrice } from '@/lib/resolvePrice'
 import {
   Sheet,
   SheetContent,
@@ -43,11 +44,8 @@ export function CartModal() {
     return cart.items.reduce((total, item) => {
       if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
       const isVariant = Boolean(item.variant) && typeof item.variant === 'object'
-      const price =
-        isVariant && item.variant?.priceInRSD != null
-          ? item.variant.priceInRSD
-          : item.product.priceInRSD
-      return total + (price || 0) * item.quantity
+      const price = resolveItemPrice(item.product, item.variant)
+      return total + (price ?? 0) * item.quantity
     }, 0)
   }, [cart?.items])
 
@@ -91,13 +89,10 @@ export function CartModal() {
                       : undefined
 
                   let image = firstGalleryImage || metaImage
-                  let price = product.priceInRSD
-
+                  const price = resolveItemPrice(product, variant)
                   const isVariant = Boolean(variant) && typeof variant === 'object'
 
                   if (isVariant) {
-                    price = variant?.priceInRSD != null ? variant.priceInRSD : product.priceInRSD
-
                     const imageVariant = product.gallery?.find((item: NonNullable<Product['gallery']>[number]) => {
                       if (!item.variantOption) return false
                       const variantOptionID =
@@ -155,7 +150,7 @@ export function CartModal() {
                         </Link>
                         <div className="flex shrink-0 flex-col items-end justify-between gap-2">
                           <DeleteItemButton item={item} />
-                          {typeof price === 'number' && (
+                          {price != null && (
                             <Price className="text-right text-sm font-medium" amount={price} />
                           )}
                           <div className="flex flex-row items-center rounded-lg border border-border">

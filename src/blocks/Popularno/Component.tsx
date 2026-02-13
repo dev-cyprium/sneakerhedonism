@@ -98,7 +98,7 @@ export const PopularnoBlock: React.FC<PopularnoBlockProps> = async ({ limit }) =
       <div className="flex justify-center mt-10">
         <Link
           href="/shop"
-          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="inline-flex items-center justify-center rounded-md bg-accent-brand px-6 py-3 text-sm font-medium text-white hover:bg-accent-brand/90 transition-colors"
         >
           Pogledaj sve
         </Link>

@@ -3,6 +3,7 @@
 import { Media } from '@/components/Media'
 import { Message } from '@/components/Message'
 import { Price } from '@/components/Price'
+import { resolveItemPrice } from '@/lib/resolvePrice'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,16 +45,16 @@ export const CheckoutPage: React.FC = () => {
     return cart.items.reduce((total, item) => {
       if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
       const isVariant = Boolean(item.variant) && typeof item.variant === 'object'
-      const price =
-        isVariant && item.variant?.priceInRSD != null
-          ? item.variant.priceInRSD
-          : item.product.priceInRSD
-      return total + (price || 0) * item.quantity
+      const price = resolveItemPrice(item.product, item.variant)
+      return total + (price ?? 0) * item.quantity
     }, 0)
   }, [cart?.items])
 
   const canGoToPayment = Boolean(
-    (email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress),
+    (email || user) &&
+      billingAddress &&
+      billingAddress.phone &&
+      (billingAddressSameAsShipping || (shippingAddress && shippingAddress.phone)),
   )
 
   useEffect(() => {
@@ -376,13 +377,11 @@ export const CheckoutPage: React.FC = () => {
               if (!quantity) return null
 
               let image = gallery?.[0]?.image || meta?.image
-              let price = product?.priceInRSD
+              const price = resolveItemPrice(product, variant)
 
               const isVariant = Boolean(variant) && typeof variant === 'object'
 
               if (isVariant) {
-                price = variant?.priceInRSD != null ? variant.priceInRSD : product?.priceInRSD
-
                 const imageVariant = product.gallery?.find(
                   (item: NonNullable<Product['gallery']>[number]) => {
                     if (!item.variantOption) return false
@@ -437,7 +436,7 @@ export const CheckoutPage: React.FC = () => {
                       </p>
                     </div>
 
-                    {typeof price === 'number' && (
+                    {price != null && (
                       <Price className="font-medium" amount={price} />
                     )}
                   </div>

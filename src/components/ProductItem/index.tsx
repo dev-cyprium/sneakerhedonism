@@ -3,6 +3,7 @@ import { OrderStatus } from '@/components/OrderStatus'
 import { Price } from '@/components/Price'
 import { Button } from '@/components/ui/button'
 import { Media as MediaType, Order, Product, Variant } from '@/payload-types'
+import { resolveItemPrice } from '@/lib/resolvePrice'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import Link from 'next/link'
 
@@ -55,7 +56,7 @@ export const ProductItem: React.FC<Props> = ({
     }
   }
 
-  const itemPrice = variant?.priceInRSD || product.priceInRSD
+  const itemPrice = resolveItemPrice(product, variant)
   const itemURL = `/products/${product.slug}${variant ? `?variant=${variant.id}` : ''}`
 
   return (
@@ -88,7 +89,7 @@ export const ProductItem: React.FC<Props> = ({
           </div>
         </div>
 
-        {itemPrice && quantity && (
+        {itemPrice != null && quantity && (
           <div className="text-right">
             <p className="font-medium text-lg">Subtotal</p>
             <Price

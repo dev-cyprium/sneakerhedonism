@@ -13,7 +13,30 @@ export function VariantSelector({ product }: { product: Product }) {
   const searchParams = useSearchParams()
   const variants = product.variants?.docs
   const variantTypes = product.variantTypes
-  const hasVariantTypes = Boolean(product.enableVariants && variantTypes?.some((t) => typeof t === 'object' && t.options?.docs?.length))
+
+  // Collect option IDs that actually exist for THIS product's variants (not all options globally)
+  const productOptionIds = React.useMemo(() => {
+    const ids = new Set<number>()
+    for (const variant of variants || []) {
+      if (typeof variant !== 'object') continue
+      for (const opt of variant.options || []) {
+        const id = typeof opt === 'object' ? opt.id : opt
+        if (id != null) ids.add(id)
+      }
+    }
+    return ids
+  }, [variants])
+
+  const hasVariantTypes = Boolean(
+    product.enableVariants &&
+      variantTypes?.some((t) => {
+        if (typeof t !== 'object' || !t.options?.docs?.length) return false
+        const optionsForProduct = t.options.docs.filter(
+          (opt) => opt && typeof opt === 'object' && productOptionIds.has(opt.id),
+        )
+        return optionsForProduct.length > 0
+      }),
+  )
 
   // Optimistic local state — reflects selection instantly before URL updates
   const [optimisticParams, setOptimisticParams] = React.useState<URLSearchParams>(
@@ -34,9 +57,14 @@ export function VariantSelector({ product }: { product: Product }) {
       return <React.Fragment key={String(type)} />
     }
 
-    const options = type.options?.docs
+    // Only show options that exist for THIS product's variants
+    const allOptions = type.options?.docs
+    const options =
+      allOptions?.filter(
+        (opt) => opt && typeof opt === 'object' && productOptionIds.has(opt.id),
+      ) ?? []
 
-    if (!options || !Array.isArray(options) || !options.length) {
+    if (!options.length) {
       return <React.Fragment key={type.id} />
     }
 

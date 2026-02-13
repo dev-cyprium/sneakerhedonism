@@ -2,6 +2,7 @@
 import type { Media, Product } from '@/payload-types'
 
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
+import { resolveProductDisplayPrice } from '@/lib/resolvePrice'
 import AutoScroll from 'embla-carousel-auto-scroll'
 import Link from 'next/link'
 import React from 'react'
@@ -27,22 +28,25 @@ export const CarouselClient: React.FC<{ products: Product[] }> = async ({ produc
       ]}
     >
       <CarouselContent>
-        {carouselProducts.map((product, i) => (
-          <CarouselItem
-            className="relative aspect-square h-[30vh] max-h-[275px] w-2/3 max-w-[475px] flex-none md:w-1/3"
-            key={`${product.slug}${i}`}
-          >
-            <Link className="relative h-full w-full" href={`/products/${product.slug}`}>
-              <GridTileImage
-                label={{
-                  amount: product.priceInRSD!,
-                  title: product.title,
-                }}
-                media={product.meta?.image as Media}
-              />
-            </Link>
-          </CarouselItem>
-        ))}
+        {carouselProducts.map((product, i) => {
+          const price = resolveProductDisplayPrice(product)
+          return (
+            <CarouselItem
+              className="relative aspect-square h-[30vh] max-h-[275px] w-2/3 max-w-[475px] flex-none md:w-1/3"
+              key={`${product.slug}${i}`}
+            >
+              <Link className="relative h-full w-full" href={`/products/${product.slug}`}>
+                <GridTileImage
+                  label={{
+                    amount: price ?? 0,
+                    title: product.title,
+                  }}
+                  media={product.meta?.image as Media}
+                />
+              </Link>
+            </CarouselItem>
+          )
+        })}
       </CarouselContent>
     </Carousel>
   )

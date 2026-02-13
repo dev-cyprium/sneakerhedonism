@@ -1,7 +1,6 @@
 import { CallToAction } from '@/blocks/CallToAction/config'
 import { Content } from '@/blocks/Content/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
-import { slugField } from 'payload'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import {
@@ -18,7 +17,7 @@ import {
   InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
-import { DefaultDocumentIDType, Where } from 'payload'
+import { DefaultDocumentIDType, slugField, Where } from 'payload'
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
@@ -45,11 +44,13 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     ...defaultCollection?.defaultPopulate,
     title: true,
     slug: true,
+    shortDescription: true,
     variantOptions: true,
     variants: true,
     enableVariants: true,
     gallery: true,
     priceInRSD: true,
+    salePriceInRSD: true,
     inventory: true,
     meta: true,
   },
@@ -60,6 +61,58 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
       tabs: [
         {
           fields: [
+            {
+              name: 'shortDescription',
+              type: 'richText',
+              label: 'Short description',
+              admin: {
+                description:
+                  'Brief teaser shown above the full description. Default: NEMA KRATKOG OPISA',
+              },
+              editor: lexicalEditor({
+                features: ({ rootFeatures }) => {
+                  return [
+                    ...rootFeatures,
+                    HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
+                    FixedToolbarFeature(),
+                    InlineToolbarFeature(),
+                    HorizontalRuleFeature(),
+                  ]
+                },
+              }),
+              required: false,
+              defaultValue: {
+                root: {
+                  type: 'root',
+                  children: [
+                    {
+                      type: 'paragraph',
+                      children: [
+                        {
+                          type: 'text',
+                          detail: 0,
+                          format: 0,
+                          mode: 'normal',
+                          style: '',
+                          text: 'NEMA KRATKOG OPISA',
+                          version: 1,
+                        },
+                      ],
+                      direction: null,
+                      format: '',
+                      indent: 0,
+                      textFormat: 0,
+                      textStyle: '',
+                      version: 1,
+                    },
+                  ],
+                  direction: null,
+                  format: '',
+                  indent: 0,
+                  version: 1,
+                },
+              },
+            },
             {
               name: 'description',
               type: 'richText',
@@ -143,6 +196,18 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
         {
           fields: [
             ...defaultCollection.fields,
+            {
+              name: 'salePriceInRSD',
+              type: 'number',
+              admin: {
+                description:
+                  'Optional sale price. When set, product is shown as on sale with discount badge.',
+                condition: (data) => Boolean(data?.priceInRSD),
+              },
+              label: 'Sale price (RSD)',
+              min: 0,
+              required: false,
+            },
             {
               name: 'relatedProducts',
               type: 'relationship',

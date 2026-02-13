@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { Banner } from '@/blocks/Banner/config'
 import { EmbedSocial } from '@/blocks/EmbedSocial/config'
+import { FAQ } from '@/blocks/FAQ/config'
 import { Carousel } from '@/blocks/Carousel/config'
 import { Novo } from '@/blocks/Novo/config'
 import { PogledajPonudu } from '@/blocks/PogledajPonudu/config'
@@ -101,6 +102,7 @@ export const Pages: CollectionConfig = {
                 MediaBlock,
                 Archive,
                 Carousel,
+                FAQ,
                 Novo,
                 PogledajPonudu,
                 Popularno,

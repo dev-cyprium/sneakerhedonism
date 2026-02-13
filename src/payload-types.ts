@@ -78,6 +78,7 @@ export interface Config {
     tags: Tag;
     categories: Category;
     media: Media;
+    'size-guides': SizeGuide;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -113,6 +114,7 @@ export interface Config {
     tags: TagsSelect<false> | TagsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'size-guides': SizeGuidesSelect<false> | SizeGuidesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -135,10 +137,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'site-settings': SiteSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
   locale: null;
   user: User;
@@ -266,6 +270,24 @@ export interface Order {
 export interface Product {
   id: number;
   title: string;
+  /**
+   * Brief teaser shown above the full description. Default: NEMA KRATKOG OPISA
+   */
+  shortDescription?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   description?: {
     root: {
       type: string;
@@ -299,6 +321,10 @@ export interface Product {
   };
   priceInRSDEnabled?: boolean | null;
   priceInRSD?: number | null;
+  /**
+   * Optional sale price. When set, product is shown as on sale with discount badge.
+   */
+  salePriceInRSD?: number | null;
   relatedProducts?: (number | Product)[] | null;
   meta?: {
     title?: string | null;
@@ -488,6 +514,7 @@ export interface Page {
     | MediaBlock
     | ArchiveBlock
     | CarouselBlock
+    | FAQBlock
     | NovoBlock
     | PogledajPonuduBlock
     | PopularnoBlock
@@ -699,6 +726,43 @@ export interface CarouselBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'carousel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock".
+ */
+export interface FAQBlock {
+  /**
+   * Add FAQ items with a question title and expanded answer content.
+   */
+  items: {
+    /**
+     * The question shown in the pill.
+     */
+    title: string;
+    /**
+     * The answer content shown when expanded.
+     */
+    expanded: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'faq';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1033,6 +1097,10 @@ export interface Variant {
   inventory?: number | null;
   priceInRSDEnabled?: boolean | null;
   priceInRSD?: number | null;
+  /**
+   * Optional sale price for this variant. When set, variant is shown as on sale.
+   */
+  salePriceInRSD?: number | null;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -1231,6 +1299,40 @@ export interface Tag {
   createdAt: string;
 }
 /**
+ * Brand-specific size guides. Link to categories (parent or child). Leave categories empty for the default site guide.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "size-guides".
+ */
+export interface SizeGuide {
+  id: number;
+  /**
+   * e.g. "New Balance" or "Default"
+   */
+  title: string;
+  /**
+   * Categories (brands) this guide applies to. Leave empty to use as the default site guide.
+   */
+  categories?: (number | Category)[] | null;
+  rows: {
+    /**
+     * e.g. "38.5", "S", "M"
+     */
+    size: string;
+    /**
+     * Dužina (cm)
+     */
+    length: number;
+    /**
+     * Širina (cm)
+     */
+    width: number;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
@@ -1294,6 +1396,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'size-guides';
+        value: number | SizeGuide;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1442,6 +1548,7 @@ export interface PagesSelect<T extends boolean = true> {
         mediaBlock?: T | MediaBlockSelect<T>;
         archive?: T | ArchiveBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
         novo?: T | NovoBlockSelect<T>;
         pogledajPonudu?: T | PogledajPonuduBlockSelect<T>;
         popularno?: T | PopularnoBlockSelect<T>;
@@ -1572,6 +1679,21 @@ export interface CarouselBlockSelect<T extends boolean = true> {
   selectedDocs?: T;
   populatedDocs?: T;
   populatedDocsTotal?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock_select".
+ */
+export interface FAQBlockSelect<T extends boolean = true> {
+  items?:
+    | T
+    | {
+        title?: T;
+        expanded?: T;
+        id?: T;
+      };
   id?: T;
   blockName?: T;
 }
@@ -1739,6 +1861,24 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "size-guides_select".
+ */
+export interface SizeGuidesSelect<T extends boolean = true> {
+  title?: T;
+  categories?: T;
+  rows?:
+    | T
+    | {
+        size?: T;
+        length?: T;
+        width?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1923,6 +2063,7 @@ export interface VariantsSelect<T extends boolean = true> {
   inventory?: T;
   priceInRSDEnabled?: T;
   priceInRSD?: T;
+  salePriceInRSD?: T;
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;
@@ -1959,6 +2100,7 @@ export interface VariantOptionsSelect<T extends boolean = true> {
  */
 export interface ProductsSelect<T extends boolean = true> {
   title?: T;
+  shortDescription?: T;
   description?: T;
   gallery?:
     | T
@@ -1980,6 +2122,7 @@ export interface ProductsSelect<T extends boolean = true> {
   variants?: T;
   priceInRSDEnabled?: T;
   priceInRSD?: T;
+  salePriceInRSD?: T;
   relatedProducts?: T;
   meta?:
     | T
@@ -2219,6 +2362,21 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
+ * Default size guide shown when no brand-specific guide exists.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  /**
+   * Size guide to show when the product has no matching brand-specific guide. Leave empty to use the built-in default.
+   */
+  defaultSizeGuide?: (number | null) | SizeGuide;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -2281,6 +2439,16 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  defaultSizeGuide?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
