@@ -96,14 +96,14 @@ export function AddToCart({ product }: Props) {
 
   return (
     <Button
-      aria-label="Add to cart"
+      aria-label="Dodaj u korpu"
       className="w-full bg-accent-brand text-white hover:bg-accent-brand/90 font-semibold uppercase tracking-wide"
       size="lg"
       disabled={disabled || isLoading}
       onClick={addToCart}
       type="submit"
     >
-      Add to cart
+      Dodaj u korpu
     </Button>
   )
 }

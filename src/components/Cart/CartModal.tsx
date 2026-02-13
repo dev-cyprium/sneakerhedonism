@@ -57,7 +57,7 @@ export function CartModal() {
         <OpenCartButton quantity={totalQuantity} />
       </SheetTrigger>
 
-      <SheetContent className="flex flex-col">
+      <SheetContent animation="fade" className="flex flex-col">
         <SheetHeader>
           <SheetTitle>My Cart</SheetTitle>
 
@@ -119,31 +119,30 @@ export function CartModal() {
                   }
 
                   return (
-                    <li className="flex w-full flex-col" key={i}>
-                      <div className="relative flex w-full flex-row justify-between px-1 py-4">
-                        <div className="absolute z-40 -mt-2 ml-[55px]">
-                          <DeleteItemButton item={item} />
-                        </div>
+                    <li className="flex w-full flex-col gap-3 border-b border-border py-4 last:border-b-0" key={i}>
+                      <div className="flex w-full flex-row gap-4">
                         <Link
-                          className="z-30 flex flex-row space-x-4"
+                          className="flex min-w-0 flex-1 flex-row gap-4"
                           href={`/products/${(item.product as Product)?.slug}`}
                         >
-                          <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+                          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                             {image?.url && (
                               <Image
                                 alt={image?.alt || product?.title || ''}
-                                className="h-full w-full object-cover"
-                                height={94}
+                                className="h-full w-full object-contain"
+                                height={80}
                                 src={image.url}
-                                width={94}
+                                width={80}
                               />
                             )}
                           </div>
 
-                          <div className="flex flex-1 flex-col text-base">
-                            <span className="leading-tight">{product?.title}</span>
+                          <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+                            <span className="truncate text-base font-medium leading-tight">
+                              {product?.title}
+                            </span>
                             {isVariant && variant ? (
-                              <p className="text-sm text-neutral-500 dark:text-neutral-400 capitalize">
+                              <p className="text-sm text-muted-foreground capitalize">
                                 {variant.options
                                   ?.map((option: number | VariantOption) => {
                                     if (typeof option === 'object') return option.label
@@ -154,18 +153,16 @@ export function CartModal() {
                             ) : null}
                           </div>
                         </Link>
-                        <div className="flex h-16 flex-col justify-between">
+                        <div className="flex shrink-0 flex-col items-end justify-between gap-2">
+                          <DeleteItemButton item={item} />
                           {typeof price === 'number' && (
-                            <Price
-                              amount={price}
-                              className="flex justify-end space-y-2 text-right text-sm"
-                            />
+                            <Price className="text-right text-sm font-medium" amount={price} />
                           )}
-                          <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
+                          <div className="flex flex-row items-center rounded-lg border border-border">
                             <EditItemQuantityButton item={item} type="minus" />
-                            <p className="w-6 text-center">
-                              <span className="w-full text-sm">{item.quantity}</span>
-                            </p>
+                            <span className="min-w-6 px-2 text-center text-sm">
+                              {item.quantity}
+                            </span>
                             <EditItemQuantityButton item={item} type="plus" />
                           </div>
                         </div>

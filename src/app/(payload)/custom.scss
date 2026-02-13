@@ -8,3 +8,16 @@
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+/* RSD price input: move currency to end (right) to avoid overlap */
+.formattedPrice {
+  .formattedPriceCurrencySymbol {
+    left: auto;
+    right: 10px;
+  }
+
+  .formattedPriceInput {
+    padding-left: 0.5rem;
+    padding-right: 2.5rem;
+  }
+}

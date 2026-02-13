@@ -26,25 +26,25 @@ export function HeaderClient({ header, navItems }: Props) {
       <AnnouncementBar enabled={header.announcementEnabled} text={header.announcementText} />
       <header className="sticky top-0 z-20 border-b border-header-border bg-background">
         <nav className="relative z-20 flex items-center justify-between container">
-          {/* Mobile hamburger */}
-          <div className="block flex-none md:hidden">
+          {/* Mobile hamburger — left side */}
+          <div className="order-first block flex-none md:hidden">
             <Suspense fallback={null}>
               <MobileMenu menu={navItems} />
             </Suspense>
           </div>
 
-          {/* Logo */}
-          <Link className="flex items-center shrink-0 py-4" href="/">
+          {/* Logo — smaller on mobile */}
+          <Link className="flex flex-1 justify-center items-center shrink-0 py-4 md:flex-initial md:flex-none" href="/">
             {logo?.url ? (
               <Image
                 src={logo.url}
                 alt={logo.alt || 'Logo'}
                 width={logo.width || 160}
                 height={logo.height || 32}
-                className="h-7 w-auto"
+                className="h-5 w-auto md:h-7"
               />
             ) : (
-              <LogoIcon className="w-7 h-auto" />
+              <LogoIcon className="h-5 w-auto md:h-7" />
             )}
           </Link>
 

@@ -24,6 +24,10 @@ type PriceRange = {
 
 type Props = BaseProps & (PriceFixed | PriceRange)
 
+function formatRSD(value: number): string {
+  return `${value.toLocaleString()} RSD`
+}
+
 export const Price = ({
   amount,
   className,
@@ -43,10 +47,12 @@ export const Price = ({
     return undefined
   }, [currencyCodeFromProps, supportedCurrencies])
 
+  const isRSD = (currencyToUse?.code ?? supportedCurrencies[0]?.code) === 'RSD'
+
   if (typeof amount === 'number') {
     return (
       <Element className={className} suppressHydrationWarning>
-        {formatCurrency(amount, { currency: currencyToUse })}
+        {isRSD ? formatRSD(amount) : formatCurrency(amount, { currency: currencyToUse })}
       </Element>
     )
   }
@@ -54,7 +60,9 @@ export const Price = ({
   if (highestAmount && highestAmount !== lowestAmount) {
     return (
       <Element className={className} suppressHydrationWarning>
-        {`${formatCurrency(lowestAmount, { currency: currencyToUse })} - ${formatCurrency(highestAmount, { currency: currencyToUse })}`}
+        {isRSD
+          ? `${formatRSD(lowestAmount)} - ${formatRSD(highestAmount)}`
+          : `${formatCurrency(lowestAmount, { currency: currencyToUse })} - ${formatCurrency(highestAmount, { currency: currencyToUse })}`}
       </Element>
     )
   }
@@ -62,7 +70,7 @@ export const Price = ({
   if (lowestAmount) {
     return (
       <Element className={className} suppressHydrationWarning>
-        {`${formatCurrency(lowestAmount, { currency: currencyToUse })}`}
+        {isRSD ? formatRSD(lowestAmount) : formatCurrency(lowestAmount, { currency: currencyToUse })}
       </Element>
     )
   }

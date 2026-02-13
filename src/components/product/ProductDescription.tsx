@@ -22,33 +22,37 @@ export function ProductDescription({ product }: { product: Product }) {
   const hasVariantDocs = product.enableVariants && Boolean(product.variants?.docs?.length)
 
   if (hasVariantDocs) {
-    const priceField = `priceIn${currency.code}` as keyof Variant
+    const variantPriceField = `priceIn${currency.code}` as keyof Variant
+    const productPriceField = `priceIn${currency.code}` as keyof Product
     const variantsOrderedByPrice = product.variants?.docs
       ?.filter((variant) => variant && typeof variant === 'object')
       .sort((a, b) => {
         if (
           typeof a === 'object' &&
           typeof b === 'object' &&
-          priceField in a &&
-          priceField in b &&
-          typeof a[priceField] === 'number' &&
-          typeof b[priceField] === 'number'
+          variantPriceField in a &&
+          variantPriceField in b &&
+          typeof a[variantPriceField] === 'number' &&
+          typeof b[variantPriceField] === 'number'
         ) {
-          return a[priceField] - b[priceField]
+          return a[variantPriceField] - b[variantPriceField]
         }
 
         return 0
       }) as Variant[]
 
-    const lowestVariant = variantsOrderedByPrice[0][priceField]
-    const highestVariant = variantsOrderedByPrice[variantsOrderedByPrice.length - 1][priceField]
+    const lowestVariantPrice = variantsOrderedByPrice[0]?.[variantPriceField]
+    const highestVariantPrice = variantsOrderedByPrice[variantsOrderedByPrice.length - 1]?.[variantPriceField]
     if (
       variantsOrderedByPrice &&
-      typeof lowestVariant === 'number' &&
-      typeof highestVariant === 'number'
+      typeof lowestVariantPrice === 'number' &&
+      typeof highestVariantPrice === 'number'
     ) {
-      lowestAmount = lowestVariant
-      highestAmount = highestVariant
+      lowestAmount = lowestVariantPrice
+      highestAmount = highestVariantPrice
+    } else if (product[productPriceField] && typeof product[productPriceField] === 'number') {
+      lowestAmount = product[productPriceField] as number
+      highestAmount = product[productPriceField] as number
     }
   }
 

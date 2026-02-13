@@ -13,6 +13,7 @@ import { codAdapter } from '@/payments/cod-adapter'
 import { Page, Post, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 import { ProductsCollection } from '@/collections/Products'
+import { VariantsCollection } from '@/collections/Variants'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
 import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
@@ -126,7 +127,7 @@ export const plugins: Plugin[] = [
           code: 'RSD',
           decimals: 0,
           label: 'Serbian Dinar',
-          symbol: 'рсд',
+          symbol: ' RSD',
         },
       ],
     },
@@ -151,6 +152,31 @@ export const plugins: Plugin[] = [
     },
     products: {
       productsCollectionOverride: ProductsCollection,
+      variants: {
+        variantsCollectionOverride: VariantsCollection,
+        variantOptionsCollectionOverride: ({ defaultCollection }) => ({
+          ...defaultCollection,
+          admin: {
+            ...defaultCollection?.admin,
+            hidden: true,
+            description:
+              'Managed via Variant Groups. Add options when editing a variant type (e.g. BROJ, VELICINE).',
+          },
+        }),
+        variantTypesCollectionOverride: ({ defaultCollection }) => ({
+          ...defaultCollection,
+          admin: {
+            ...defaultCollection?.admin,
+            group: 'Ecommerce',
+            useAsTitle: 'label',
+            description: 'Variant groups (e.g. BROJ, VELICINE). Add options for each group when editing.',
+          },
+          labels: {
+            plural: 'Variant Groups',
+            singular: 'Variant Group',
+          },
+        }),
+      },
     },
   }),
 ]

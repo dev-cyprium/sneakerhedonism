@@ -54,7 +54,7 @@ export function MobileMenu({ menu }: Props) {
         <MenuIcon className="h-4" />
       </SheetTrigger>
 
-      <SheetContent side="left" className="px-4 overflow-y-auto">
+      <SheetContent animation="fade" side="left" className="px-4 overflow-y-auto">
         <SheetHeader className="px-0 pt-4 pb-0">
           <SheetTitle>Sneaker Hedonism</SheetTitle>
           <SheetDescription />

@@ -27,20 +27,20 @@ export function SizeGuide() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           <Ruler className="size-4" />
-          Size guide
+          Vodič za veličine
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Size Guide</DialogTitle>
+          <DialogTitle>Vodič za veličine</DialogTitle>
         </DialogHeader>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="py-2 px-3 text-left font-semibold">Size</th>
-                <th className="py-2 px-3 text-left font-semibold">Length (cm)</th>
-                <th className="py-2 px-3 text-left font-semibold">Width (cm)</th>
+                <th className="py-2 px-3 text-left font-semibold">Veličina</th>
+                <th className="py-2 px-3 text-left font-semibold">Dužina (cm)</th>
+                <th className="py-2 px-3 text-left font-semibold">Širina (cm)</th>
               </tr>
             </thead>
             <tbody>

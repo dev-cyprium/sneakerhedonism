@@ -409,15 +409,18 @@ export const CheckoutPage: React.FC = () => {
 
               return (
                 <div className="flex items-start gap-4" key={index}>
-                  <div className="flex items-stretch justify-stretch h-20 w-20 p-2 rounded-lg border">
-                    <div className="relative w-full h-full">
-                      {image && typeof image !== 'string' && (
-                        <Media className="" fill imgClassName="rounded-lg" resource={image} />
-                      )}
-                    </div>
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                    {image && typeof image !== 'string' && (
+                      <Media
+                        className="h-full w-full"
+                        fill
+                        imgClassName="rounded-lg object-contain"
+                        resource={image}
+                      />
+                    )}
                   </div>
-                  <div className="flex grow justify-between items-center">
-                    <div className="flex flex-col gap-1">
+                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-1">
+                    <div>
                       <p className="font-medium text-lg">{title}</p>
                       {variant && typeof variant === 'object' && (
                         <p className="text-sm font-mono text-primary/50 tracking-widest">
@@ -429,13 +432,14 @@ export const CheckoutPage: React.FC = () => {
                             .join(', ')}
                         </p>
                       )}
-                      <div>
-                        {'x'}
-                        {quantity}
-                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        x{quantity}
+                      </p>
                     </div>
 
-                    {typeof price === 'number' && <Price amount={price} />}
+                    {typeof price === 'number' && (
+                      <Price className="font-medium" amount={price} />
+                    )}
                   </div>
                 </div>
               )

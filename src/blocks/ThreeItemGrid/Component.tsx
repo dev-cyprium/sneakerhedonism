@@ -13,7 +13,7 @@ export const ThreeItemGridItem: React.FC<Props> = ({ item, size }) => {
   if (item.enableVariants && item.variants?.docs?.length) {
     const variant = item.variants.docs[0]
 
-    if (variant && typeof variant === 'object' && variant.priceInRSD) {
+    if (variant && typeof variant === 'object' && variant.priceInRSD != null) {
       price = variant.priceInRSD
     }
   }

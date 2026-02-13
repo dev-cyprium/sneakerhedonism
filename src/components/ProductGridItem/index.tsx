@@ -19,12 +19,7 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
 
   if (variants && variants.length > 0) {
     const variant = variants[0]
-    if (
-      variant &&
-      typeof variant === 'object' &&
-      variant?.priceInRSD &&
-      typeof variant.priceInRSD === 'number'
-    ) {
+    if (variant && typeof variant === 'object' && variant.priceInRSD != null) {
       price = variant.priceInRSD
     }
   }

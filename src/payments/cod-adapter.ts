@@ -37,6 +37,8 @@ export const codAdapter = (): PaymentAdapter => {
 
       for (const item of cart.items) {
         const quantity = item.quantity || 1
+        const productId = typeof item.product === 'object' ? item.product.id : item.product
+
         if (item.variant) {
           const variantId = typeof item.variant === 'object' ? item.variant.id : item.variant
           const variant = await payload.findByID({
@@ -45,9 +47,19 @@ export const codAdapter = (): PaymentAdapter => {
             depth: 0,
             select: { [priceField]: true },
           })
-          amount += ((variant as Record<string, any>)[priceField] || 0) * quantity
+          const variantPrice = (variant as Record<string, any>)[priceField]
+          let price = variantPrice
+          if (price == null) {
+            const product = await payload.findByID({
+              id: productId,
+              collection: 'products' as CollectionSlug,
+              depth: 0,
+              select: { [priceField]: true },
+            })
+            price = (product as Record<string, any>)[priceField]
+          }
+          amount += (price || 0) * quantity
         } else if (item.product) {
-          const productId = typeof item.product === 'object' ? item.product.id : item.product
           const product = await payload.findByID({
             id: productId,
             collection: 'products' as CollectionSlug,

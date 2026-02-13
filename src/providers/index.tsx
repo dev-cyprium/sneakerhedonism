@@ -24,7 +24,7 @@ export const Providers: React.FC<{
                   code: 'RSD',
                   decimals: 0,
                   label: 'Serbian Dinar',
-                  symbol: 'рсд',
+                  symbol: ' RSD',
                 },
               ],
             }}

@@ -145,7 +145,7 @@ export default async function ProductPage({ params }: Args) {
         {/* Description section */}
         {product.description && (
           <div className="mt-12 border-t pt-8">
-            <h2 className="text-lg font-semibold mb-4 uppercase tracking-wide">Description</h2>
+            <h2 className="text-lg font-semibold mb-4 uppercase tracking-wide">Opis</h2>
             <RichText
               className="prose max-w-none text-sm text-muted-foreground"
               data={product.description}
