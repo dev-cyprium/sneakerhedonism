@@ -7,29 +7,82 @@ import React from 'react'
 
 import { Media } from '@/components/Media'
 
+const SVE_SLUG = 'sve'
+
 export const BlogFeedBlock: React.FC<
   BlogFeedBlockProps & {
     id?: DefaultDocumentIDType
+    searchParams?: { category?: string }
   }
-> = async ({ id, heading, postsPerPage = 50 }) => {
+> = async ({ id, heading, postsPerPage = 50, searchParams }) => {
   const payload = await getPayload({ config: configPromise })
+  const limit = postsPerPage ?? 50
+  const category = searchParams?.category ?? SVE_SLUG
 
-  const posts = await payload.find({
-    collection: 'posts',
-    depth: 1,
-    limit: postsPerPage,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-publishedOn',
-    where: {
-      _status: { equals: 'published' },
-    },
-  })
+  const [tagsResult, postsResult] = await Promise.all([
+    payload.find({
+      collection: 'tags',
+      depth: 0,
+      limit: 100,
+      overrideAccess: false,
+      pagination: false,
+      sort: 'title',
+    }),
+    (async () => {
+      const where: { _status: { equals: 'published' }; tags?: { contains: number } } = {
+        _status: { equals: 'published' },
+      }
+      if (category !== SVE_SLUG) {
+        const tagBySlug = await payload.find({
+          collection: 'tags',
+          depth: 0,
+          limit: 1,
+          overrideAccess: false,
+          pagination: false,
+          where: { slug: { equals: category } },
+        })
+        const tagId = tagBySlug.docs[0]?.id
+        if (tagId) where.tags = { contains: tagId }
+      }
+      return payload.find({
+        collection: 'posts',
+        depth: 1,
+        limit,
+        overrideAccess: false,
+        pagination: false,
+        sort: '-publishedOn',
+        where,
+      })
+    })(),
+  ])
+
+  const posts = postsResult
+  const filterOptions = [
+    { slug: SVE_SLUG, title: 'Sve' },
+    ...tagsResult.docs.map((t) => ({ slug: (t as { slug?: string }).slug ?? '', title: (t as { title?: string }).title ?? '' })),
+  ].filter((o) => o.slug)
 
   return (
     <section className="my-16" id={`block-${id}`}>
       <div className="container">
         {heading && <h2 className="mb-8 text-4xl font-bold tracking-tight">{heading}</h2>}
+
+        {/* Category filters: "Sve" shows all, others filter by tag */}
+        <nav className="mb-8 flex flex-wrap gap-2" aria-label="Filter po kategoriji">
+          {filterOptions.map((opt) => (
+            <Link
+              key={opt.slug}
+              href={opt.slug === SVE_SLUG ? '/blog' : `/blog?category=${encodeURIComponent(opt.slug)}`}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                category === opt.slug
+                  ? 'bg-accent-brand text-accent-brand-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {opt.title}
+            </Link>
+          ))}
+        </nav>
 
         {posts.docs.length === 0 ? (
           <p className="text-muted-foreground">Nema objavljenih članaka.</p>

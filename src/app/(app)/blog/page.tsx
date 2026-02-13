@@ -12,8 +12,13 @@ import { notFound } from 'next/navigation'
 
 const BLOG_PAGE_SLUG = 'blog'
 
-export default async function BlogPage() {
+type BlogPageProps = {
+  searchParams: Promise<{ category?: string }>
+}
+
+export default async function BlogPage({ searchParams: searchParamsPromise }: BlogPageProps) {
   const page = await queryPageBySlug({ slug: BLOG_PAGE_SLUG })
+  const searchParams = await searchParamsPromise
 
   if (!page) {
     return notFound()
@@ -24,7 +29,7 @@ export default async function BlogPage() {
   return (
     <article className="pt-16 pb-24">
       <RenderHero {...hero} />
-      <RenderBlocks blocks={layout} />
+      <RenderBlocks blocks={layout} searchParams={searchParams} />
     </article>
   )
 }
