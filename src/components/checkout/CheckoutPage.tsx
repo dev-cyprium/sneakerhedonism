@@ -78,6 +78,53 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [])
 
+  const handleEccPayment = useCallback(async () => {
+    setProcessingPayment(true)
+    setError(null)
+
+    try {
+      const paymentData = (await initiatePayment('ecc', {
+        additionalData: {
+          ...(email ? { customerEmail: email } : {}),
+          billingAddress,
+          shippingAddress: billingAddressSameAsShipping ? billingAddress : shippingAddress,
+        },
+      })) as Record<string, unknown>
+
+      if (!paymentData?.transactionID || !paymentData?.gatewayUrl || !paymentData?.formFields) {
+        throw new Error('Failed to initiate card payment.')
+      }
+
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = paymentData.gatewayUrl as string
+      form.style.display = 'none'
+
+      const formFields = paymentData.formFields as Record<string, string>
+      for (const [name, value] of Object.entries(formFields)) {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = name
+        input.value = value
+        form.appendChild(input)
+      }
+
+      document.body.appendChild(form)
+      form.submit()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong.'
+      setError(msg)
+      toast.error(msg)
+      setProcessingPayment(false)
+    }
+  }, [
+    initiatePayment,
+    email,
+    billingAddress,
+    billingAddressSameAsShipping,
+    shippingAddress,
+  ])
+
   const handleCodPayment = useCallback(async () => {
     setProcessingPayment(true)
     setError(null)
@@ -336,18 +383,29 @@ export const CheckoutPage: React.FC = () => {
                 )}
               </button>
 
-              <div className="flex items-center gap-4 p-5 rounded-lg border-2 border-primary/10 opacity-50">
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  void handleEccPayment()
+                }}
+                disabled={isProcessingPayment}
+                className="flex items-center gap-4 p-5 rounded-lg border-2 border-primary/20 hover:border-primary/50 transition-colors text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
                   <CreditCard className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-lg">Kartica</p>
-                  <p className="text-sm text-primary/60">Uskoro dostupno</p>
+                  <p className="font-medium text-lg">Plaćanje karticom</p>
+                  <p className="text-sm text-primary/60">
+                    Visa, MasterCard, Dina
+                  </p>
                 </div>
-                <span className="text-xs font-medium bg-primary/10 px-3 py-1 rounded-full">
-                  Uskoro
-                </span>
-              </div>
+                {isProcessingPayment ? (
+                  <LoadingSpinner />
+                ) : (
+                  <span className="text-sm font-medium text-primary/80">Izaberi</span>
+                )}
+              </button>
             </div>
 
             <Button

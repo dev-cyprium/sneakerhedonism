@@ -17,8 +17,8 @@ export type PriceInfo = {
 
 /**
  * Resolves price for a product with an optional specific variant.
- * Rule: variant price overrides base price when both exist.
- * Sale price takes precedence over regular price when set.
+ * Rule: Sale/discount price always takes precedence when set (product or variant).
+ * Variant price overrides base price when both exist at the same tier.
  */
 export function resolveItemPrice(
   product: Product | Partial<Product>,
@@ -29,9 +29,10 @@ export function resolveItemPrice(
   const baseSalePrice = product.salePriceInRSD
   const basePrice = product.priceInRSD
 
+  // Prefer any sale price over any regular price (discount always wins)
   if (variantSalePrice != null && typeof variantSalePrice === 'number') return variantSalePrice
-  if (variantPrice != null && typeof variantPrice === 'number') return variantPrice
   if (baseSalePrice != null && typeof baseSalePrice === 'number') return baseSalePrice
+  if (variantPrice != null && typeof variantPrice === 'number') return variantPrice
   if (basePrice != null && typeof basePrice === 'number') return basePrice
   return undefined
 }

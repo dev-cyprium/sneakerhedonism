@@ -9,6 +9,7 @@ import { defaultCountries } from '@payloadcms/plugin-ecommerce/client/react'
 
 import { stripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
 import { codAdapter } from '@/payments/cod-adapter'
+import { eccAdapter } from '@/payments/ecc-adapter'
 
 import { Page, Post, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -143,6 +144,7 @@ export const plugins: Plugin[] = [
     payments: {
       paymentMethods: [
         codAdapter(),
+        eccAdapter(),
         stripeAdapter({
           secretKey: process.env.STRIPE_SECRET_KEY!,
           publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,

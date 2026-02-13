@@ -39,10 +39,15 @@ export const Providers: React.FC<{
                     inventory: true,
                     meta: true,
                     enableVariants: true,
+                    priceInRSD: true,
+                    salePriceInRSD: true,
                   },
                   variants: {
                     title: true,
                     inventory: true,
+                    options: true,
+                    priceInRSD: true,
+                    salePriceInRSD: true,
                   },
                 },
               },
@@ -51,6 +56,12 @@ export const Providers: React.FC<{
               {
                 name: 'cod',
                 label: 'Plaćanje pouzećem',
+                initiatePayment: true,
+                confirmOrder: true,
+              },
+              {
+                name: 'ecc',
+                label: 'Plaćanje karticom',
                 initiatePayment: true,
                 confirmOrder: true,
               },

@@ -28,6 +28,7 @@ import { Pages } from '@/collections/Pages'
 import { Posts } from '@/collections/Posts'
 import { Tags } from '@/collections/Tags'
 import { Users } from '@/collections/Users'
+import { EccSettings } from '@/globals/EccSettings'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
 import { SiteSettings } from '@/globals/SiteSettings'
@@ -97,7 +98,7 @@ export default buildConfig({
   }),
   //email: nodemailerAdapter(),
   endpoints: [],
-  globals: [Header, Footer, SiteSettings],
+  globals: [Header, Footer, SiteSettings, EccSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

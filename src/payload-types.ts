@@ -138,11 +138,13 @@ export interface Config {
     header: Header;
     footer: Footer;
     'site-settings': SiteSetting;
+    'ecc-settings': EccSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'ecc-settings': EccSettingsSelect<false> | EccSettingsSelect<true>;
   };
   locale: null;
   user: User;
@@ -1120,9 +1122,16 @@ export interface Transaction {
         id?: string | null;
       }[]
     | null;
-  paymentMethod?: ('cod' | 'stripe') | null;
+  paymentMethod?: ('cod' | 'ecc' | 'stripe') | null;
   cod?: {
     note?: string | null;
+  };
+  ecc?: {
+    tranCode?: string | null;
+    approvalCode?: string | null;
+    proxyPan?: string | null;
+    rrn?: string | null;
+    xid?: string | null;
   };
   stripe?: {
     customerID?: string | null;
@@ -2217,6 +2226,15 @@ export interface TransactionsSelect<T extends boolean = true> {
     | {
         note?: T;
       };
+  ecc?:
+    | T
+    | {
+        tranCode?: T;
+        approvalCode?: T;
+        proxyPan?: T;
+        rrn?: T;
+        xid?: T;
+      };
   stripe?:
     | T
     | {
@@ -2377,6 +2395,53 @@ export interface SiteSetting {
   createdAt?: string | null;
 }
 /**
+ * ECC (eCommerceConnect) payment gateway configuration for card payments.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ecc-settings".
+ */
+export interface EccSetting {
+  id: number;
+  /**
+   * Shown to customers at checkout.
+   */
+  title?: string | null;
+  /**
+   * Payment method description shown at checkout.
+   */
+  description?: string | null;
+  /**
+   * Bank-assigned merchant identifier.
+   */
+  merchantId: string;
+  /**
+   * Bank-assigned terminal identifier.
+   */
+  terminalId: string;
+  /**
+   * ISO 4217 numeric currency code. 941 = RSD.
+   */
+  currency: string;
+  /**
+   * 1 = pre-authorization, 0 = direct capture.
+   */
+  delay?: ('1' | '0') | null;
+  /**
+   * Bank payment gateway endpoint URL.
+   */
+  gatewayUrl: string;
+  /**
+   * Language locale for the bank payment page.
+   */
+  locale?: string | null;
+  /**
+   * The URL path configured in the bank portal for callbacks. Change this if you update it on the bank side.
+   */
+  callbackPath?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -2449,6 +2514,24 @@ export interface FooterSelect<T extends boolean = true> {
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
   defaultSizeGuide?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ecc-settings_select".
+ */
+export interface EccSettingsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  merchantId?: T;
+  terminalId?: T;
+  currency?: T;
+  delay?: T;
+  gatewayUrl?: T;
+  locale?: T;
+  callbackPath?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

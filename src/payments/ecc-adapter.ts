@@ -1,21 +1,48 @@
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 import type { CollectionSlug } from 'payload'
 
-export const codAdapter = (): PaymentAdapter => {
+import {
+  buildOutgoingSignData,
+  formatPurchaseTime,
+  getPrivateKey,
+  signRequest,
+} from './ecc/crypto'
+
+export const eccAdapter = (): PaymentAdapter => {
   return {
-    name: 'cod',
-    label: 'Pay on Delivery',
+    name: 'ecc',
+    label: 'Card Payment (ECC)',
     group: {
-      name: 'cod',
+      name: 'ecc',
       type: 'group',
       admin: {
-        condition: (data) => data?.paymentMethod === 'cod',
+        condition: (data) => data?.paymentMethod === 'ecc',
       },
       fields: [
         {
-          name: 'note',
+          name: 'tranCode',
           type: 'text',
-          label: 'COD Note',
+          label: 'Transaction Code',
+        },
+        {
+          name: 'approvalCode',
+          type: 'text',
+          label: 'Approval Code',
+        },
+        {
+          name: 'proxyPan',
+          type: 'text',
+          label: 'Masked Card Number',
+        },
+        {
+          name: 'rrn',
+          type: 'text',
+          label: 'RRN',
+        },
+        {
+          name: 'xid',
+          type: 'text',
+          label: 'XID',
         },
       ],
     },
@@ -31,7 +58,7 @@ export const codAdapter = (): PaymentAdapter => {
         throw new Error('A valid customer email is required.')
       }
 
-      // Calculate amount from cart items since subtotal may be 0
+      // Calculate amount from cart items
       const priceField = `priceIn${currency.toUpperCase()}`
       const saleField = `salePriceIn${currency.toUpperCase()}`
       let amount = 0
@@ -87,6 +114,19 @@ export const codAdapter = (): PaymentAdapter => {
         }
       })
 
+      // Fetch ECC settings from CMS
+      const eccSettings = await payload.findGlobal({
+        slug: 'ecc-settings' as any,
+      }) as Record<string, any>
+
+      const { merchantId, terminalId, currency: eccCurrency, delay, gatewayUrl, locale } =
+        eccSettings
+
+      if (!merchantId || !terminalId || !gatewayUrl) {
+        throw new Error('ECC payment gateway is not configured. Please set up ECC Settings in the admin panel.')
+      }
+
+      // Create pending transaction
       const transaction = await payload.create({
         collection: transactionsSlug as CollectionSlug,
         data: {
@@ -96,14 +136,64 @@ export const codAdapter = (): PaymentAdapter => {
           cart: cart.id,
           currency: currency.toUpperCase() as 'RSD',
           items: flattenedCart,
-          paymentMethod: 'cod' as const,
+          paymentMethod: 'ecc' as const,
           status: 'pending' as const,
         },
       })
 
+      // Build bank form fields
+      const purchaseTime = formatPurchaseTime()
+      const orderId = String(transaction.id)
+      const bankAmount = String(amount * 100) // Convert to smallest unit (paras)
+      const sd = 'aa'
+
+      // Build product description (first 20 chars)
+      const productNames = cart.items
+        .map((item) => {
+          if (typeof item.product === 'object' && item.product) {
+            return (item.product as Record<string, any>).title || ''
+          }
+          return ''
+        })
+        .filter(Boolean)
+        .join(', ')
+      const purchaseDesc = productNames.slice(0, 20)
+
+      // Sign the request
+      const signData = buildOutgoingSignData({
+        merchantId,
+        terminalId,
+        purchaseTime,
+        orderId,
+        delay: delay || '1',
+        currency: eccCurrency || '941',
+        totalAmount: bankAmount,
+        sd,
+      })
+
+      const privateKey = getPrivateKey()
+      const signature = signRequest(signData, privateKey)
+
       return {
-        message: 'COD order initiated',
+        message: 'ECC payment initiated',
         transactionID: transaction.id,
+        gatewayUrl,
+        formFields: {
+          Version: '1',
+          MerchantID: merchantId,
+          TerminalID: terminalId,
+          TotalAmount: bankAmount,
+          AltTotalAmount: bankAmount,
+          Currency: eccCurrency || '941',
+          AltCurrency: eccCurrency || '941',
+          locale: locale || 'sr',
+          SD: sd,
+          OrderID: orderId,
+          Delay: delay || '1',
+          PurchaseTime: purchaseTime,
+          PurchaseDesc: purchaseDesc,
+          Signature: signature,
+        },
       }
     },
     confirmOrder: async ({
@@ -116,7 +206,6 @@ export const codAdapter = (): PaymentAdapter => {
       const payload = req.payload
       const customerEmail = data.customerEmail
       const transactionID = data.transactionID
-      const shippingAddress = data.shippingAddress
 
       if (!transactionID) {
         throw new Error('Transaction ID is required.')
@@ -139,9 +228,9 @@ export const codAdapter = (): PaymentAdapter => {
         data: {
           amount: txn.amount,
           currency: txn.currency,
-          ...(req.user ? { customer: req.user.id } : { customerEmail }),
+          ...(txn.customer ? { customer: txn.customer } : { customerEmail: customerEmail || txn.customerEmail }),
           items: txn.items,
-          ...(shippingAddress ? { shippingAddress } : {}),
+          ...(data.shippingAddress ? { shippingAddress: data.shippingAddress } : {}),
           status: 'processing',
           transactions: [transaction.id],
         },
@@ -158,17 +247,24 @@ export const codAdapter = (): PaymentAdapter => {
         })
       }
 
+      // Update transaction with ECC-specific data if provided
+      const updateData: Record<string, any> = {
+        order: order.id,
+        status: 'succeeded',
+      }
+
+      if (data.eccData) {
+        updateData.ecc = data.eccData
+      }
+
       await payload.update({
         id: transaction.id,
         collection: transactionsSlug as CollectionSlug,
-        data: {
-          order: order.id,
-          status: 'succeeded',
-        } as any,
+        data: updateData as any,
       })
 
       return {
-        message: 'Order placed successfully. Payment on delivery.',
+        message: 'Card payment processed successfully.',
         orderID: order.id,
         transactionID: transaction.id,
       }
