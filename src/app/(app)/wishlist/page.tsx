@@ -17,7 +17,7 @@ export default function WishlistPage() {
           <WishlistContent />
         </Suspense>
       </div>
-      <NovoBlock limit={8} />
+      <NovoBlock blockType="novo" limit={8} />
     </>
   )
 }
