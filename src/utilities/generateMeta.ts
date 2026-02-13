@@ -5,7 +5,9 @@ import type { Page, Post, Product } from '../payload-types'
 import { getServerSideURL } from './getURL'
 import { mergeOpenGraph } from './mergeOpenGraph'
 
-export const generateMeta = async (args: { doc: Page | Post | Product }): Promise<Metadata> => {
+export const generateMeta = async (args: {
+  doc: Page | Post | Product | null | undefined
+}): Promise<Metadata> => {
   const { doc } = args || {}
 
   const ogImage =

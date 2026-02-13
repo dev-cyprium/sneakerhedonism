@@ -27,7 +27,7 @@ export async function generateStaticParams() {
     },
   })
 
-  return posts.docs.map(({ slug }) => ({ slug }))
+  return (posts.docs ?? []).map(({ slug }) => ({ slug }))
 }
 
 type Args = {
@@ -51,19 +51,25 @@ export default async function BlogPostPage({ params }: Args) {
       })
     : null
 
-  const payload = await getPayload({ config: configPromise })
-  const { docs: recentPosts } = await payload.find({
-    collection: 'posts',
-    depth: 1,
-    limit: 5,
-    sort: '-publishedOn',
-    where: {
-      and: [
-        { _status: { equals: 'published' } },
-        { id: { not_equals: post.id } },
-      ],
-    },
-  })
+  let recentPosts: Post[] = []
+  try {
+    const payload = await getPayload({ config: configPromise })
+    const result = await payload.find({
+      collection: 'posts',
+      depth: 1,
+      limit: 5,
+      sort: '-publishedOn',
+      where: {
+        and: [
+          { _status: { equals: 'published' } },
+          { id: { not_equals: post.id } },
+        ],
+      },
+    })
+    recentPosts = result.docs
+  } catch {
+    // Sidebar recent posts are non-critical — render page without them
+  }
 
   return (
     <article className="pb-24">
