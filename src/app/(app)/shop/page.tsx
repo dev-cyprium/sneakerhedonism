@@ -52,6 +52,13 @@ export default async function ShopPage({ searchParams }: Props) {
     .filter((c) => !c.parent)
     .map((c) => ({ id: c.id, title: c.title, slug: c.slug }))
 
+  // "Sve" = show all products (virtual category, first in list)
+  const SVE_SLUG = 'sve'
+  const categoriesForFilter = [
+    { id: 0, title: 'Sve', slug: SVE_SLUG },
+    ...parentCategories,
+  ]
+
   // --- Resolve selected parent category ---
   let categoryIds: number[] = []
   let childCategories = allCategories.docs.filter(() => false) // empty typed array
@@ -59,12 +66,16 @@ export default async function ShopPage({ searchParams }: Props) {
 
   if (category) {
     const slug = Array.isArray(category) ? category[0] : category
-    const cat = allCategories.docs.find((c) => c.slug === slug)
-    if (cat) {
-      selectedCategoryId = cat.id
-      categoryIds.push(cat.id)
-      childCategories = allCategories.docs.filter((c) => c.parent === cat.id)
-      categoryIds.push(...childCategories.map((c) => c.id))
+    if (slug === SVE_SLUG) {
+      // "Sve" = no category filter, show all
+    } else {
+        const cat = allCategories.docs.find((c) => c.slug === slug)
+      if (cat) {
+        selectedCategoryId = cat.id
+        categoryIds.push(cat.id)
+        childCategories = allCategories.docs.filter((c) => c.parent === cat.id)
+        categoryIds.push(...childCategories.map((c) => c.id))
+      }
     }
   }
 
@@ -235,7 +246,7 @@ export default async function ShopPage({ searchParams }: Props) {
   return (
     <div className="flex flex-col md:flex-row items-start gap-8 md:gap-10">
       <ShopSidebar
-        parentCategories={parentCategories}
+        parentCategories={categoriesForFilter}
         brands={brands}
         variantTypes={variantTypes}
         priceRange={priceRange}
