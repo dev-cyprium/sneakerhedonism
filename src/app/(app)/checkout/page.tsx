@@ -1,16 +1,23 @@
 import type { Metadata } from 'next'
 
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 import { CheckoutPage } from '@/components/checkout/CheckoutPage'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 export default function Checkout() {
   return (
     <div className="container min-h-[90vh] flex">
       <h1 className="sr-only">Checkout</h1>
 
-      <CheckoutPage />
+      <Suspense fallback={
+        <div className="py-12 w-full flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      }>
+        <CheckoutPage />
+      </Suspense>
     </div>
   )
 }
