@@ -28,7 +28,7 @@ export function HeaderIcons() {
           <Heart className="h-[26px] w-[26px] stroke-[1.5]" />
         </Link>
         <Link
-          href="/shop"
+          href="/shop#search"
           className="text-nav-text hover:text-nav-text-hover transition-colors"
           aria-label="Search"
         >

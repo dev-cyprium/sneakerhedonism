@@ -16,16 +16,28 @@ type Props = {
   searchParams: Promise<SearchParams>
 }
 
+const VALID_SORT = ['title', '-title', '-createdAt', 'priceInRSD', '-priceInRSD'] as const
+
 export default async function ShopPage({ searchParams }: Props) {
   const params = await searchParams
   const {
-    q: searchValue,
-    sort,
+    q: searchValueRaw,
+    sort: sortRaw,
     category,
     brand,
     minPrice,
     maxPrice,
   } = params
+
+  const searchValue = typeof searchValueRaw === 'string'
+    ? searchValueRaw
+    : Array.isArray(searchValueRaw)
+      ? searchValueRaw[0] ?? ''
+      : ''
+
+  const sort = sortRaw && VALID_SORT.includes(sortRaw as (typeof VALID_SORT)[number])
+    ? (sortRaw as string)
+    : undefined
   const payload = await getPayload({ config: configPromise })
 
   // --- Fetch all categories (depth 0 for raw IDs) ---
@@ -183,12 +195,7 @@ export default async function ShopPage({ searchParams }: Props) {
   }
 
   if (searchValue) {
-    whereConditions.push({
-      or: [
-        { title: { like: searchValue } },
-        { description: { like: searchValue } },
-      ],
-    })
+    whereConditions.push({ title: { like: searchValue } })
   }
 
   if (variantProductIds !== null) {
