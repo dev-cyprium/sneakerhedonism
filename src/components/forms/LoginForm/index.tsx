@@ -71,7 +71,7 @@ export const LoginForm: React.FC = () => {
         <p className="text-sm text-muted-foreground -mt-1">
           Zaboravili ste lozinku?{' '}
           <Link
-            href={`/recover-password${allParams}`}
+            href={`/forgot-password${allParams}`}
             className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
           >
             Kliknite ovde da je resetujete

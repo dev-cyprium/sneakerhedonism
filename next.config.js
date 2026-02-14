@@ -7,11 +7,9 @@ const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || ''
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   serverExternalPackages: ['sharp'],
   images: {
+    qualities: [75, 90],
     remotePatterns: [
       ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
         const url = new URL(item)
@@ -52,15 +50,6 @@ const nextConfig = {
         ],
       },
     ]
-  },
-  webpack: (webpackConfig) => {
-    webpackConfig.resolve.extensionAlias = {
-      '.cjs': ['.cts', '.cjs'],
-      '.js': ['.ts', '.tsx', '.js', '.jsx'],
-      '.mjs': ['.mts', '.mjs'],
-    }
-
-    return webpackConfig
   },
 }
 

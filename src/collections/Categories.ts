@@ -4,7 +4,7 @@ import type { CollectionAfterChangeHook, CollectionConfig, Where } from 'payload
 
 const revalidateHeaderOnChange: CollectionAfterChangeHook = ({ req: { payload } }) => {
   payload.logger.info('Category changed — revalidating header')
-  revalidateTag('global_header')
+  revalidateTag('global_header', { expire: 0 })
 }
 
 export const Categories: CollectionConfig = {

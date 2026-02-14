@@ -3,7 +3,7 @@ import { ProductGridItem } from '@/components/ProductGridItem'
 import { ShopSidebar } from '@/components/shop/ShopSidebar'
 import configPromise from '@payload-config'
 import { getPayload, Where } from 'payload'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 export const metadata = {
   description: 'Pretražite proizvode u našoj ponudi.',
@@ -17,6 +17,144 @@ type Props = {
 }
 
 const VALID_SORT = ['title', '-title', '-createdAt', 'priceInRSD', '-priceInRSD'] as const
+
+function ProductGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex flex-col overflow-hidden rounded-xl border border-border/60 bg-background"
+        >
+          <div className="aspect-square w-full animate-pulse bg-muted" />
+          <div className="flex flex-col gap-1.5 px-4 py-4">
+            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+type ProductGridProps = {
+  searchValue: string
+  sort: string | undefined
+  categoryIds: number[]
+  brandId: number | null
+  variantProductIds: number[] | null
+  minPriceVal: number | null
+  maxPriceVal: number | null
+}
+
+async function ShopProductGrid({
+  searchValue,
+  sort,
+  categoryIds,
+  brandId,
+  variantProductIds,
+  minPriceVal,
+  maxPriceVal,
+}: ProductGridProps) {
+  const payload = await getPayload({ config: configPromise })
+
+  const whereConditions: Where[] = [{ _status: { equals: 'published' } }]
+
+  if (brandId) {
+    whereConditions.push({ categories: { in: [brandId] } })
+  } else if (categoryIds.length > 0) {
+    whereConditions.push({ categories: { in: categoryIds } })
+  }
+
+  if (searchValue) {
+    whereConditions.push({ title: { like: searchValue } })
+  }
+
+  if (variantProductIds !== null) {
+    if (variantProductIds.length > 0) {
+      whereConditions.push({ id: { in: variantProductIds } })
+    } else {
+      whereConditions.push({ id: { equals: -1 } })
+    }
+  }
+
+  if (minPriceVal && !isNaN(minPriceVal)) {
+    whereConditions.push({ priceInRSD: { greater_than_equal: minPriceVal } })
+  }
+  if (maxPriceVal && !isNaN(maxPriceVal)) {
+    whereConditions.push({ priceInRSD: { less_than_equal: maxPriceVal } })
+  }
+
+  const products = await payload.find({
+    collection: 'products',
+    draft: false,
+    overrideAccess: false,
+    select: {
+      title: true,
+      slug: true,
+      gallery: true,
+      categories: true,
+      priceInRSD: true,
+    },
+    ...(sort ? { sort } : { sort: 'title' }),
+    where: { and: whereConditions },
+  })
+
+  const resultsText = products.docs.length > 1 ? 'rezultata' : 'rezultat'
+
+  return (
+    <>
+      {searchValue && products.docs.length > 0 ? (
+        <p className="mb-4">
+          {`Prikazano ${products.docs.length} ${resultsText} za `}
+          <span className="font-bold">&quot;{searchValue}&quot;</span>
+        </p>
+      ) : null}
+
+      {products.docs.length === 0 && (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-10 py-12 text-center shadow-sm max-w-md">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 120 120"
+              fill="none"
+              className="h-28 w-28 text-muted-foreground/40"
+            >
+              <rect x="20" y="30" width="80" height="60" rx="6" stroke="currentColor" strokeWidth="2" />
+              <path d="M20 45h80" stroke="currentColor" strokeWidth="2" />
+              <circle cx="60" cy="70" r="12" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />
+              <path d="M56 66l8 8M64 66l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="M38 38h6M50 38h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <div>
+              <p className="text-lg font-semibold text-foreground">
+                {searchValue
+                  ? 'Nema proizvoda koji odgovaraju pojmu'
+                  : 'Nema pronađenih proizvoda'}
+              </p>
+              {searchValue && (
+                <p className="mt-1 text-sm font-bold text-foreground">
+                  &quot;{searchValue}&quot;
+                </p>
+              )}
+              <p className="mt-2 text-sm text-muted-foreground">
+                Pokušajte sa drugim filterima ili pretragom.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {products?.docs.length > 0 ? (
+        <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.docs.map((product) => {
+            return <ProductGridItem key={product.id} product={product} />
+          })}
+        </Grid>
+      ) : null}
+    </>
+  )
+}
 
 export default async function ShopPage({ searchParams }: Props) {
   const params = await searchParams
@@ -38,21 +176,49 @@ export default async function ShopPage({ searchParams }: Props) {
   const sort = sortRaw && VALID_SORT.includes(sortRaw as (typeof VALID_SORT)[number])
     ? (sortRaw as string)
     : undefined
+
   const payload = await getPayload({ config: configPromise })
 
-  // --- Fetch all categories (depth 0 for raw IDs) ---
-  const allCategories = await payload.find({
-    collection: 'categories',
-    sort: 'title',
-    pagination: false,
-    depth: 0,
-  })
+  // --- Parallelize independent queries ---
+  const [allCategories, variantTypesResult, [minResult, maxResult]] = await Promise.all([
+    payload.find({
+      collection: 'categories',
+      sort: 'title',
+      pagination: false,
+      depth: 0,
+    }),
+    payload.find({
+      collection: 'variantTypes',
+      depth: 1,
+      pagination: false,
+    }),
+    Promise.all([
+      payload.find({
+        collection: 'products',
+        sort: 'priceInRSD',
+        limit: 1,
+        where: { _status: { equals: 'published' }, priceInRSD: { greater_than: 0 } },
+        select: { priceInRSD: true },
+      }),
+      payload.find({
+        collection: 'products',
+        sort: '-priceInRSD',
+        limit: 1,
+        where: { _status: { equals: 'published' }, priceInRSD: { greater_than: 0 } },
+        select: { priceInRSD: true },
+      }),
+    ]),
+  ])
+
+  const priceRange = {
+    min: minResult.docs[0]?.priceInRSD ?? 0,
+    max: maxResult.docs[0]?.priceInRSD ?? 100000,
+  }
 
   const parentCategories = allCategories.docs
     .filter((c) => !c.parent)
     .map((c) => ({ id: c.id, title: c.title, slug: c.slug }))
 
-  // "Sve" = show all products (virtual category, first in list)
   const SVE_SLUG = 'sve'
   const categoriesForFilter = [
     { id: 0, title: 'Sve', slug: SVE_SLUG },
@@ -61,15 +227,13 @@ export default async function ShopPage({ searchParams }: Props) {
 
   // --- Resolve selected parent category ---
   let categoryIds: number[] = []
-  let childCategories = allCategories.docs.filter(() => false) // empty typed array
+  let childCategories = allCategories.docs.filter(() => false)
   let selectedCategoryId: number | null = null
 
   if (category) {
     const slug = Array.isArray(category) ? category[0] : category
-    if (slug === SVE_SLUG) {
-      // "Sve" = no category filter, show all
-    } else {
-        const cat = allCategories.docs.find((c) => c.slug === slug)
+    if (slug !== SVE_SLUG) {
+      const cat = allCategories.docs.find((c) => c.slug === slug)
       if (cat) {
         selectedCategoryId = cat.id
         categoryIds.push(cat.id)
@@ -128,13 +292,7 @@ export default async function ShopPage({ searchParams }: Props) {
       .sort((a, b) => a.title.localeCompare(b.title))
   }
 
-  // --- Fetch variant types with options ---
-  const variantTypesResult = await payload.find({
-    collection: 'variantTypes',
-    depth: 1,
-    pagination: false,
-  })
-
+  // --- Process variant types ---
   const variantTypes = variantTypesResult.docs.map((vt) => ({
     id: vt.id,
     label: vt.label,
@@ -174,74 +332,9 @@ export default async function ShopPage({ searchParams }: Props) {
     )
   }
 
-  // --- Fetch price range (min/max across all published products) ---
-  const [minResult, maxResult] = await Promise.all([
-    payload.find({
-      collection: 'products',
-      sort: 'priceInRSD',
-      limit: 1,
-      where: { _status: { equals: 'published' }, priceInRSD: { greater_than: 0 } },
-      select: { priceInRSD: true },
-    }),
-    payload.find({
-      collection: 'products',
-      sort: '-priceInRSD',
-      limit: 1,
-      where: { _status: { equals: 'published' }, priceInRSD: { greater_than: 0 } },
-      select: { priceInRSD: true },
-    }),
-  ])
-  const priceRange = {
-    min: minResult.docs[0]?.priceInRSD ?? 0,
-    max: maxResult.docs[0]?.priceInRSD ?? 100000,
-  }
-
-  // --- Build product query ---
-  const whereConditions: Where[] = [{ _status: { equals: 'published' } }]
-
-  if (brandId) {
-    whereConditions.push({ categories: { in: [brandId] } })
-  } else if (categoryIds.length > 0) {
-    whereConditions.push({ categories: { in: categoryIds } })
-  }
-
-  if (searchValue) {
-    whereConditions.push({ title: { like: searchValue } })
-  }
-
-  if (variantProductIds !== null) {
-    if (variantProductIds.length > 0) {
-      whereConditions.push({ id: { in: variantProductIds } })
-    } else {
-      whereConditions.push({ id: { equals: -1 } })
-    }
-  }
-
+  // --- Price filter values ---
   const minPriceVal = minPrice ? Number(Array.isArray(minPrice) ? minPrice[0] : minPrice) : null
   const maxPriceVal = maxPrice ? Number(Array.isArray(maxPrice) ? maxPrice[0] : maxPrice) : null
-  if (minPriceVal && !isNaN(minPriceVal)) {
-    whereConditions.push({ priceInRSD: { greater_than_equal: minPriceVal } })
-  }
-  if (maxPriceVal && !isNaN(maxPriceVal)) {
-    whereConditions.push({ priceInRSD: { less_than_equal: maxPriceVal } })
-  }
-
-  const products = await payload.find({
-    collection: 'products',
-    draft: false,
-    overrideAccess: false,
-    select: {
-      title: true,
-      slug: true,
-      gallery: true,
-      categories: true,
-      priceInRSD: true,
-    },
-    ...(sort ? { sort } : { sort: 'title' }),
-    where: { and: whereConditions },
-  })
-
-  const resultsText = products.docs.length > 1 ? 'rezultata' : 'rezultat'
 
   return (
     <div className="flex flex-col md:flex-row items-start gap-8 md:gap-10">
@@ -252,54 +345,17 @@ export default async function ShopPage({ searchParams }: Props) {
         priceRange={priceRange}
       />
       <div className="min-h-screen w-full">
-        {searchValue && products.docs.length > 0 ? (
-          <p className="mb-4">
-            {`Prikazano ${products.docs.length} ${resultsText} za `}
-            <span className="font-bold">&quot;{searchValue}&quot;</span>
-          </p>
-        ) : null}
-
-        {products.docs.length === 0 && (
-          <div className="flex items-center justify-center py-20">
-            <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-10 py-12 text-center shadow-sm max-w-md">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 120 120"
-                fill="none"
-                className="h-28 w-28 text-muted-foreground/40"
-              >
-                <rect x="20" y="30" width="80" height="60" rx="6" stroke="currentColor" strokeWidth="2" />
-                <path d="M20 45h80" stroke="currentColor" strokeWidth="2" />
-                <circle cx="60" cy="70" r="12" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />
-                <path d="M56 66l8 8M64 66l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M38 38h6M50 38h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <div>
-                <p className="text-lg font-semibold text-foreground">
-                  {searchValue
-                    ? 'Nema proizvoda koji odgovaraju pojmu'
-                    : 'Nema pronađenih proizvoda'}
-                </p>
-                {searchValue && (
-                  <p className="mt-1 text-sm font-bold text-foreground">
-                    &quot;{searchValue}&quot;
-                  </p>
-                )}
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Pokušajte sa drugim filterima ili pretragom.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {products?.docs.length > 0 ? (
-          <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.docs.map((product) => {
-              return <ProductGridItem key={product.id} product={product} />
-            })}
-          </Grid>
-        ) : null}
+        <Suspense fallback={<ProductGridSkeleton />}>
+          <ShopProductGrid
+            searchValue={searchValue}
+            sort={sort}
+            categoryIds={categoryIds}
+            brandId={brandId}
+            variantProductIds={variantProductIds}
+            minPriceVal={minPriceVal}
+            maxPriceVal={maxPriceVal}
+          />
+        </Suspense>
       </div>
     </div>
   )
