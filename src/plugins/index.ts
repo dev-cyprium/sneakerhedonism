@@ -12,6 +12,7 @@ import { eccAdapter } from '@/payments/ecc-adapter'
 
 import { Page, Post, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { AddressesCollection } from '@/collections/Addresses'
 import { OrdersCollection } from '@/collections/Orders'
 import { ProductsCollection } from '@/collections/Products'
 import { VariantsCollection } from '@/collections/Variants'
@@ -138,6 +139,7 @@ export const plugins: Plugin[] = [
       ],
     },
     addresses: {
+      addressesCollectionOverride: AddressesCollection,
       supportedCountries: [
         { label: 'Serbia', value: 'RS' },
         ...defaultCountries,
