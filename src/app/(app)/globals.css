@@ -354,3 +354,7 @@ button {
   margin-inline: auto;
 }
 
+/* EmbedSocial widget branding — keep behind page content */
+.feed-powered-by-es.es-widget-branding.es-widget-branding-slider {
+  z-index: 0 !important;
+}
