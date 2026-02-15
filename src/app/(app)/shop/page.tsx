@@ -45,6 +45,7 @@ type ProductGridProps = {
   variantProductIds: number[] | null
   minPriceVal: number | null
   maxPriceVal: number | null
+  onSale: boolean
 }
 
 async function ShopProductGrid({
@@ -55,6 +56,7 @@ async function ShopProductGrid({
   variantProductIds,
   minPriceVal,
   maxPriceVal,
+  onSale,
 }: ProductGridProps) {
   const payload = await getPayload({ config: configPromise })
 
@@ -85,16 +87,41 @@ async function ShopProductGrid({
     whereConditions.push({ priceInRSD: { less_than_equal: maxPriceVal } })
   }
 
+  if (onSale) {
+    const saleVariantProducts = await payload.find({
+      collection: 'variants',
+      where: { salePriceInRSD: { exists: true } },
+      select: { product: true },
+      pagination: false,
+      depth: 0,
+    })
+    const productIdsFromVariants = [
+      ...new Set(
+        saleVariantProducts.docs.map((v) =>
+          typeof v.product === 'number' ? v.product : (v.product as { id: number }).id,
+        ),
+      ),
+    ]
+    const saleConditions: Where[] = [{ salePriceInRSD: { exists: true } }]
+    if (productIdsFromVariants.length > 0) {
+      saleConditions.push({ id: { in: productIdsFromVariants } })
+    }
+    whereConditions.push({ or: saleConditions })
+  }
+
   const products = await payload.find({
     collection: 'products',
     draft: false,
     overrideAccess: false,
+    depth: 1,
     select: {
       title: true,
       slug: true,
       gallery: true,
       categories: true,
       priceInRSD: true,
+      salePriceInRSD: true,
+      variants: true,
     },
     ...(sort ? { sort } : { sort: 'title' }),
     where: { and: whereConditions },
@@ -165,6 +192,7 @@ export default async function ShopPage({ searchParams }: Props) {
     brand,
     minPrice,
     maxPrice,
+    onSale: onSaleRaw,
   } = params
 
   const searchValue = typeof searchValueRaw === 'string'
@@ -335,6 +363,7 @@ export default async function ShopPage({ searchParams }: Props) {
   // --- Price filter values ---
   const minPriceVal = minPrice ? Number(Array.isArray(minPrice) ? minPrice[0] : minPrice) : null
   const maxPriceVal = maxPrice ? Number(Array.isArray(maxPrice) ? maxPrice[0] : maxPrice) : null
+  const onSale = onSaleRaw === '1' || (Array.isArray(onSaleRaw) && onSaleRaw[0] === '1')
 
   return (
     <div className="flex flex-col md:flex-row items-start gap-8 md:gap-10">
@@ -354,6 +383,7 @@ export default async function ShopPage({ searchParams }: Props) {
             variantProductIds={variantProductIds}
             minPriceVal={minPriceVal}
             maxPriceVal={maxPriceVal}
+            onSale={onSale}
           />
         </Suspense>
       </div>
