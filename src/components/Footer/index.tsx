@@ -17,7 +17,7 @@ export async function Footer() {
 
   return (
     <>
-      <footer className="footer-root mt-16 border-t border-border bg-background text-sm text-muted-foreground">
+      <footer className="footer-root mt-16 border-t border-border bg-muted text-sm text-muted-foreground">
         <div className="container">
           <div className="footer-layout py-10 md:mx-auto md:max-w-6xl md:py-14">
             {hasColumns ? (
@@ -26,7 +26,7 @@ export async function Footer() {
                   <div className="footer-column space-y-8" key={column.id || `column-${columnIndex}`}>
                     {(column.sections || []).map((section, sectionIndex) => (
                       <section
-                        className="footer-section space-y-4"
+                        className="footer-section space-y-4 border-b border-border pb-6 last:border-b-0 last:pb-0"
                         key={section.id || `${column.id || columnIndex}-section-${sectionIndex}`}
                       >
                         <h2 className="footer-section-title text-sm font-semibold text-foreground">
@@ -129,7 +129,7 @@ export async function Footer() {
               </div>
             ) : (
               <div className="footer-columns grid gap-10 md:grid-cols-3 md:gap-12">
-                <div className="footer-column space-y-4">
+                <div className="footer-column space-y-4 border-b border-border pb-6">
                   <h2 className="footer-section-title text-sm font-semibold text-foreground">
                     Footer Links
                   </h2>
