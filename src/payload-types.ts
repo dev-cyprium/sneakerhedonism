@@ -2494,6 +2494,43 @@ export interface Footer {
                         blockName?: string | null;
                         blockType: 'textItem';
                       }
+                    | {
+                        links?:
+                          | {
+                              platform: 'instagram' | 'tiktok';
+                              url: string;
+                              newTab?: boolean | null;
+                              /**
+                               * Optional. Falls back to platform name.
+                               */
+                              ariaLabel?: string | null;
+                              id?: string | null;
+                            }[]
+                          | null;
+                        id?: string | null;
+                        blockName?: string | null;
+                        blockType: 'socialIconsRow';
+                      }
+                    | {
+                        content: {
+                          root: {
+                            type: string;
+                            children: {
+                              type: any;
+                              version: number;
+                              [k: string]: unknown;
+                            }[];
+                            direction: ('ltr' | 'rtl') | null;
+                            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                            indent: number;
+                            version: number;
+                          };
+                          [k: string]: unknown;
+                        };
+                        id?: string | null;
+                        blockName?: string | null;
+                        blockType: 'richContentItem';
+                      }
                   )[]
                 | null;
               id?: string | null;
@@ -2723,6 +2760,28 @@ export interface FooterSelect<T extends boolean = true> {
                           text?: T;
                           url?: T;
                           newTab?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                    socialIconsRow?:
+                      | T
+                      | {
+                          links?:
+                            | T
+                            | {
+                                platform?: T;
+                                url?: T;
+                                newTab?: T;
+                                ariaLabel?: T;
+                                id?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    richContentItem?:
+                      | T
+                      | {
+                          content?: T;
                           id?: T;
                           blockName?: T;
                         };

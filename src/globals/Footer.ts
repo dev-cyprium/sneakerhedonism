@@ -78,6 +78,71 @@ export const Footer: GlobalConfig = {
                     },
                   ],
                 },
+                {
+                  slug: 'socialIconsRow',
+                  labels: {
+                    singular: 'Social Icons Row',
+                    plural: 'Social Icons Rows',
+                  },
+                  fields: [
+                    {
+                      name: 'links',
+                      type: 'array',
+                      minRows: 1,
+                      fields: [
+                        {
+                          name: 'platform',
+                          type: 'select',
+                          required: true,
+                          defaultValue: 'instagram',
+                          options: [
+                            {
+                              label: 'Instagram',
+                              value: 'instagram',
+                            },
+                            {
+                              label: 'TikTok',
+                              value: 'tiktok',
+                            },
+                          ],
+                        },
+                        {
+                          name: 'url',
+                          type: 'text',
+                          required: true,
+                        },
+                        {
+                          name: 'newTab',
+                          type: 'checkbox',
+                          label: 'Open in new tab',
+                          defaultValue: true,
+                        },
+                        {
+                          name: 'ariaLabel',
+                          type: 'text',
+                          label: 'Accessibility label',
+                          admin: {
+                            description: 'Optional. Falls back to platform name.',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  slug: 'richContentItem',
+                  labels: {
+                    singular: 'Rich Content',
+                    plural: 'Rich Content',
+                  },
+                  fields: [
+                    {
+                      name: 'content',
+                      type: 'richText',
+                      required: true,
+                    },
+                  ],
+                },
               ],
             },
           ],
