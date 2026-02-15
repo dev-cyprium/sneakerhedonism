@@ -45,7 +45,8 @@ export const syncAddressNameToUser: CollectionAfterChangeHook = async ({ doc, re
       overrideAccess: true,
     })
   } catch (err) {
-    req.payload.logger.warn?.('syncAddressNameToUser: failed to update user name', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    req.payload.logger.warn?.(`syncAddressNameToUser: failed to update user name: ${msg}`)
   }
 
   return doc
