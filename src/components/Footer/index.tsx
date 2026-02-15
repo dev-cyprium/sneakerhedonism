@@ -1,70 +1,153 @@
-import type { Footer } from '@/payload-types'
+import type { Footer as FooterType, Media as MediaType } from '@/payload-types'
 
-import { FooterMenu } from '@/components/Footer/menu'
-import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
-import { themeToggleEnabled } from '@/providers/Theme/shared'
+import { CMSLink } from '@/components/Link'
+import { Media } from '@/components/Media'
+import { ScrollToTopButton } from '@/components/Footer/ScrollToTopButton'
 import { getCachedGlobal } from '@/utilities/getGlobals'
-import Link from 'next/link'
-import React, { Suspense } from 'react'
-import { LogoIcon } from '@/components/icons/logo'
-
-const { COMPANY_NAME, SITE_NAME } = process.env
+import React from 'react'
 
 export async function Footer() {
-  const footer: Footer = await getCachedGlobal('footer', 1)()
-  const menu = footer.navItems || []
-  const currentYear = new Date().getFullYear()
-  const copyrightDate = 2023 + (currentYear > 2023 ? `-${currentYear}` : '')
-  const skeleton = 'w-full h-6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700'
-
-  const copyrightName = COMPANY_NAME || SITE_NAME || ''
+  const footer: FooterType = await getCachedGlobal('footer', 2)()
+  const columns = footer.columns || []
+  const hasColumns = columns.length > 0
+  const paymentCards = footer.paymentCards || []
+  const fallbackNavItems = footer.navItems || []
 
   return (
-    <footer className="text-sm text-neutral-500 dark:text-neutral-400">
-      <div className="container">
-        <div className="flex w-full flex-col gap-6 border-t border-neutral-200 py-12 text-sm md:flex-row md:gap-12 dark:border-neutral-700">
-          <div>
-            <Link className="flex items-center gap-2 text-black md:pt-1 dark:text-white" href="/">
-              <LogoIcon className="w-6" />
-              <span className="sr-only">{SITE_NAME}</span>
-            </Link>
-          </div>
-          <Suspense
-            fallback={
-              <div className="flex h-[188px] w-[200px] flex-col gap-2">
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
+    <>
+      <footer className="footer-root mt-16 border-t border-border bg-background text-sm text-muted-foreground">
+        <div className="container">
+          <div className="footer-layout py-10 md:py-14">
+            {hasColumns ? (
+              <div className="footer-columns grid gap-10 md:grid-cols-3 md:gap-12">
+                {columns.map((column, columnIndex) => (
+                  <div className="footer-column space-y-8" key={column.id || `column-${columnIndex}`}>
+                    {(column.sections || []).map((section, sectionIndex) => (
+                      <section
+                        className="footer-section space-y-4"
+                        key={section.id || `${column.id || columnIndex}-section-${sectionIndex}`}
+                      >
+                        <h2 className="footer-section-title text-sm font-semibold text-foreground">
+                          {section.title}
+                        </h2>
+                        <ul className="footer-section-items space-y-2.5">
+                          {(section.items || []).map((item, itemIndex) => {
+                            const itemKey =
+                              item.id ||
+                              `${section.id || `${column.id || columnIndex}-${sectionIndex}`}-item-${itemIndex}`
+
+                            if (item.blockType === 'linkItem' && item.link) {
+                              return (
+                                <li className="footer-item leading-6" key={itemKey}>
+                                  <CMSLink
+                                    appearance="inline"
+                                    className="footer-link transition-colors hover:text-foreground"
+                                    {...item.link}
+                                  />
+                                </li>
+                              )
+                            }
+
+                            if (item.blockType === 'textItem') {
+                              const content = (
+                                <span className="footer-text-row leading-6">{item.text}</span>
+                              )
+
+                              return (
+                                <li className="footer-item leading-6" key={itemKey}>
+                                  {item.url ? (
+                                    <a
+                                      className="footer-text-link transition-colors hover:text-foreground"
+                                      href={item.url}
+                                      rel={item.newTab ? 'noopener noreferrer' : undefined}
+                                      target={item.newTab ? '_blank' : undefined}
+                                    >
+                                      {content}
+                                    </a>
+                                  ) : (
+                                    content
+                                  )}
+                                </li>
+                              )
+                            }
+
+                            return null
+                          })}
+                        </ul>
+                      </section>
+                    ))}
+                  </div>
+                ))}
               </div>
-            }
-          >
-            <FooterMenu menu={menu} />
-          </Suspense>
-          {themeToggleEnabled && (
-            <div className="md:ml-auto flex flex-col gap-4 items-end">
-              <ThemeSelector />
+            ) : (
+              <div className="footer-columns grid gap-10 md:grid-cols-3 md:gap-12">
+                <div className="footer-column space-y-4">
+                  <h2 className="footer-section-title text-sm font-semibold text-foreground">
+                    Footer Links
+                  </h2>
+                  <ul className="footer-section-items space-y-2.5">
+                    {fallbackNavItems.map((item, index) => (
+                      <li className="footer-item leading-6" key={item.id || `legacy-link-${index}`}>
+                        <CMSLink
+                          appearance="inline"
+                          className="footer-link transition-colors hover:text-foreground"
+                          {...item.link}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {paymentCards.length > 0 && (
+          <div className="footer-payment-strip border-t border-border/70 py-6">
+            <div className="container">
+              <ul className="footer-payment-list grid grid-cols-3 gap-3 sm:grid-cols-4 md:flex md:flex-nowrap md:items-center md:justify-start md:gap-4">
+                {paymentCards.map((card, index) => {
+                  const image = typeof card.image === 'object' ? (card.image as MediaType) : null
+
+                  if (!image) return null
+
+                  const cardImage = (
+                    <Media
+                      className="footer-payment-image"
+                      imgClassName="h-8 w-auto object-contain"
+                      resource={image}
+                    />
+                  )
+
+                  return (
+                    <li className="footer-payment-item flex items-center justify-center" key={card.id || index}>
+                      {card.url ? (
+                        <a
+                          className="footer-payment-link opacity-90 transition-opacity hover:opacity-100"
+                          href={card.url}
+                          rel={card.newTab ? 'noopener noreferrer' : undefined}
+                          target={card.newTab ? '_blank' : undefined}
+                        >
+                          {cardImage}
+                        </a>
+                      ) : (
+                        cardImage
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
-          )}
-        </div>
-      </div>
-      <div className="border-t border-neutral-200 py-6 text-sm dark:border-neutral-700">
-        <div className="container mx-auto flex w-full flex-col items-center gap-1 md:flex-row md:gap-0">
-          <p>
-            &copy; {copyrightDate} {copyrightName}
-            {copyrightName.length && !copyrightName.endsWith('.') ? '.' : ''} All rights reserved.
-          </p>
-          <hr className="mx-4 hidden h-4 w-px border-l border-neutral-400 md:inline-block" />
-          <p>Designed in Michigan</p>
-          <p className="md:ml-auto">
-            <a className="text-black dark:text-white" href="https://payloadcms.com">
-              Crafted by Payload
-            </a>
-          </p>
-        </div>
-      </div>
-    </footer>
+          </div>
+        )}
+      </footer>
+
+      {footer.scrollToTop?.enabled !== false && (
+        <ScrollToTopButton
+          ariaLabel={footer.scrollToTop?.ariaLabel}
+          showAfterPx={footer.scrollToTop?.showAfterPx}
+        />
+      )}
+    </>
   )
 }

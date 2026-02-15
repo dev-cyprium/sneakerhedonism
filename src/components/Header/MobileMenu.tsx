@@ -7,7 +7,6 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
 } from '@/components/ui/accordion'
 import {
   Sheet,
@@ -19,7 +18,8 @@ import {
 } from '@/components/ui/sheet'
 import { useAuth } from '@/providers/Auth'
 import { useWishlist } from '@/providers/Wishlist'
-import { Heart, MenuIcon, Search } from 'lucide-react'
+import * as AccordionPrimitive from '@radix-ui/react-accordion'
+import { ChevronDown, Heart, MenuIcon, Search } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
@@ -71,9 +71,21 @@ export function MobileMenu({ menu }: Props) {
                 if (hasChildren) {
                   return (
                     <AccordionItem key={item.id} value={item.id}>
-                      <AccordionTrigger className="text-sm uppercase font-nav tracking-wide">
-                        {item.label}
-                      </AccordionTrigger>
+                      <AccordionPrimitive.Header className="flex items-center gap-2 py-2">
+                        <Link
+                          href={item.href}
+                          {...(item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                          className="min-w-0 flex-1 py-2 text-sm uppercase font-nav tracking-wide text-nav-text hover:text-nav-text-hover"
+                        >
+                          {item.label}
+                        </Link>
+                        <AccordionPrimitive.Trigger
+                          className="focus-visible:border-ring focus-visible:ring-ring/50 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-nav-text transition-colors hover:bg-muted hover:text-nav-text-hover focus-visible:outline-none focus-visible:ring-[3px] [&[data-state=open]>svg]:rotate-180"
+                          aria-label={`Prikaži podkategorije za ${item.label}`}
+                        >
+                          <ChevronDown className="size-4 transition-transform duration-200" />
+                        </AccordionPrimitive.Trigger>
+                      </AccordionPrimitive.Header>
                       <AccordionContent>
                         <ul className="flex flex-col gap-2 pl-4">
                           {item.children!.map((child) => (

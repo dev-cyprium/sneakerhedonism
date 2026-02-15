@@ -34,6 +34,18 @@ export function CartModal() {
     setIsOpen(false)
   }, [pathname])
 
+  useEffect(() => {
+    const handleOpenCart = () => {
+      setIsOpen(true)
+    }
+
+    window.addEventListener('open-cart-sheet', handleOpenCart)
+
+    return () => {
+      window.removeEventListener('open-cart-sheet', handleOpenCart)
+    }
+  }, [])
+
   const totalQuantity = useMemo(() => {
     if (!cart || !cart.items || !cart.items.length) return undefined
     return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
@@ -57,15 +69,17 @@ export function CartModal() {
 
       <SheetContent animation="fade" className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>My Cart</SheetTitle>
+          <SheetTitle>Korpa</SheetTitle>
 
-          <SheetDescription>Manage your cart here, add items to view the total.</SheetDescription>
+          <SheetDescription>
+            Pregledajte proizvode, izmenite količinu i nastavite ka plaćanju.
+          </SheetDescription>
         </SheetHeader>
 
         {!cart || cart?.items?.length === 0 ? (
           <div className="text-center flex flex-col items-center gap-2">
             <ShoppingCart className="h-16" />
-            <p className="text-center text-2xl font-bold">Your cart is empty.</p>
+            <p className="text-center text-2xl font-bold">Vaša korpa je prazna.</p>
           </div>
         ) : (
           <div className="grow flex px-4">
@@ -171,7 +185,7 @@ export function CartModal() {
                 <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
                   {cartTotal > 0 && (
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Total</p>
+                      <p>Ukupno</p>
                       <Price
                         amount={cartTotal}
                         className="text-right text-base text-black dark:text-white"
@@ -181,7 +195,7 @@ export function CartModal() {
 
                   <Button asChild>
                     <Link className="w-full" href="/checkout">
-                      Proceed to Checkout
+                      Nastavi na plaćanje
                     </Link>
                   </Button>
                 </div>

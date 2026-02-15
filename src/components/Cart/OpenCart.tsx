@@ -12,7 +12,7 @@ export function OpenCartButton({
   return (
     <button
       className="relative text-nav-text hover:text-nav-text-hover transition-colors hover:cursor-pointer"
-      aria-label="Cart"
+      aria-label="Korpa"
       {...rest}
     >
       <ShoppingBag className="h-[22px] w-[22px] stroke-[1.5]" />

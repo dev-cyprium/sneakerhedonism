@@ -2458,6 +2458,66 @@ export interface Header {
  */
 export interface Footer {
   id: number;
+  /**
+   * Build the 3-column footer layout. Add up to three columns; each column can have multiple titled sections.
+   */
+  columns?:
+    | {
+        /**
+         * Each section can contain links and/or text rows.
+         */
+        sections?:
+          | {
+              title: string;
+              items?:
+                | (
+                    | {
+                        link: {
+                          type?: ('reference' | 'custom') | null;
+                          newTab?: boolean | null;
+                          reference?: {
+                            relationTo: 'pages';
+                            value: number | Page;
+                          } | null;
+                          url?: string | null;
+                          label: string;
+                        };
+                        id?: string | null;
+                        blockName?: string | null;
+                        blockType: 'linkItem';
+                      }
+                    | {
+                        text: string;
+                        url?: string | null;
+                        newTab?: boolean | null;
+                        id?: string | null;
+                        blockName?: string | null;
+                        blockType: 'textItem';
+                      }
+                  )[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Displayed in one row at the footer bottom on desktop and wrapped into multiple rows on smaller screens.
+   */
+  paymentCards?:
+    | {
+        image: number | Media;
+        url?: string | null;
+        newTab?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  scrollToTop: {
+    enabled?: boolean | null;
+    showAfterPx?: number | null;
+    ariaLabel: string;
+  };
   navItems?:
     | {
         link: {
@@ -2632,6 +2692,60 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
+  columns?:
+    | T
+    | {
+        sections?:
+          | T
+          | {
+              title?: T;
+              items?:
+                | T
+                | {
+                    linkItem?:
+                      | T
+                      | {
+                          link?:
+                            | T
+                            | {
+                                type?: T;
+                                newTab?: T;
+                                reference?: T;
+                                url?: T;
+                                label?: T;
+                              };
+                          id?: T;
+                          blockName?: T;
+                        };
+                    textItem?:
+                      | T
+                      | {
+                          text?: T;
+                          url?: T;
+                          newTab?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
+  paymentCards?:
+    | T
+    | {
+        image?: T;
+        url?: T;
+        newTab?: T;
+        id?: T;
+      };
+  scrollToTop?:
+    | T
+    | {
+        enabled?: T;
+        showAfterPx?: T;
+        ariaLabel?: T;
+      };
   navItems?:
     | T
     | {

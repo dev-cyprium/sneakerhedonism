@@ -1,11 +1,19 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Media } from '@/components/Media'
 import type { Product, Variant } from '@/payload-types'
 
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import { useSearchParams } from 'next/navigation'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 type Props = {
   product: Product
@@ -16,6 +24,7 @@ type Props = {
 export function AddToCart({ product, variant: variantOverride }: Props) {
   const { addItem, cart, isLoading } = useCart()
   const searchParams = useSearchParams()
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
 
   const variants = product.variants?.docs || []
   const hasVariantDocs = variants.length > 0
@@ -40,18 +49,42 @@ export function AddToCart({ product, variant: variantOverride }: Props) {
     return undefined
   }, [variantOverride, product.enableVariants, hasVariantDocs, searchParams, variants])
 
+  const previewImage = useMemo(() => {
+    const firstGalleryImage =
+      typeof product.gallery?.[0]?.image === 'object' ? product.gallery?.[0]?.image : undefined
+    const metaImage = typeof product.meta?.image === 'object' ? product.meta.image : undefined
+
+    return firstGalleryImage || metaImage
+  }, [product.gallery, product.meta?.image])
+
+  const handleContinueShopping = useCallback(() => {
+    setIsConfirmModalOpen(false)
+  }, [])
+
+  const handleOpenCart = useCallback(() => {
+    setIsConfirmModalOpen(false)
+
+    window.setTimeout(() => {
+      window.dispatchEvent(new Event('open-cart-sheet'))
+    }, 0)
+  }, [])
+
   const addToCart = useCallback(
-    (e: React.FormEvent<HTMLButtonElement>) => {
+    async (e: React.FormEvent<HTMLButtonElement>) => {
       e.preventDefault()
 
-      addItem({
-        product: product.id,
-        variant: selectedVariant?.id ?? undefined,
-      }).then(() => {
-        toast.success('Item added to cart.')
-      })
+      try {
+        await addItem({
+          product: product.id,
+          variant: selectedVariant?.id ?? undefined,
+        })
+
+        setIsConfirmModalOpen(true)
+      } catch {
+        toast.error('Došlo je do greške pri dodavanju u korpu.')
+      }
     },
-    [addItem, product, selectedVariant],
+    [addItem, product.id, selectedVariant?.id],
   )
 
   const disabled = useMemo<boolean>(() => {
@@ -98,15 +131,61 @@ export function AddToCart({ product, variant: variantOverride }: Props) {
   }, [selectedVariant, hasVariantDocs, cart?.items, product])
 
   return (
-    <Button
-      aria-label="Dodaj u korpu"
-      className="w-full bg-accent-brand text-white hover:bg-accent-brand/90 font-semibold uppercase tracking-wide"
-      size="lg"
-      disabled={disabled || isLoading}
-      onClick={addToCart}
-      type="submit"
-    >
-      Dodaj u korpu
-    </Button>
+    <>
+      <Button
+        aria-label="Dodaj u korpu"
+        className="w-full bg-accent-brand text-white hover:bg-accent-brand/90 font-semibold uppercase tracking-wide"
+        size="lg"
+        disabled={disabled || isLoading}
+        onClick={addToCart}
+        type="submit"
+      >
+        Dodaj u korpu
+      </Button>
+
+      <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+        <DialogContent className="sm:max-w-[420px] p-0">
+          <DialogHeader className="gap-1 border-b px-6 py-5">
+            <DialogTitle className="text-3xl leading-tight">Proizvod je dodat u korpu</DialogTitle>
+            <DialogDescription className="sr-only">
+              Izaberite da li želite da nastavite kupovinu ili otvorite korpu.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 px-6 py-5">
+            {previewImage ? (
+              <div className="relative mx-auto h-24 w-24">
+                <Media
+                  className="h-full w-full"
+                  fill
+                  imgClassName="object-contain"
+                  resource={previewImage}
+                />
+              </div>
+            ) : null}
+
+            <p className="text-center text-lg font-semibold leading-snug">{product.title}</p>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 w-full text-base font-semibold"
+                onClick={handleContinueShopping}
+              >
+                Nastavi kupovinu
+              </Button>
+              <Button
+                type="button"
+                className="h-12 w-full bg-accent-brand text-base font-semibold text-white hover:bg-accent-brand/90"
+                onClick={handleOpenCart}
+              >
+                Idi u korpu
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

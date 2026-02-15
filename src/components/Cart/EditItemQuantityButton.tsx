@@ -37,7 +37,7 @@ export function EditItemQuantityButton({ type, item }: { item: CartItem; type: '
     <form>
       <button
         disabled={disabled || isLoading}
-        aria-label={type === 'plus' ? 'Increase item quantity' : 'Reduce item quantity'}
+        aria-label={type === 'plus' ? 'Povećaj količinu proizvoda' : 'Smanji količinu proizvoda'}
         className={clsx(
           'ease hover:cursor-pointer flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full px-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80',
           {

@@ -1,0 +1,51 @@
+---
+title: Payload Migrations and Hooks (Access & Predictable DB)
+description: Predictable migration workflow and overrideAccess in hooks to avoid 404/permission errors
+tags: [payload, migrations, hooks, overrideAccess, access-control, database]
+priority: high
+globs: ["src/migrations/**", "src/collections/**/hooks/**", "src/globals/**/hooks/**", "src/payments/**"]
+---
+
+# Payload: Migrations and Hooks
+
+## 1. DB migrations — predictable workflow
+
+- **Create migrations** with: `npx payload migrate:create` (generates an incremental migration from the current schema diff). Do not hand-write full-schema migrations that create all tables from scratch.
+- **Register every new migration** in `src/migrations/index.ts`: add an entry with `up`, `down`, and `name` (match the filename without extension).
+- **Run migrations** with: `npx payload migrate`. If prompted about dev mode, answer `y` to proceed.
+- **If the database was created with dev push** (schema already exists) and `payload migrate` would fail with "already exists":
+  - Run **once**: `pnpm run mark-migrations-run` to record existing migrations as applied.
+  - Then `npx payload migrate` will succeed and only run new migrations.
+- **Never rely only on dev push** for production or shared environments; migrations are the source of truth for schema changes.
+
+## 2. Hooks: use `overrideAccess: true` when the hook must always succeed
+
+- Hooks (e.g. `afterChange` on orders) often run in the same request as **unauthenticated** or **guest** users (e.g. checkout, payment confirm, webhooks). The incoming `req` may have **no user** or a user without read access to related collections.
+- Payload’s Local API **enforces access control** when `req` is passed and `overrideAccess` is not set to `true`. That can cause **NotFound (404)** or permission errors when the hook calls `findByID`, `find`, `findGlobal`, or `update` on collections the request is not allowed to read (e.g. products, variants, transactions, globals).
+- **Rule**: In collection/global hooks that **must** load related data or update documents for the hook to work (e.g. building order data for emails, updating `emailsSent` on the same order), pass **`overrideAccess: true`** so the operation is not blocked by the request user’s permissions.
+
+```typescript
+// ✅ In a hook that must resolve related data (e.g. order emails)
+await payload.findByID({
+  id: item.product,
+  collection: 'products',
+  depth: 0,
+  req,
+  overrideAccess: true,
+})
+
+await payload.findGlobal({
+  slug: 'email-settings',
+  overrideAccess: true,
+})
+
+await payload.update({
+  id: doc.id,
+  collection: 'orders',
+  data: { emailsSent: [...] },
+  req,
+  overrideAccess: true,
+})
+```
+
+- Use **`overrideAccess: false`** only when you intentionally want to enforce the request user’s access (e.g. in API route handlers acting on behalf of that user). See `.cursor/rules/security-critical.mdc` for when to use `overrideAccess: false` with `user`.

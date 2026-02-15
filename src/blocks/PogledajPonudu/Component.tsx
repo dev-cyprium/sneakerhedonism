@@ -13,11 +13,12 @@ const CardLink: React.FC<{
 }> = ({ item, className }) => (
   <Link
     href={item.link}
-    className={`group relative overflow-hidden rounded-xl shadow-sm transition-shadow hover:shadow-md ${className ?? ''}`}
+    className={`group relative block h-full w-full min-w-0 overflow-hidden rounded-xl shadow-sm transition-shadow hover:shadow-md ${className ?? ''}`}
   >
     <Media
       className="h-full w-full"
-      imgClassName="h-full w-full object-cover transition duration-300 ease-in-out group-hover:scale-105"
+      fill
+      imgClassName="h-full w-full object-cover object-center transition duration-300 ease-in-out group-hover:scale-105"
       resource={item.image as MediaType}
     />
     <div className="absolute inset-0 bg-black/0 transition duration-300 ease-in-out group-hover:bg-black/20" />
@@ -46,7 +47,7 @@ export const PogledajPonuduBlock: React.FC<
       )}
 
       {/* Desktop: 1 large left + 2 small right — compact, scales with viewport */}
-      <div className="hidden md:grid md:aspect-[8/3] md:grid-cols-5 md:grid-rows-2 md:gap-3">
+      <div className="hidden md:grid md:aspect-8/3 md:grid-cols-5 md:grid-rows-2 md:gap-3">
         <CardLink
           item={first}
           className="col-span-3 row-span-2 min-h-0"

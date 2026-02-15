@@ -20,7 +20,7 @@ const VALID_SORT = ['title', '-title', '-createdAt', 'priceInRSD', '-priceInRSD'
 
 function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: 9 }).map((_, i) => (
         <div
           key={i}
@@ -173,7 +173,7 @@ async function ShopProductGrid({
       )}
 
       {products?.docs.length > 0 ? (
-        <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Grid className="grid grid-cols-2 lg:grid-cols-3 gap-6">
           {products.docs.map((product) => {
             return <ProductGridItem key={product.id} product={product} />
           })}
