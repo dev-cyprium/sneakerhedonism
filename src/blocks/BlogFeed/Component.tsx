@@ -1,8 +1,13 @@
-import type { BlogFeedBlock as BlogFeedBlockProps, Post, Media as MediaType, Tag } from '@/payload-types'
+import type {
+  BlogFeedBlock as BlogFeedBlockProps,
+  Media as MediaType,
+  Post,
+  Tag,
+} from '@/payload-types'
 
 import configPromise from '@payload-config'
-import { DefaultDocumentIDType, getPayload } from 'payload'
 import Link from 'next/link'
+import { DefaultDocumentIDType, getPayload } from 'payload'
 import React from 'react'
 
 import { Media } from '@/components/Media'
@@ -57,22 +62,28 @@ export const BlogFeedBlock: React.FC<
   ])
 
   const posts = postsResult
-  const filterOptions = [
-    { slug: SVE_SLUG, title: 'Sve' },
-    ...tagsResult.docs.map((t) => ({ slug: (t as { slug?: string }).slug ?? '', title: (t as { title?: string }).title ?? '' })),
-  ].filter((o) => o.slug)
+  const filterOptions = tagsResult.docs
+    .map((t) => ({
+      slug: (t as { slug?: string }).slug ?? '',
+      title: (t as { title?: string }).title ?? '',
+    }))
+    .filter((o) => o.slug)
 
   return (
     <section className="my-16" id={`block-${id}`}>
       <div className="container">
-        {heading && <h2 className="mb-8 text-4xl font-bold tracking-tight">{heading}</h2>}
+        {heading && heading !== 'Blog' && (
+          <h2 className="mb-8 text-4xl font-bold tracking-tight">{heading}</h2>
+        )}
 
-        {/* Category filters: "Sve" shows all, others filter by tag */}
+        {/* Category filters by tag (no "Sve" option) */}
         <nav className="mb-8 flex flex-wrap gap-2" aria-label="Filter po kategoriji">
           {filterOptions.map((opt) => (
             <Link
               key={opt.slug}
-              href={opt.slug === SVE_SLUG ? '/blog' : `/blog?category=${encodeURIComponent(opt.slug)}`}
+              href={
+                opt.slug === SVE_SLUG ? '/blog' : `/blog?category=${encodeURIComponent(opt.slug)}`
+              }
               className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                 category === opt.slug
                   ? 'bg-accent-brand text-accent-brand-foreground'
@@ -115,10 +126,10 @@ function PostCard({ post }: { post: Post }) {
       className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-accent-brand"
     >
       {image && (
-        <div className="relative aspect-[16/10] overflow-hidden">
+        <div className="relative h-52 w-full shrink-0 overflow-hidden">
           <Media
             resource={image}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-fill transition-transform duration-300 group-hover:scale-105"
           />
         </div>
       )}

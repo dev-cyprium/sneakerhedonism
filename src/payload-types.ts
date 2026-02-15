@@ -139,12 +139,14 @@ export interface Config {
     footer: Footer;
     'site-settings': SiteSetting;
     'ecc-settings': EccSetting;
+    'email-settings': EmailSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'ecc-settings': EccSettingsSelect<false> | EccSettingsSelect<true>;
+    'email-settings': EmailSettingsSelect<false> | EmailSettingsSelect<true>;
   };
   locale: null;
   user: User;
@@ -272,6 +274,18 @@ export interface Order {
   status?: OrderStatus;
   amount?: number | null;
   currency?: 'RSD' | null;
+  orderStatus?: ('processing' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled') | null;
+  trackingCode?: string | null;
+  carrier?: string | null;
+  emailsSent?:
+    | {
+        type?: string | null;
+        to?: string | null;
+        sentAt?: string | null;
+        error?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2281,6 +2295,18 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   amount?: T;
   currency?: T;
+  orderStatus?: T;
+  trackingCode?: T;
+  carrier?: T;
+  emailsSent?:
+    | T
+    | {
+        type?: T;
+        to?: T;
+        sentAt?: T;
+        error?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2509,6 +2535,55 @@ export interface EccSetting {
   createdAt?: string | null;
 }
 /**
+ * Email notification settings — sender, admin recipients, tracking URL templates.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-settings".
+ */
+export interface EmailSetting {
+  id: number;
+  /**
+   * Used in email subjects and headers.
+   */
+  storeName?: string | null;
+  /**
+   * Sender address for all outgoing emails.
+   */
+  fromEmail?: string | null;
+  /**
+   * Email addresses that receive order notifications.
+   */
+  adminEmails?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Fallback tracking URL when no carrier match is found. Use {{trackingCode}} as placeholder.
+   */
+  trackingUrlTemplate?: string | null;
+  /**
+   * Per-carrier tracking URL templates.
+   */
+  carriers?:
+    | {
+        name: string;
+        /**
+         * Use {{trackingCode}} as placeholder.
+         */
+        trackingUrlTemplate: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Base URL used for links in emails.
+   */
+  storeUrl?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -2598,6 +2673,32 @@ export interface EccSettingsSelect<T extends boolean = true> {
   delay?: T;
   gatewayUrl?: T;
   locale?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-settings_select".
+ */
+export interface EmailSettingsSelect<T extends boolean = true> {
+  storeName?: T;
+  fromEmail?: T;
+  adminEmails?:
+    | T
+    | {
+        email?: T;
+        id?: T;
+      };
+  trackingUrlTemplate?: T;
+  carriers?:
+    | T
+    | {
+        name?: T;
+        trackingUrlTemplate?: T;
+        id?: T;
+      };
+  storeUrl?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

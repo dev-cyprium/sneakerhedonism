@@ -1,3 +1,4 @@
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import {
   BlockquoteFeature,
@@ -29,6 +30,7 @@ import { Posts } from '@/collections/Posts'
 import { Tags } from '@/collections/Tags'
 import { Users } from '@/collections/Users'
 import { EccSettings } from '@/globals/EccSettings'
+import { EmailSettings } from '@/globals/EmailSettings'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
 import { SiteSettings } from '@/globals/SiteSettings'
@@ -96,9 +98,21 @@ export default buildConfig({
       ]
     },
   }),
-  //email: nodemailerAdapter(),
+  email: nodemailerAdapter({
+    defaultFromAddress: 'info@mail.sneakerhedonism.com',
+    defaultFromName: 'Sneaker Hedonism',
+    transportOptions: {
+      host: 'smtp.resend.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'resend',
+        pass: process.env.RESEND_API_KEY || '',
+      },
+    },
+  }),
   endpoints: [],
-  globals: [Header, Footer, SiteSettings, EccSettings],
+  globals: [Header, Footer, SiteSettings, EccSettings, EmailSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

@@ -73,6 +73,7 @@ export async function POST(request: Request) {
           ...(txn.customer ? { customer: txn.customer } : { customerEmail: txn.customerEmail }),
           items: txn.items,
           status: 'processing',
+          orderStatus: 'processing',
           transactions: [transaction.id],
         },
       })

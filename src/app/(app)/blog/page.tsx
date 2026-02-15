@@ -4,9 +4,8 @@ import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
-import React from 'react'
+import { getPayload } from 'payload'
 
 import { notFound } from 'next/navigation'
 
@@ -52,10 +51,7 @@ const queryPageBySlug = async ({ slug }: { slug: string }) => {
     overrideAccess: draft,
     pagination: false,
     where: {
-      and: [
-        { slug: { equals: slug } },
-        ...(draft ? [] : [{ _status: { equals: 'published' } }]),
-      ],
+      and: [{ slug: { equals: slug } }, ...(draft ? [] : [{ _status: { equals: 'published' } }])],
     },
   })
 

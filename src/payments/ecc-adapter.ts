@@ -232,6 +232,7 @@ export const eccAdapter = (): PaymentAdapter => {
           items: txn.items,
           ...(data.shippingAddress ? { shippingAddress: data.shippingAddress } : {}),
           status: 'processing',
+          orderStatus: 'processing',
           transactions: [transaction.id],
         },
       })

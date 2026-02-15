@@ -12,6 +12,7 @@ import { eccAdapter } from '@/payments/ecc-adapter'
 
 import { Page, Post, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { OrdersCollection } from '@/collections/Orders'
 import { ProductsCollection } from '@/collections/Products'
 import { VariantsCollection } from '@/collections/Variants'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
@@ -144,6 +145,9 @@ export const plugins: Plugin[] = [
     },
     customers: {
       slug: 'users',
+    },
+    orders: {
+      ordersCollectionOverride: OrdersCollection,
     },
     payments: {
       paymentMethods: [

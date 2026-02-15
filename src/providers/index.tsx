@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/providers/Auth'
+import { EcommerceAuthSync } from '@/providers/EcommerceAuthSync'
 import { WishlistProvider } from '@/providers/Wishlist'
 import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
 import React from 'react'
@@ -68,7 +69,7 @@ export const Providers: React.FC<{
               },
             ]}
           >
-            {children}
+            <EcommerceAuthSync>{children}</EcommerceAuthSync>
           </EcommerceProvider>
         </HeaderThemeProvider>
         </WishlistProvider>

@@ -143,6 +143,7 @@ export const codAdapter = (): PaymentAdapter => {
           items: txn.items,
           ...(shippingAddress ? { shippingAddress } : {}),
           status: 'processing',
+          orderStatus: 'processing',
           transactions: [transaction.id],
         },
       })

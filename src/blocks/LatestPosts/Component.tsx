@@ -1,10 +1,15 @@
-import type { LatestPostsBlock as LatestPostsBlockProps, Post, Media as MediaType, Tag } from '@/payload-types'
+import type {
+  LatestPostsBlock as LatestPostsBlockProps,
+  Media as MediaType,
+  Post,
+  Tag,
+} from '@/payload-types'
 
-import configPromise from '@payload-config'
-import { DefaultDocumentIDType, getPayload } from 'payload'
-import Link from 'next/link'
-import React from 'react'
 import { Media } from '@/components/Media'
+import configPromise from '@payload-config'
+import Link from 'next/link'
+import { DefaultDocumentIDType, getPayload } from 'payload'
+import React from 'react'
 
 export const LatestPostsBlock: React.FC<
   LatestPostsBlockProps & {
@@ -66,10 +71,10 @@ function PostCard({ post }: { post: Post }) {
       className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-accent-brand"
     >
       {image && (
-        <div className="relative aspect-[16/10] overflow-hidden">
+        <div className="relative h-52 w-full shrink-0 overflow-hidden">
           <Media
             resource={image}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-fill transition-transform duration-300 group-hover:scale-105"
           />
         </div>
       )}
