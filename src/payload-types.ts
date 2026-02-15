@@ -727,7 +727,7 @@ export interface Category {
  * via the `definition` "CarouselBlock".
  */
 export interface CarouselBlock {
-  populateBy?: ('collection' | 'selection') | null;
+  populateBy?: ('collection' | 'selection' | 'media') | null;
   relationTo?: 'products' | null;
   categories?: (number | Category)[] | null;
   limit?: number | null;
@@ -737,6 +737,7 @@ export interface CarouselBlock {
         value: number | Product;
       }[]
     | null;
+  selectedMedia?: (number | Media)[] | null;
   /**
    * This field is auto-populated after-read
    */
@@ -1758,6 +1759,7 @@ export interface CarouselBlockSelect<T extends boolean = true> {
   categories?: T;
   limit?: T;
   selectedDocs?: T;
+  selectedMedia?: T;
   populatedDocs?: T;
   populatedDocsTotal?: T;
   id?: T;

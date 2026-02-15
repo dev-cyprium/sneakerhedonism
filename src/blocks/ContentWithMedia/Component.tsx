@@ -23,7 +23,7 @@ export const ContentWithMediaBlock: React.FC<
           })}
         >
           {richText && (
-            <RichText data={richText} enableGutter={false} className="prose-h2:text-accent-brand" />
+            <RichText data={richText} enableGutter={false} className="[&_h2]:text-accent-brand" />
           )}
           {enableLink && <CMSLink className="mt-6" {...link} />}
         </div>

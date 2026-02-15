@@ -16,6 +16,10 @@ export const Carousel: Block = {
           label: 'Individual Selection',
           value: 'selection',
         },
+        {
+          label: 'Media',
+          value: 'media',
+        },
       ],
     },
     {
@@ -62,6 +66,16 @@ export const Carousel: Block = {
       hasMany: true,
       label: 'Selection',
       relationTo: ['products'],
+    },
+    {
+      name: 'selectedMedia',
+      type: 'relationship',
+      admin: {
+        condition: (_, siblingData) => siblingData.populateBy === 'media',
+      },
+      hasMany: true,
+      label: 'Media',
+      relationTo: 'media',
     },
     {
       name: 'populatedDocs',

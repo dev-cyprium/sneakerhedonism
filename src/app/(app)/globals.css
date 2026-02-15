@@ -358,3 +358,8 @@ button {
 .feed-powered-by-es.es-widget-branding.es-widget-branding-slider {
   z-index: 0 !important;
 }
+
+/* Prose h2 from rich content — override typography plugin (unlayered so it wins) */
+.prose h2 {
+  color: var(--accent-brand) !important;
+}
