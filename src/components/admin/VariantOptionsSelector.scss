@@ -1,0 +1,72 @@
+@layer payload-default {
+  .variantOptionsSelector {
+    margin-top: calc(var(--spacing-field) * 2);
+    margin-bottom: calc(var(--spacing-field) * 2);
+  }
+
+  .variantOptionsSelectorHeading {
+    margin-bottom: calc(var(--base) * 0.5);
+  }
+
+  .variantOptionsSelectorMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--base) * 0.5);
+    margin-bottom: calc(var(--base) * 0.5);
+    font-size: calc(var(--base) * 0.8);
+    color: var(--theme-elevation-500);
+  }
+
+  .variantOptionsSelectorItem {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--base) * 0.35);
+  }
+
+  .variantOptionsSelectorItemHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: calc(var(--base) * 0.5);
+  }
+
+  .variantOptionsSelectorItemCount {
+    font-size: calc(var(--base) * 0.75);
+    color: var(--theme-elevation-500);
+  }
+
+  .variantOptionsSelectorSelection {
+    margin: 0;
+    font-size: calc(var(--base) * 0.75);
+    color: var(--theme-elevation-600);
+  }
+
+  .variantOptionsSelectorSelection--empty {
+    color: var(--theme-elevation-400);
+  }
+
+  .variantOptionsSelectorList {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--base) * 0.75);
+  }
+
+  .variantOptionsSelectorError {
+    position: relative;
+  }
+
+  .variantOptionsSelectorErrorWrapper {
+    &.showError {
+      border-radius: 2px;
+      outline: 1px solid var(--theme-error-400);
+      outline-offset: 2px;
+    }
+  }
+
+  .variantOptionsSelectorEmpty {
+    margin: 0;
+    font-size: calc(var(--base) * 0.8);
+    color: var(--theme-elevation-500);
+  }
+}

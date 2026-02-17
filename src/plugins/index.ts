@@ -22,6 +22,8 @@ import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
 
+const VARIANT_OPTIONS_JOIN_LIMIT = 2000
+
 const generateTitle: GenerateTitle<Product | Page | Post> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Sneaker Hedonism` : 'Sneaker Hedonism'
 }
@@ -170,19 +172,43 @@ export const plugins: Plugin[] = [
               'Managed via Variant Groups. Add options when editing a variant type (e.g. BROJ, VELICINE).',
           },
         }),
-        variantTypesCollectionOverride: ({ defaultCollection }) => ({
-          ...defaultCollection,
-          admin: {
-            ...defaultCollection?.admin,
-            group: 'Ecommerce',
-            useAsTitle: 'label',
-            description: 'Variant groups (e.g. BROJ, VELICINE). Add options for each group when editing.',
-          },
-          labels: {
-            plural: 'Variant Groups',
-            singular: 'Variant Group',
-          },
-        }),
+        variantTypesCollectionOverride: ({ defaultCollection }) => {
+          const fields =
+            defaultCollection.fields?.map((field) => {
+              if ('name' in field && field.name === 'options' && field.type === 'join') {
+                return {
+                  ...field,
+                  defaultLimit: VARIANT_OPTIONS_JOIN_LIMIT,
+                  defaultSort: '_variantOptions_options_order',
+                  admin: {
+                    ...field.admin,
+                    components: {
+                      ...field.admin?.components,
+                      Cell: '@/components/admin/VariantTypeOptionsCountCell#VariantTypeOptionsCountCell',
+                    },
+                  },
+                }
+              }
+
+              return field
+            }) ?? []
+
+          return {
+            ...defaultCollection,
+            admin: {
+              ...defaultCollection?.admin,
+              group: 'Ecommerce',
+              useAsTitle: 'label',
+              defaultColumns: ['label', 'name', 'options', 'updatedAt'],
+              description: 'Variant groups (e.g. BROJ, VELICINE). Add options for each group when editing.',
+            },
+            fields,
+            labels: {
+              plural: 'Variant Groups',
+              singular: 'Variant Group',
+            },
+          }
+        },
       },
     },
   }),

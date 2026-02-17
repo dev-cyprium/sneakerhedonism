@@ -4,7 +4,24 @@ import { APIError } from 'payload'
 export const VariantsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
   fields: [
-    ...(defaultCollection.fields ?? []),
+    ...((defaultCollection.fields ?? []).map((field) => {
+      if ('name' in field && field.name === 'options' && field.type === 'relationship') {
+        return {
+          ...field,
+          admin: {
+            ...field.admin,
+            components: {
+              ...field.admin?.components,
+              Field: {
+                path: '@/components/admin/VariantOptionsSelector#VariantOptionsSelector',
+              },
+            },
+          },
+        }
+      }
+
+      return field
+    }) as NonNullable<typeof defaultCollection.fields>),
     {
       name: 'salePriceInRSD',
       type: 'number',
