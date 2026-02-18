@@ -1,14 +1,15 @@
-import { Grid } from '@/components/Grid'
-import { ProductGridItem } from '@/components/ProductGridItem'
 import { SortFilter } from '@/components/shop/filters/SortFilter'
 import {
   DEFAULT_SHOP_SORT,
   isShopSortValue,
   type ShopSortValue,
 } from '@/components/shop/filters/sortOptions'
+import { ShopProductGridInfinite } from '@/components/shop/ShopProductGridInfinite'
 import { ShopSidebar } from '@/components/shop/ShopSidebar'
+import { buildShopProductWhere, SHOP_PRODUCT_SELECT } from '@/lib/shopProducts'
+import type { Product } from '@/payload-types'
 import configPromise from '@payload-config'
-import { getPayload, Where } from 'payload'
+import { getPayload } from 'payload'
 import React, { Suspense } from 'react'
 
 export const revalidate = 30
@@ -23,6 +24,8 @@ type SearchParams = { [key: string]: string | string[] | undefined }
 type Props = {
   searchParams: Promise<SearchParams>
 }
+
+const INITIAL_PAGE_SIZE = 12
 
 function ProductGridSkeleton() {
   return (
@@ -65,127 +68,44 @@ async function ShopProductGrid({
   onSale,
 }: ProductGridProps) {
   const payload = await getPayload({ config: configPromise })
+  const whereConditions = await buildShopProductWhere(
+    {
+      categoryIds,
+      brandId,
+      searchValue,
+      variantProductIds,
+      minPriceVal,
+      maxPriceVal,
+      onSale,
+    },
+    payload,
+  )
 
-  const whereConditions: Where[] = [{ _status: { equals: 'published' } }]
-
-  if (brandId) {
-    whereConditions.push({ categories: { in: [brandId] } })
-  } else if (categoryIds.length > 0) {
-    whereConditions.push({ categories: { in: categoryIds } })
-  }
-
-  if (searchValue) {
-    whereConditions.push({ title: { like: searchValue } })
-  }
-
-  if (variantProductIds !== null) {
-    if (variantProductIds.length > 0) {
-      whereConditions.push({ id: { in: variantProductIds } })
-    } else {
-      whereConditions.push({ id: { equals: -1 } })
-    }
-  }
-
-  if (minPriceVal && !isNaN(minPriceVal)) {
-    whereConditions.push({ priceInRSD: { greater_than_equal: minPriceVal } })
-  }
-  if (maxPriceVal && !isNaN(maxPriceVal)) {
-    whereConditions.push({ priceInRSD: { less_than_equal: maxPriceVal } })
-  }
-
-  if (onSale) {
-    const saleVariantProducts = await payload.find({
-      collection: 'variants',
-      where: { salePriceInRSD: { exists: true } },
-      select: { product: true },
-      pagination: false,
-      depth: 0,
-    })
-    const productIdsFromVariants = [
-      ...new Set(
-        saleVariantProducts.docs.map((v) =>
-          typeof v.product === 'number' ? v.product : (v.product as { id: number }).id,
-        ),
-      ),
-    ]
-    const saleConditions: Where[] = [{ salePriceInRSD: { exists: true } }]
-    if (productIdsFromVariants.length > 0) {
-      saleConditions.push({ id: { in: productIdsFromVariants } })
-    }
-    whereConditions.push({ or: saleConditions })
-  }
-
-  const products = await payload.find({
+  const result = await payload.find({
     collection: 'products',
     draft: false,
     overrideAccess: false,
     depth: 1,
-    select: {
-      title: true,
-      slug: true,
-      gallery: true,
-      categories: true,
-      priceInRSD: true,
-      salePriceInRSD: true,
-      variants: true,
-    },
+    select: SHOP_PRODUCT_SELECT,
     sort,
     where: { and: whereConditions },
+    limit: INITIAL_PAGE_SIZE,
+    page: 1,
   })
 
-  const resultsText = products.docs.length > 1 ? 'rezultata' : 'rezultat'
-
   return (
-    <>
-      {searchValue && products.docs.length > 0 ? (
-        <p className="mb-4">
-          {`Prikazano ${products.docs.length} ${resultsText} za `}
-          <span className="font-bold">&quot;{searchValue}&quot;</span>
-        </p>
-      ) : null}
-
-      {products.docs.length === 0 && (
-        <div className="flex items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-10 py-12 text-center shadow-sm max-w-md">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 120 120"
-              fill="none"
-              className="h-28 w-28 text-muted-foreground/40"
-            >
-              <rect x="20" y="30" width="80" height="60" rx="6" stroke="currentColor" strokeWidth="2" />
-              <path d="M20 45h80" stroke="currentColor" strokeWidth="2" />
-              <circle cx="60" cy="70" r="12" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />
-              <path d="M56 66l8 8M64 66l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <path d="M38 38h6M50 38h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <div>
-              <p className="text-lg font-semibold text-foreground">
-                {searchValue
-                  ? 'Nema proizvoda koji odgovaraju pojmu'
-                  : 'Nema pronađenih proizvoda'}
-              </p>
-              {searchValue && (
-                <p className="mt-1 text-sm font-bold text-foreground">
-                  &quot;{searchValue}&quot;
-                </p>
-              )}
-              <p className="mt-2 text-sm text-muted-foreground">
-                Pokušajte sa drugim filterima ili pretragom.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {products?.docs.length > 0 ? (
-        <Grid className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.docs.map((product) => {
-            return <ProductGridItem key={product.id} product={product} />
-          })}
-        </Grid>
-      ) : null}
-    </>
+    <ShopProductGridInfinite
+      searchValue={searchValue}
+      sort={sort}
+      categoryIds={categoryIds}
+      brandId={brandId}
+      variantProductIds={variantProductIds}
+      minPriceVal={minPriceVal}
+      maxPriceVal={maxPriceVal}
+      onSale={onSale}
+      initialProducts={result.docs as Partial<Product>[]}
+      initialHasNextPage={result.hasNextPage ?? false}
+    />
   )
 }
 
