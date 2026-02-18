@@ -9,14 +9,50 @@ const revalidateStorefrontPaths = () => {
   }
 }
 
+const isRenderTimeRevalidateError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false
+
+  return (
+    error.message.includes('used "revalidatePath') &&
+    error.message.includes('during render') &&
+    error.message.includes('/admin/[[...segments]]')
+  )
+}
+
+const revalidateStorefrontPathsSafely = ({
+  context,
+  event,
+  payload,
+}: {
+  context: Record<string, unknown>
+  event: 'changed' | 'deleted'
+  payload: {
+    logger: {
+      info: (message: string) => void
+      warn: (message: string) => void
+    }
+  }
+}) => {
+  if (context.disableRevalidate) return
+
+  try {
+    revalidateStorefrontPaths()
+    payload.logger.info(`Storefront data ${event} - revalidating / and /shop`)
+  } catch (error) {
+    if (isRenderTimeRevalidateError(error)) {
+      payload.logger.warn('Skipping storefront revalidation during admin render')
+      return
+    }
+
+    throw error
+  }
+}
+
 export const revalidateStorefrontAfterChange: CollectionAfterChangeHook = ({
   doc,
   req: { context, payload },
 }) => {
-  if (!context.disableRevalidate) {
-    payload.logger.info('Storefront data changed - revalidating / and /shop')
-    revalidateStorefrontPaths()
-  }
+  revalidateStorefrontPathsSafely({ context, event: 'changed', payload })
 
   return doc
 }
@@ -25,10 +61,7 @@ export const revalidateStorefrontAfterDelete: CollectionAfterDeleteHook = ({
   doc,
   req: { context, payload },
 }) => {
-  if (!context.disableRevalidate) {
-    payload.logger.info('Storefront data deleted - revalidating / and /shop')
-    revalidateStorefrontPaths()
-  }
+  revalidateStorefrontPathsSafely({ context, event: 'deleted', payload })
 
   return doc
 }
