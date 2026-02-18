@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server'
 
 const DEFAULT_LIMIT = 12
 
-function parseArray(value: string | string[] | undefined): number[] {
+function parseArray(value: string | string[] | undefined | null): number[] {
   if (value == null) return []
   const str = Array.isArray(value) ? value[0] : value
   if (!str) return []
@@ -25,7 +25,7 @@ function parseArray(value: string | string[] | undefined): number[] {
   }
 }
 
-function parseNullableArray(value: string | string[] | undefined): number[] | null {
+function parseNullableArray(value: string | string[] | undefined | null): number[] | null {
   if (value == null) return null
   const str = Array.isArray(value) ? value[0] : value
   if (!str || str === 'null') return null
