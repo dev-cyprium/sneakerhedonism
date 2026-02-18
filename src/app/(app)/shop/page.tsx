@@ -1,5 +1,11 @@
 import { Grid } from '@/components/Grid'
 import { ProductGridItem } from '@/components/ProductGridItem'
+import { SortFilter } from '@/components/shop/filters/SortFilter'
+import {
+  DEFAULT_SHOP_SORT,
+  isShopSortValue,
+  type ShopSortValue,
+} from '@/components/shop/filters/sortOptions'
 import { ShopSidebar } from '@/components/shop/ShopSidebar'
 import configPromise from '@payload-config'
 import { getPayload, Where } from 'payload'
@@ -17,8 +23,6 @@ type SearchParams = { [key: string]: string | string[] | undefined }
 type Props = {
   searchParams: Promise<SearchParams>
 }
-
-const VALID_SORT = ['title', '-title', '-createdAt', 'priceInRSD', '-priceInRSD'] as const
 
 function ProductGridSkeleton() {
   return (
@@ -41,7 +45,7 @@ function ProductGridSkeleton() {
 
 type ProductGridProps = {
   searchValue: string
-  sort: string | undefined
+  sort: ShopSortValue
   categoryIds: number[]
   brandId: number | null
   variantProductIds: number[] | null
@@ -125,7 +129,7 @@ async function ShopProductGrid({
       salePriceInRSD: true,
       variants: true,
     },
-    ...(sort ? { sort } : { sort: 'title' }),
+    sort,
     where: { and: whereConditions },
   })
 
@@ -203,9 +207,8 @@ export default async function ShopPage({ searchParams }: Props) {
       ? searchValueRaw[0] ?? ''
       : ''
 
-  const sort = sortRaw && VALID_SORT.includes(sortRaw as (typeof VALID_SORT)[number])
-    ? (sortRaw as string)
-    : undefined
+  const sortParam = typeof sortRaw === 'string' ? sortRaw : Array.isArray(sortRaw) ? sortRaw[0] : undefined
+  const sort: ShopSortValue = isShopSortValue(sortParam) ? sortParam : DEFAULT_SHOP_SORT
 
   const payload = await getPayload({ config: configPromise })
 
@@ -376,6 +379,9 @@ export default async function ShopPage({ searchParams }: Props) {
         priceRange={priceRange}
       />
       <div className="min-h-screen w-full">
+        <div className="mb-6 w-full md:flex md:justify-end">
+          <SortFilter />
+        </div>
         <Suspense fallback={<ProductGridSkeleton />}>
           <ShopProductGrid
             searchValue={searchValue}

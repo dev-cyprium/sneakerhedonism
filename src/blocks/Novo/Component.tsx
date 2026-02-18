@@ -34,7 +34,7 @@ export const NovoBlock: React.FC<NovoBlockProps> = async ({ limit }) => {
       </div>
       <div className="flex justify-center mt-10">
         <Link
-          href="/shop?sort=-createdAt"
+          href="/shop"
           className="inline-flex items-center justify-center rounded-md bg-accent-brand px-6 py-3 text-sm font-medium text-white hover:bg-accent-brand/90 transition-colors"
         >
           Pogledaj sve
