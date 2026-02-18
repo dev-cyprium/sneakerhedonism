@@ -21,6 +21,10 @@ import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
 import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
+import {
+  revalidateStorefrontAfterChange,
+  revalidateStorefrontAfterDelete,
+} from '@/collections/hooks/revalidateStorefront'
 
 const VARIANT_OPTIONS_JOIN_LIMIT = 2000
 
@@ -165,6 +169,11 @@ export const plugins: Plugin[] = [
         variantsCollectionOverride: VariantsCollection,
         variantOptionsCollectionOverride: ({ defaultCollection }) => ({
           ...defaultCollection,
+          hooks: {
+            ...(defaultCollection.hooks ?? {}),
+            afterChange: [...(defaultCollection.hooks?.afterChange ?? []), revalidateStorefrontAfterChange],
+            afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
+          },
           admin: {
             ...defaultCollection?.admin,
             hidden: true,
@@ -195,6 +204,11 @@ export const plugins: Plugin[] = [
 
           return {
             ...defaultCollection,
+            hooks: {
+              ...(defaultCollection.hooks ?? {}),
+              afterChange: [...(defaultCollection.hooks?.afterChange ?? []), revalidateStorefrontAfterChange],
+              afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
+            },
             admin: {
               ...defaultCollection?.admin,
               group: 'Ecommerce',

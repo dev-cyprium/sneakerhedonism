@@ -1,8 +1,18 @@
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import { APIError } from 'payload'
 
+import {
+  revalidateStorefrontAfterChange,
+  revalidateStorefrontAfterDelete,
+} from '@/collections/hooks/revalidateStorefront'
+
 export const VariantsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
+  hooks: {
+    ...(defaultCollection.hooks ?? {}),
+    afterChange: [...(defaultCollection.hooks?.afterChange ?? []), revalidateStorefrontAfterChange],
+    afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
+  },
   fields: [
     ...((defaultCollection.fields ?? []).map((field) => {
       if ('name' in field && field.name === 'options' && field.type === 'relationship') {

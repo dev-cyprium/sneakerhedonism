@@ -19,8 +19,18 @@ import {
 } from '@payloadcms/richtext-lexical'
 import { DefaultDocumentIDType, slugField, Where } from 'payload'
 
+import {
+  revalidateStorefrontAfterChange,
+  revalidateStorefrontAfterDelete,
+} from '@/collections/hooks/revalidateStorefront'
+
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
+  hooks: {
+    ...(defaultCollection.hooks ?? {}),
+    afterChange: [...(defaultCollection.hooks?.afterChange ?? []), revalidateStorefrontAfterChange],
+    afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
+  },
   admin: {
     ...defaultCollection?.admin,
     defaultColumns: ['title', 'enableVariants', '_status', 'variants.variants'],

@@ -1,9 +1,19 @@
 import { revalidateTag } from 'next/cache'
 import { slugField } from 'payload'
-import type { CollectionAfterChangeHook, CollectionConfig, Where } from 'payload'
+import type { CollectionAfterChangeHook, CollectionAfterDeleteHook, CollectionConfig, Where } from 'payload'
+
+import {
+  revalidateStorefrontAfterChange,
+  revalidateStorefrontAfterDelete,
+} from '@/collections/hooks/revalidateStorefront'
 
 const revalidateHeaderOnChange: CollectionAfterChangeHook = ({ req: { payload } }) => {
   payload.logger.info('Category changed — revalidating header')
+  revalidateTag('global_header', { expire: 0 })
+}
+
+const revalidateHeaderOnDelete: CollectionAfterDeleteHook = ({ req: { payload } }) => {
+  payload.logger.info('Category deleted — revalidating header')
   revalidateTag('global_header', { expire: 0 })
 }
 
@@ -17,7 +27,8 @@ export const Categories: CollectionConfig = {
     group: 'Content',
   },
   hooks: {
-    afterChange: [revalidateHeaderOnChange],
+    afterChange: [revalidateHeaderOnChange, revalidateStorefrontAfterChange],
+    afterDelete: [revalidateHeaderOnDelete, revalidateStorefrontAfterDelete],
   },
   fields: [
     {

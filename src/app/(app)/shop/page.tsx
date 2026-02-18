@@ -5,6 +5,8 @@ import configPromise from '@payload-config'
 import { getPayload, Where } from 'payload'
 import React, { Suspense } from 'react'
 
+export const revalidate = 30
+
 export const metadata = {
   description: 'Pretražite proizvode u našoj ponudi.',
   title: 'Prodavnica',

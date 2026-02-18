@@ -1,6 +1,10 @@
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import type { Field } from 'payload'
 
+import {
+  revalidateStorefrontAfterChange,
+  revalidateStorefrontAfterDelete,
+} from '@/collections/hooks/revalidateStorefront'
 import { sendOrderEmails } from './hooks/sendOrderEmails'
 
 export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => ({
@@ -100,7 +104,12 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
         return data
       },
     ],
-    afterChange: [...(defaultCollection.hooks?.afterChange ?? []), sendOrderEmails],
+    afterChange: [
+      ...(defaultCollection.hooks?.afterChange ?? []),
+      sendOrderEmails,
+      revalidateStorefrontAfterChange,
+    ],
+    afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
   },
   admin: {
     ...defaultCollection?.admin,
