@@ -22,10 +22,14 @@ export async function seedTestUser(): Promise<void> {
     },
   })
 
-  // Create fresh test user
+  // Create fresh test user with admin role so they can access the admin panel
   await payload.create({
     collection: 'users',
-    data: testUser,
+    data: {
+      ...testUser,
+      roles: ['admin'],
+    },
+    overrideAccess: true,
   })
 }
 

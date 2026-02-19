@@ -26,6 +26,6 @@ export async function login({
 
   await page.waitForURL(`${serverURL}/admin`)
 
-  const dashboardArtifact = page.locator('span[title="Dashboard"]')
-  await expect(dashboardArtifact).toBeVisible()
+  // Admin is a heavy SPA; wait for dashboard content (nav link is icon-only and unreliable)
+  await expect(page.getByText('Welcome to your dashboard!')).toBeVisible({ timeout: 15000 })
 }

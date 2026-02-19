@@ -7,9 +7,9 @@ const dirname = path.dirname(filename)
 
 test.describe('Frontend', () => {
   let page: Page
+  let adminEmail: string
   const baseURL = 'http://localhost:3000'
   const mediaURL = `${baseURL}/admin/collections/media`
-  const adminEmail = 'admin@test.com'
   const adminPassword = 'admin'
   const userEmail = 'user@test.com'
   const userPassword = 'user'
@@ -20,10 +20,11 @@ test.describe('Frontend', () => {
     postcode: 'WS11 1DB',
   }
   test.beforeAll(async ({ browser, request }, testInfo) => {
+    adminEmail = `admin-${Date.now()}@test.com`
     const context = await browser.newContext()
     page = await context.newPage()
-    await createUserAndLogin(request, adminEmail, adminPassword)
-    await createVariantsAndProducts(page, request)
+    const token = await createUserAndLogin(request, adminEmail, adminPassword)
+    await createVariantsAndProducts(page, request, token)
   })
 
   test('can go on homepage', async ({ page }) => {
@@ -384,7 +385,7 @@ test.describe('Frontend', () => {
     email: string,
     password: string,
     isAdmin: boolean = true,
-  ) {
+  ): Promise<string> {
     const data: any = {
       email,
       password,
@@ -394,50 +395,84 @@ test.describe('Frontend', () => {
       data.roles = ['admin']
     }
 
-    const response = await request.post(`${baseURL}/api/users`, {
+    const createRes = await request.post(`${baseURL}/api/users`, {
       data,
     })
+    if (!createRes.ok()) {
+      const text = await createRes.text()
+      const isAlreadyRegistered =
+        createRes.status() === 400 &&
+        (text.includes('already registered') || text.includes('A user with the given email is already registered'))
+      if (!isAlreadyRegistered) {
+        throw new Error(`Failed to create user: ${createRes.status()} ${text}`)
+      }
+    }
 
-    console.log({ response })
-
-    const login = await request.post(`${baseURL}/api/users/login`, {
-      data: {
-        email,
-        password,
-      },
+    const loginRes = await request.post(`${baseURL}/api/users/login`, {
+      data: { email, password },
     })
+    if (!loginRes.ok()) {
+      throw new Error(`Failed to login: ${loginRes.status()} ${await loginRes.text()}`)
+    }
 
-    console.log({ login })
+    const loginBody = await loginRes.json()
+    const token = loginBody.token
+    if (!token) {
+      throw new Error('Login response missing token. Check auth config (e.g. removeTokenFromResponses).')
+    }
+    return token
   }
 
-  async function createVariantsAndProducts(page: Page, request: any) {
-    const variantType = await request.post(`${baseURL}/api/variantTypes`, {
+  function authHeaders(token: string) {
+    return { Authorization: `Bearer ${token}` }
+  }
+
+  async function getDocId(res: any): Promise<number> {
+    const ok = typeof res.ok === 'function' ? res.ok() : res.ok
+    if (!ok) {
+      const text = typeof res.text === 'function' ? await res.text() : ''
+      throw new Error(`API request failed: ${typeof res.status === 'function' ? res.status() : res.status} ${text}`)
+    }
+    const body = await res.json()
+    const doc = body.doc ?? body
+    const id = doc?.id
+    if (id == null) {
+      throw new Error(`API response missing doc.id: ${JSON.stringify(body)}`)
+    }
+    return typeof id === 'number' ? id : Number(id)
+  }
+
+  async function createVariantsAndProducts(page: Page, request: any, token: string) {
+    const headers = authHeaders(token)
+
+    const variantTypeRes = await request.post(`${baseURL}/api/variantTypes`, {
       data: {
         name: 'brand',
         label: 'Brand',
       },
+      headers,
     })
-
-    const variantTypeID = (await variantType.json()).doc.id
+    const variantTypeID = await getDocId(variantTypeRes)
 
     const brands = [
       { label: 'Payload', value: 'payload' },
       { label: 'Figma', value: 'figma' },
     ]
 
-    const [payload, figma] = await Promise.all(
+    const [payloadRes, figmaRes] = await Promise.all(
       brands.map((option) =>
         request.post(`${baseURL}/api/variantOptions`, {
           data: {
             ...option,
             variantType: variantTypeID,
           },
+          headers,
         }),
       ),
     )
 
-    const payloadVariantID = (await payload.json()).doc.id
-    const figmaVariantID = (await figma.json()).doc.id
+    const payloadVariantID = await getDocId(payloadRes)
+    const figmaVariantID = await getDocId(figmaRes)
 
     await loginFromUI(page, adminEmail, adminPassword)
     await page.goto(`${mediaURL}/create`)
@@ -453,7 +488,7 @@ test.describe('Frontend', () => {
     await expect(page).toHaveURL(/\/admin\/collections\/media\/\d+/)
     const imageID = page.url().split('/').pop()
 
-    const productWithVariants = await request.post(`${baseURL}/api/products`, {
+    const productWithVariantsRes = await request.post(`${baseURL}/api/products`, {
       data: {
         title: 'Test Product With Variants',
         slug: 'test-product-variants',
@@ -466,11 +501,12 @@ test.describe('Frontend', () => {
         priceInUSDEnabled: true,
         priceInUSD: 1000,
       },
+      headers,
     })
 
-    const productID = (await productWithVariants.json()).doc.id
+    const productID = await getDocId(productWithVariantsRes)
 
-    const variantPayload = await request.post(`${baseURL}/api/variants`, {
+    await request.post(`${baseURL}/api/variants`, {
       data: {
         product: productID,
         variantType: variantTypeID,
@@ -480,9 +516,10 @@ test.describe('Frontend', () => {
         inventory: 50,
         _status: 'published',
       },
+      headers,
     })
 
-    const variantFigma = await request.post(`${baseURL}/api/variants`, {
+    await request.post(`${baseURL}/api/variants`, {
       data: {
         product: productID,
         variantType: variantTypeID,
@@ -492,9 +529,10 @@ test.describe('Frontend', () => {
         inventory: 50,
         _status: 'published',
       },
+      headers,
     })
 
-    const product = await request.post(`${baseURL}/api/products`, {
+    await request.post(`${baseURL}/api/products`, {
       data: {
         title: 'Test Product',
         slug: 'test-product',
@@ -505,9 +543,10 @@ test.describe('Frontend', () => {
         priceInUSDEnabled: true,
         priceInUSD: 1000,
       },
+      headers,
     })
 
-    const noInventoryProduct = await request.post(`${baseURL}/api/products`, {
+    await request.post(`${baseURL}/api/products`, {
       data: {
         title: 'No Inventory Product',
         slug: 'no-inventory-product',
@@ -518,6 +557,7 @@ test.describe('Frontend', () => {
         priceInUSDEnabled: true,
         priceInUSD: 1000,
       },
+      headers,
     })
   }
 
