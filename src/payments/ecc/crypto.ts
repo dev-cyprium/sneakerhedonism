@@ -1,6 +1,22 @@
 import crypto from 'crypto'
 
 /**
+ * Normalize a PEM string: handles escaped newlines, Windows line endings,
+ * extra whitespace from multi-line .env values, and re-wraps base64 at 64 chars.
+ */
+function normalizePem(raw: string): string {
+  const cleaned = raw.replace(/\\n/g, '\n')
+  const match = cleaned.match(/-----BEGIN ([A-Z ]+)-----([^-]+)-----END \1-----/)
+  if (!match) {
+    throw new Error('Invalid PEM format')
+  }
+  const type = match[1]
+  const base64 = match[2].replace(/\s/g, '')
+  const lines = base64.match(/.{1,64}/g) || []
+  return `-----BEGIN ${type}-----\n${lines.join('\n')}\n-----END ${type}-----\n`
+}
+
+/**
  * Sign outgoing request data with SHA1withRSA, return base64 signature.
  */
 export function signRequest(data: string, privateKeyPem: string): string {
@@ -68,22 +84,22 @@ export function buildVerificationData(params: {
 }
 
 /**
- * Read private key PEM from environment variable, replacing escaped newlines.
+ * Read private key PEM from environment variable.
  */
 export function getPrivateKey(): string {
   const key = process.env.ECC_PRIVATE_KEY
   if (!key) {
     throw new Error('ECC_PRIVATE_KEY environment variable is not set.')
   }
-  return key.replace(/\\n/g, '\n')
+  return normalizePem(key)
 }
 
 /**
- * Read public key PEM from environment variable, replacing escaped newlines.
+ * Read public key PEM from environment variable.
  * Returns null if not configured (verification is optional).
  */
 export function getPublicKey(): string | null {
   const key = process.env.ECC_PUBLIC_KEY
   if (!key) return null
-  return key.replace(/\\n/g, '\n')
+  return normalizePem(key)
 }

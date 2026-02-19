@@ -11,6 +11,10 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData()
 
+    // Log incoming bank callback data
+    const formEntries = Object.fromEntries(formData.entries())
+    payload.logger.info({ msg: 'ECC callback received', data: formEntries })
+
     const merchantId = formData.get('MerchantID') as string
     const terminalId = formData.get('TerminalID') as string
     const orderId = formData.get('OrderID') as string
@@ -41,24 +45,30 @@ export async function POST(request: Request) {
     const eccData = { tranCode, approvalCode, proxyPan, rrn, xid }
 
     if (tranCode === '000') {
-      // Optionally verify bank signature
+      // Verify bank signature (non-blocking — errors are logged, not thrown)
       const publicKey = getPublicKey()
       if (publicKey && signature) {
-        const verifyData = buildVerificationData({
-          merchantId,
-          terminalId,
-          purchaseTime,
-          orderId,
-          xid,
-          currency,
-          totalAmount,
-          tranCode,
-          approvalCode,
-        })
+        try {
+          const verifyData = buildVerificationData({
+            merchantId,
+            terminalId,
+            purchaseTime,
+            orderId,
+            xid,
+            currency,
+            totalAmount,
+            tranCode,
+            approvalCode,
+          })
 
-        const isValid = verifyResponse(verifyData, signature, publicKey)
-        if (!isValid) {
-          payload.logger.warn(`ECC: Invalid signature for transaction ${orderId}`)
+          const isValid = verifyResponse(verifyData, signature, publicKey)
+          if (!isValid) {
+            payload.logger.warn(`ECC: Invalid signature for transaction ${orderId}`)
+          }
+        } catch (verifyErr) {
+          payload.logger.warn(
+            `ECC: Signature verification error for transaction ${orderId}: ${verifyErr instanceof Error ? verifyErr.message : String(verifyErr)}`,
+          )
         }
       }
 

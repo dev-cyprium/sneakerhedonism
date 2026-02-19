@@ -417,29 +417,22 @@ export const CheckoutPage: React.FC = () => {
                 )}
               </button>
 
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  void handleEccPayment()
-                }}
-                disabled={isProcessingPayment}
-                className="flex items-center gap-4 p-5 rounded-lg border-2 border-primary/20 hover:border-primary/50 transition-colors text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              <div
+                className="flex items-center gap-4 p-5 rounded-lg border-2 border-primary/10 opacity-50 cursor-not-allowed"
               >
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                  <CreditCard className="w-6 h-6" />
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/5">
+                  <CreditCard className="w-6 h-6 text-primary/40" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-lg">Plaćanje karticom</p>
-                  <p className="text-sm text-primary/60">
+                  <p className="font-medium text-lg line-through text-primary/40">Plaćanje karticom</p>
+                  <p className="text-sm text-primary/40">
                     Visa, MasterCard, Dina
                   </p>
                 </div>
-                {isProcessingPayment ? (
-                  <LoadingSpinner />
-                ) : (
-                  <span className="text-sm font-medium text-primary/80">Izaberi</span>
-                )}
-              </button>
+                <span className="text-xs font-medium bg-primary/10 text-primary/60 px-3 py-1 rounded-full">
+                  Privremeno nedostupno
+                </span>
+              </div>
             </div>
 
             <Button
