@@ -7,7 +7,7 @@
 | Vercel      | Hosting platform for Next.js & web frontend | 20$/month  |
 | Neon.tech   | Managed Postgres database (serverless)      | Free Tier  |
 | Payload CMS | Headless CMS for backend/API/admin          | Free (OSS) |
-| Cloudinary  | Media/image asset storage & delivery        | Free Tier  |
+| Cloudflare  | Media/image asset storage & delivery        | Free Tier  |
 
 _Note: Costs based on typical use; higher usage may incur fees._
 
