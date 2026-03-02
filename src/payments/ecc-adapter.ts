@@ -1,5 +1,6 @@
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 import type { CollectionSlug } from 'payload'
+import { getShippingSummary } from '@/lib/shipping'
 
 import {
   buildOutgoingSignData,
@@ -100,6 +101,8 @@ export const eccAdapter = (): PaymentAdapter => {
         }
       }
 
+      const { totalAmount } = getShippingSummary(amount)
+
       const flattenedCart = cart.items.map((item) => {
         const productID = typeof item.product === 'object' ? item.product.id : item.product
         const variantID = item.variant
@@ -131,7 +134,7 @@ export const eccAdapter = (): PaymentAdapter => {
         collection: transactionsSlug as CollectionSlug,
         data: {
           ...(req.user ? { customer: req.user.id } : { customerEmail }),
-          amount,
+          amount: totalAmount,
           billingAddress,
           cart: cart.id,
           currency: currency.toUpperCase() as 'RSD',
@@ -144,7 +147,7 @@ export const eccAdapter = (): PaymentAdapter => {
       // Build bank form fields
       const purchaseTime = formatPurchaseTime()
       const orderId = String(transaction.id)
-      const bankAmount = String(amount * 100) // Convert to smallest unit (paras)
+      const bankAmount = String(totalAmount * 100) // Convert to smallest unit (paras)
       const sd = 'aa'
 
       // Build product description (first 20 chars)

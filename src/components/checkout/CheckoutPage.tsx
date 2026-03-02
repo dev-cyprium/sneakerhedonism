@@ -4,6 +4,7 @@ import { Media } from '@/components/Media'
 import { Message } from '@/components/Message'
 import { Price } from '@/components/Price'
 import { resolveItemPrice } from '@/lib/resolvePrice'
+import { FREE_SHIPPING_THRESHOLD_RSD, getShippingSummary } from '@/lib/shipping'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +18,8 @@ import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
 import { Address, Product, VariantOption } from '@/payload-types'
 import { Checkbox } from '@/components/ui/checkbox'
+import { DeleteItemButton } from '@/components/Cart/DeleteItemButton'
+import { EditItemQuantityButton } from '@/components/Cart/EditItemQuantityButton'
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { FormItem } from '@/components/forms/FormItem'
 import { toast } from 'sonner'
@@ -42,15 +45,16 @@ export const CheckoutPage: React.FC = () => {
 
   const cartIsEmpty = !cart || !cart.items || !cart.items.length
 
-  const cartTotal = useMemo(() => {
+  const cartSubtotal = useMemo(() => {
     if (!cart?.items?.length) return 0
     return cart.items.reduce((total, item) => {
       if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
-      const isVariant = Boolean(item.variant) && typeof item.variant === 'object'
       const price = resolveItemPrice(item.product, item.variant)
       return total + (price ?? 0) * item.quantity
     }, 0)
   }, [cart?.items])
+
+  const shippingSummary = useMemo(() => getShippingSummary(cartSubtotal), [cartSubtotal])
 
   const canGoToPayment = Boolean(
     (email || user) &&
@@ -201,7 +205,7 @@ export const CheckoutPage: React.FC = () => {
     return (
       <div className="prose dark:prose-invert py-12 w-full items-center">
         <p>Vaša korpa je prazna.</p>
-        <Link href="/search">Nastavite kupovinu?</Link>
+        <Link href="/shop">Nastavite kupovinu?</Link>
       </div>
     )
   }
@@ -450,11 +454,44 @@ export const CheckoutPage: React.FC = () => {
       {!cartIsEmpty && (
         <div className="basis-full lg:basis-1/3 lg:pl-8 p-8 border-none bg-primary/5 flex flex-col gap-8 rounded-lg">
           <h2 className="text-3xl font-medium">Vaša korpa</h2>
+          <div className="rounded-lg border border-primary/20 bg-background/80 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                {shippingSummary.hasFreeShipping ? (
+                  <p className="text-sm font-medium text-foreground">Besplatna dostava je aktivna.</p>
+                ) : (
+                  <p className="text-sm font-medium text-foreground">
+                    Dodajte još{' '}
+                    <Price
+                      as="span"
+                      amount={shippingSummary.remainingForFreeShipping}
+                      className="inline text-sm font-semibold text-foreground"
+                    />{' '}
+                    do besplatne dostave.
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Prag: <Price as="span" amount={FREE_SHIPPING_THRESHOLD_RSD} className="inline text-xs" />
+                </p>
+              </div>
+              {!shippingSummary.hasFreeShipping && (
+                <Button asChild variant="link" size="clear" className="h-auto p-0 text-xs sm:text-sm">
+                  <Link href="/shop">Dodaj još proizvoda</Link>
+                </Button>
+              )}
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: `${shippingSummary.progressToFreeShipping}%` }}
+              />
+            </div>
+          </div>
           {cart?.items?.map((item, index) => {
             if (typeof item.product === 'object' && item.product) {
               const {
                 product,
-                product: { id, meta, title, gallery },
+                product: { meta, title, gallery },
                 quantity,
                 variant,
               } = item
@@ -516,14 +553,22 @@ export const CheckoutPage: React.FC = () => {
                             .join(', ')}
                         </p>
                       )}
-                      <p className="text-sm text-muted-foreground">
-                        x{quantity}
-                      </p>
                     </div>
 
                     {price != null && (
                       <Price className="font-medium" amount={price} />
                     )}
+
+                    <div className="mt-1 flex items-center justify-between gap-3">
+                      <div className="flex flex-row items-center rounded-lg border border-border bg-background">
+                        <EditItemQuantityButton item={item} type="minus" />
+                        <span className="min-w-6 px-2 text-center text-sm">
+                          {quantity}
+                        </span>
+                        <EditItemQuantityButton item={item} type="plus" />
+                      </div>
+                      <DeleteItemButton item={item} />
+                    </div>
                   </div>
                 </div>
               )
@@ -531,9 +576,23 @@ export const CheckoutPage: React.FC = () => {
             return null
           })}
           <hr />
-          <div className="flex justify-between items-center gap-2">
-            <span className="uppercase">Ukupno</span>{' '}
-            <Price className="text-3xl font-medium" amount={cartTotal} />
+          <div className="space-y-2">
+            <div className="flex justify-between items-center gap-2 text-sm text-muted-foreground">
+              <span>Iznos</span>
+              <Price amount={shippingSummary.subtotalAmount} />
+            </div>
+            <div className="flex justify-between items-center gap-2 text-sm text-muted-foreground">
+              <span>Dostava</span>
+              {shippingSummary.hasFreeShipping ? (
+                <span className="font-medium text-primary">Besplatno</span>
+              ) : (
+                <Price amount={shippingSummary.shippingAmount} />
+              )}
+            </div>
+            <div className="flex justify-between items-center gap-2">
+              <span className="uppercase">Ukupno</span>
+              <Price className="text-3xl font-medium" amount={shippingSummary.totalAmount} />
+            </div>
           </div>
         </div>
       )}

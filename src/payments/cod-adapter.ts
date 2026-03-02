@@ -1,5 +1,6 @@
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 import type { CollectionSlug } from 'payload'
+import { getShippingSummary } from '@/lib/shipping'
 
 export const codAdapter = (): PaymentAdapter => {
   return {
@@ -73,6 +74,8 @@ export const codAdapter = (): PaymentAdapter => {
         }
       }
 
+      const { totalAmount } = getShippingSummary(amount)
+
       const flattenedCart = cart.items.map((item) => {
         const productID = typeof item.product === 'object' ? item.product.id : item.product
         const variantID = item.variant
@@ -91,7 +94,7 @@ export const codAdapter = (): PaymentAdapter => {
         collection: transactionsSlug as CollectionSlug,
         data: {
           ...(req.user ? { customer: req.user.id } : { customerEmail }),
-          amount,
+          amount: totalAmount,
           billingAddress,
           cart: cart.id,
           currency: currency.toUpperCase() as 'RSD',
