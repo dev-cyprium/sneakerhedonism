@@ -8,15 +8,32 @@ import { ShopProductGridInfinite } from '@/components/shop/ShopProductGridInfini
 import { ShopSidebar } from '@/components/shop/ShopSidebar'
 import { buildShopProductWhere, SHOP_PRODUCT_SELECT } from '@/lib/shopProducts'
 import type { Product } from '@/payload-types'
+import { getServerSideURL } from '@/utilities/getURL'
 import configPromise from '@payload-config'
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import React, { Suspense } from 'react'
 
 export const revalidate = 30
 
-export const metadata = {
-  description: 'Pretražite proizvode u našoj ponudi.',
-  title: 'Prodavnica',
+const SHOP_TITLE = 'Prodavnica'
+const SHOP_DESCRIPTION =
+  'Pretražite premium patike i brendirano obuće u Sneaker Hedonism prodavnici. Filtrirajte po kategoriji, brendu i ceni. Brza dostava u celoj Srbiji.'
+
+export const metadata: Metadata = {
+  title: `${SHOP_TITLE} | Sneaker Hedonism`,
+  description: SHOP_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    url: `${getServerSideURL()}/shop`,
+    siteName: 'Sneaker Hedonism',
+    title: `${SHOP_TITLE} | Sneaker Hedonism`,
+    description: SHOP_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 type SearchParams = { [key: string]: string | string[] | undefined }
