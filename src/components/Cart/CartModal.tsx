@@ -2,6 +2,7 @@
 
 import { Price } from '@/components/Price'
 import { resolveItemPrice } from '@/lib/resolvePrice'
+import { FREE_SHIPPING_THRESHOLD_RSD, getShippingSummary } from '@/lib/shipping'
 import {
   Sheet,
   SheetContent,
@@ -51,15 +52,16 @@ export function CartModal() {
     return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
   }, [cart])
 
-  const cartTotal = useMemo(() => {
+  const cartSubtotal = useMemo(() => {
     if (!cart?.items?.length) return 0
     return cart.items.reduce((total, item) => {
       if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
-      const isVariant = Boolean(item.variant) && typeof item.variant === 'object'
       const price = resolveItemPrice(item.product, item.variant)
       return total + (price ?? 0) * item.quantity
     }, 0)
   }, [cart?.items])
+
+  const shippingSummary = useMemo(() => getShippingSummary(cartSubtotal), [cartSubtotal])
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
@@ -80,6 +82,9 @@ export function CartModal() {
           <div className="text-center flex flex-col items-center gap-2">
             <ShoppingCart className="h-16" />
             <p className="text-center text-2xl font-bold">Vaša korpa je prazna.</p>
+            <Button asChild variant="outline">
+              <Link href="/shop">Idi u prodavnicu</Link>
+            </Button>
           </div>
         ) : (
           <div className="grow flex px-4">
@@ -182,16 +187,74 @@ export function CartModal() {
               </ul>
 
               <div className="px-4">
-                <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  {cartTotal > 0 && (
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Ukupno</p>
-                      <Price
-                        amount={cartTotal}
-                        className="text-right text-base text-black dark:text-white"
+                <div className="py-4 text-sm text-muted-foreground">
+                  <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        {shippingSummary.hasFreeShipping ? (
+                          <p className="text-sm font-medium text-foreground">
+                            Ostvarili ste besplatnu dostavu.
+                          </p>
+                        ) : (
+                          <p className="text-sm font-medium text-foreground">
+                            Dodajte još{' '}
+                            <Price
+                              as="span"
+                              amount={shippingSummary.remainingForFreeShipping}
+                              className="inline text-sm font-semibold text-foreground"
+                            />{' '}
+                            do besplatne dostave.
+                          </p>
+                        )}
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Prag za besplatnu dostavu je{' '}
+                          <Price
+                            as="span"
+                            amount={FREE_SHIPPING_THRESHOLD_RSD}
+                            className="inline text-xs text-muted-foreground"
+                          />
+                          .
+                        </p>
+                      </div>
+
+                      {!shippingSummary.hasFreeShipping && (
+                        <Button asChild variant="link" size="clear" className="h-auto p-0 text-xs sm:text-sm">
+                          <Link href="/shop">Dodaj proizvode</Link>
+                        </Button>
+                      )}
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-300"
+                        style={{ width: `${shippingSummary.progressToFreeShipping}%` }}
                       />
                     </div>
-                  )}
+                  </div>
+
+                  <div className="mb-3 space-y-2 border-b border-border pb-3 pt-1">
+                    <div className="flex items-center justify-between">
+                      <p>Iznos</p>
+                      <Price amount={cartSubtotal} className="text-right text-sm text-foreground" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p>Dostava</p>
+                      {shippingSummary.hasFreeShipping ? (
+                        <span className="text-sm font-medium text-primary">Besplatno</span>
+                      ) : (
+                        <Price
+                          amount={shippingSummary.shippingAmount}
+                          className="text-right text-sm text-foreground"
+                        />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <p className="font-medium text-foreground">Ukupno</p>
+                      <Price
+                        amount={shippingSummary.totalAmount}
+                        className="text-right text-base font-semibold text-foreground"
+                      />
+                    </div>
+                  </div>
 
                   <Button asChild>
                     <Link className="w-full" href="/checkout">
