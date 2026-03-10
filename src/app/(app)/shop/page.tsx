@@ -150,7 +150,7 @@ export default async function ShopPage({ searchParams }: Props) {
   const payload = await getPayload({ config: configPromise })
 
   // --- Parallelize independent queries ---
-  const [allCategories, variantTypesResult, [minResult, maxResult]] = await Promise.all([
+  const [allCategories, variantTypesResult, [minResult, maxResult, saleMinResult, saleMaxResult]] = await Promise.all([
     payload.find({
       collection: 'categories',
       sort: 'title',
@@ -168,21 +168,40 @@ export default async function ShopPage({ searchParams }: Props) {
         sort: 'priceInRSD',
         limit: 1,
         where: { _status: { equals: 'published' }, priceInRSD: { greater_than: 0 } },
-        select: { priceInRSD: true },
+        select: { priceInRSD: true, salePriceInRSD: true },
       }),
       payload.find({
         collection: 'products',
         sort: '-priceInRSD',
         limit: 1,
         where: { _status: { equals: 'published' }, priceInRSD: { greater_than: 0 } },
-        select: { priceInRSD: true },
+        select: { priceInRSD: true, salePriceInRSD: true },
+      }),
+      // Also check sale prices for slider bounds
+      payload.find({
+        collection: 'products',
+        sort: 'salePriceInRSD',
+        limit: 1,
+        where: { _status: { equals: 'published' }, salePriceInRSD: { greater_than: 0 } },
+        select: { salePriceInRSD: true },
+      }),
+      payload.find({
+        collection: 'products',
+        sort: '-salePriceInRSD',
+        limit: 1,
+        where: { _status: { equals: 'published' }, salePriceInRSD: { greater_than: 0 } },
+        select: { salePriceInRSD: true },
       }),
     ]),
   ])
 
+  const regularMin = minResult.docs[0]?.priceInRSD ?? 0
+  const regularMax = maxResult.docs[0]?.priceInRSD ?? 100000
+  const saleMin = saleMinResult.docs[0]?.salePriceInRSD ?? regularMin
+  const saleMax = saleMaxResult.docs[0]?.salePriceInRSD ?? regularMax
   const priceRange = {
-    min: minResult.docs[0]?.priceInRSD ?? 0,
-    max: maxResult.docs[0]?.priceInRSD ?? 100000,
+    min: Math.min(regularMin, saleMin),
+    max: Math.max(regularMax, saleMax),
   }
 
   const parentCategories = allCategories.docs

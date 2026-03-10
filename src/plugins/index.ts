@@ -15,6 +15,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 import { AddressesCollection } from '@/collections/Addresses'
 import { OrdersCollection } from '@/collections/Orders'
 import { ProductsCollection } from '@/collections/Products'
+import { TransactionsCollection } from '@/collections/Transactions'
 import { VariantsCollection } from '@/collections/Variants'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
@@ -156,6 +157,9 @@ export const plugins: Plugin[] = [
     },
     orders: {
       ordersCollectionOverride: OrdersCollection,
+    },
+    transactions: {
+      transactionsCollectionOverride: TransactionsCollection,
     },
     payments: {
       paymentMethods: [

@@ -55,11 +55,23 @@ export async function buildShopProductWhere(
     }
   }
 
-  if (minPriceVal != null && !isNaN(minPriceVal)) {
-    whereConditions.push({ priceInRSD: { greater_than_equal: minPriceVal } })
-  }
-  if (maxPriceVal != null && !isNaN(maxPriceVal)) {
-    whereConditions.push({ priceInRSD: { less_than_equal: maxPriceVal } })
+  if ((minPriceVal != null && !isNaN(minPriceVal)) || (maxPriceVal != null && !isNaN(maxPriceVal))) {
+    // Filter by effective price: use salePriceInRSD when it exists, otherwise priceInRSD
+    const saleConditions: Where[] = [{ salePriceInRSD: { exists: true } }]
+    const regularConditions: Where[] = [{ salePriceInRSD: { exists: false } }]
+
+    if (minPriceVal != null && !isNaN(minPriceVal)) {
+      saleConditions.push({ salePriceInRSD: { greater_than_equal: minPriceVal } })
+      regularConditions.push({ priceInRSD: { greater_than_equal: minPriceVal } })
+    }
+    if (maxPriceVal != null && !isNaN(maxPriceVal)) {
+      saleConditions.push({ salePriceInRSD: { less_than_equal: maxPriceVal } })
+      regularConditions.push({ priceInRSD: { less_than_equal: maxPriceVal } })
+    }
+
+    whereConditions.push({
+      or: [{ and: saleConditions }, { and: regularConditions }],
+    })
   }
 
   if (onSale) {

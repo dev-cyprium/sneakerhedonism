@@ -9,7 +9,7 @@ import {
   BASE_URL,
   UI,
 } from '../helpers/constants'
-import { loginFromUI, logout } from '../helpers/login'
+import { loginFromUI, loginToAdmin, logout } from '../helpers/login'
 
 test.describe('Frontend', () => {
   // ─── Basic pages ────────────────────────────────────────────────
@@ -225,6 +225,56 @@ test.describe('Frontend', () => {
     await page.waitForURL(/\/orders\//)
   })
 
+  test('Guest can apply limited coupon in checkout', async ({ page }) => {
+    const couponCode = `E2E-LIMITED-${Date.now()}`
+
+    await loginToAdmin(page, ADMIN_USER.email, ADMIN_USER.password)
+    await createCoupon(page, {
+      code: couponCode,
+      discountPercent: 15,
+      minimumSubtotal: 0,
+      unlimitedUsage: false,
+      usageLimit: 25,
+    })
+    await logout(page)
+
+    await addToCartAndConfirm(page, {
+      productName: SIMPLE_PRODUCT.title,
+      productSlug: SIMPLE_PRODUCT.slug,
+    })
+    await page.keyboard.press('Escape')
+
+    await checkout(page, 'guest-coupon@test.com', { couponCode })
+    await expectOrderIsDisplayed(page)
+  })
+
+  test('Guest cannot apply unlimited coupon', async ({ page }) => {
+    const couponCode = `E2E-UNLIMITED-${Date.now()}`
+
+    await loginToAdmin(page, ADMIN_USER.email, ADMIN_USER.password)
+    await createCoupon(page, {
+      code: couponCode,
+      discountPercent: 15,
+      minimumSubtotal: 0,
+      unlimitedUsage: true,
+    })
+    await logout(page)
+
+    await addToCartAndConfirm(page, {
+      productName: SIMPLE_PRODUCT.title,
+      productSlug: SIMPLE_PRODUCT.slug,
+    })
+    await page.keyboard.press('Escape')
+
+    await checkout(page, 'guest-coupon-restricted@test.com', {
+      couponCode,
+      expectCouponError: /Guests cannot redeem this coupon\./,
+      placeOrder: false,
+    })
+
+    await expect(page).toHaveURL(/\/checkout/)
+  })
+
   // ─── Admin product management ──────────────────────────────────
 
   test('Admins can update and view prices on products', async ({ page }) => {
@@ -436,7 +486,15 @@ test.describe('Frontend', () => {
     await expect(emptyCartMessage).toBeVisible()
   }
 
-  async function checkout(page: Page, guestEmail?: string | null): Promise<void> {
+  async function checkout(
+    page: Page,
+    guestEmail?: string | null,
+    options?: {
+      couponCode?: string
+      expectCouponError?: RegExp | string
+      placeOrder?: boolean
+    },
+  ): Promise<void> {
     await page.goto(`${BASE_URL}/checkout`)
 
     if (guestEmail) {
@@ -477,6 +535,24 @@ test.describe('Frontend', () => {
       }
     }
 
+    if (options?.couponCode) {
+      const couponInput = page.getByPlaceholder('Unesite kupon kod')
+      await couponInput.fill(options.couponCode)
+
+      const applyCouponButton = page.getByRole('button', { name: 'Primeni', exact: true }).first()
+      await applyCouponButton.click()
+
+      if (options.expectCouponError) {
+        await expect(page.getByText(options.expectCouponError)).toBeVisible({ timeout: 10000 })
+      } else {
+        await expect(page.getByText(new RegExp(`Aktivan kupon:\\s*${options.couponCode}`, 'i'))).toBeVisible({
+          timeout: 10000,
+        })
+      }
+    }
+
+    if (options?.placeOrder === false) return
+
     // Proceed to payment section
     const goToPayment = page.getByRole('button', { name: UI.goToPayment })
     await expect(goToPayment).toBeEnabled({ timeout: 5000 })
@@ -508,5 +584,29 @@ test.describe('Frontend', () => {
 
     const successMessage = page.locator('text=Updated successfully')
     await expect(successMessage).toBeVisible()
+  }
+
+  async function createCoupon(
+    page: Page,
+    data: {
+      code: string
+      discountPercent: number
+      minimumSubtotal: number
+      unlimitedUsage: boolean
+      usageLimit?: number
+    },
+  ) {
+    const response = await page.request.post(`${BASE_URL}/api/coupons`, {
+      data: {
+        code: data.code,
+        active: true,
+        discountPercent: data.discountPercent,
+        minimumSubtotal: data.minimumSubtotal,
+        unlimitedUsage: data.unlimitedUsage,
+        ...(data.unlimitedUsage ? {} : { usageLimit: data.usageLimit ?? 10 }),
+      },
+    })
+
+    expect(response.ok()).toBe(true)
   }
 })

@@ -1,6 +1,7 @@
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 import type { CollectionSlug } from 'payload'
-import { getShippingSummary } from '@/lib/shipping'
+
+import { resolveCheckoutPricing } from '@/lib/checkoutPricing'
 
 export const codAdapter = (): PaymentAdapter => {
   return {
@@ -23,6 +24,7 @@ export const codAdapter = (): PaymentAdapter => {
     initiatePayment: async ({ data, req, transactionsSlug }) => {
       const payload = req.payload
       const { cart, currency, customerEmail, billingAddress } = data
+      const couponCode = (data as Record<string, unknown>).couponCode
 
       if (!cart || !cart.items || cart.items.length === 0) {
         throw new Error('Cart is empty or not provided.')
@@ -32,75 +34,38 @@ export const codAdapter = (): PaymentAdapter => {
         throw new Error('A valid customer email is required.')
       }
 
-      // Calculate amount from cart items since subtotal may be 0
-      const priceField = `priceIn${currency.toUpperCase()}`
-      const saleField = `salePriceIn${currency.toUpperCase()}`
-      let amount = 0
-
-      for (const item of cart.items) {
-        const quantity = item.quantity || 1
-        const productId = typeof item.product === 'object' ? item.product.id : item.product
-
-        if (item.variant) {
-          const variantId = typeof item.variant === 'object' ? item.variant.id : item.variant
-          const variant = await payload.findByID({
-            id: variantId,
-            collection: 'variants' as CollectionSlug,
-            depth: 0,
-            select: { [priceField]: true, [saleField]: true },
-          })
-          const product = await payload.findByID({
-            id: productId,
-            collection: 'products' as CollectionSlug,
-            depth: 0,
-            select: { [priceField]: true, [saleField]: true },
-          })
-          const v = variant as Record<string, any>
-          const p = product as Record<string, any>
-          // Prefer any sale price over any regular price (discount always wins)
-          const price =
-            v[saleField] ?? p[saleField] ?? v[priceField] ?? p[priceField] ?? 0
-          amount += price * quantity
-        } else if (item.product) {
-          const product = await payload.findByID({
-            id: productId,
-            collection: 'products' as CollectionSlug,
-            depth: 0,
-            select: { [priceField]: true, [saleField]: true },
-          })
-          const p = product as Record<string, any>
-          const price = p[saleField] ?? p[priceField] ?? 0
-          amount += price * quantity
-        }
-      }
-
-      const { totalAmount } = getShippingSummary(amount)
-
-      const flattenedCart = cart.items.map((item) => {
-        const productID = typeof item.product === 'object' ? item.product.id : item.product
-        const variantID = item.variant
-          ? typeof item.variant === 'object'
-            ? item.variant.id
-            : item.variant
-          : undefined
-        return {
-          product: productID,
-          quantity: item.quantity,
-          ...(variantID ? { variant: variantID } : {}),
-        }
+      const pricing = await resolveCheckoutPricing({
+        cartItems: cart.items,
+        couponCode: typeof couponCode === 'string' ? couponCode : undefined,
+        currency,
+        payload,
+        req,
+        user: req.user ?? null,
       })
 
       const transaction = await payload.create({
         collection: transactionsSlug as CollectionSlug,
         data: {
           ...(req.user ? { customer: req.user.id } : { customerEmail }),
-          amount: totalAmount,
+          amount: pricing.totalAmount,
           billingAddress,
           cart: cart.id,
           currency: currency.toUpperCase() as 'RSD',
-          items: flattenedCart,
+          items: pricing.flattenedItems,
           paymentMethod: 'cod' as const,
           status: 'pending' as const,
+          subtotalBeforeDiscount: pricing.subtotalAmount,
+          subtotalAfterDiscount: pricing.discountedSubtotalAmount,
+          shippingAmount: pricing.shippingAmount,
+          ...(pricing.coupon
+            ? {
+                coupon: pricing.coupon.id,
+                couponCode: pricing.coupon.code,
+                couponDiscountPercent: pricing.coupon.discountPercent,
+                couponDiscountAmount: pricing.discountAmount,
+                couponMinimumSubtotal: pricing.coupon.minimumSubtotal,
+              }
+            : {}),
         },
       })
 
@@ -136,6 +101,8 @@ export const codAdapter = (): PaymentAdapter => {
       }
 
       const txn = transaction as Record<string, any>
+      const couponID =
+        txn.coupon && typeof txn.coupon === 'object' ? txn.coupon.id : txn.coupon
 
       const order = await payload.create({
         collection: ordersSlug as CollectionSlug,
@@ -148,6 +115,24 @@ export const codAdapter = (): PaymentAdapter => {
           status: 'processing',
           orderStatus: 'processing',
           transactions: [transaction.id],
+          ...(couponID ? { coupon: couponID } : {}),
+          ...(txn.couponCode ? { couponCode: txn.couponCode } : {}),
+          ...(typeof txn.couponDiscountPercent === 'number'
+            ? { couponDiscountPercent: txn.couponDiscountPercent }
+            : {}),
+          ...(typeof txn.couponDiscountAmount === 'number'
+            ? { couponDiscountAmount: txn.couponDiscountAmount }
+            : {}),
+          ...(typeof txn.couponMinimumSubtotal === 'number'
+            ? { couponMinimumSubtotal: txn.couponMinimumSubtotal }
+            : {}),
+          ...(typeof txn.subtotalBeforeDiscount === 'number'
+            ? { subtotalBeforeDiscount: txn.subtotalBeforeDiscount }
+            : {}),
+          ...(typeof txn.subtotalAfterDiscount === 'number'
+            ? { subtotalAfterDiscount: txn.subtotalAfterDiscount }
+            : {}),
+          ...(typeof txn.shippingAmount === 'number' ? { shippingAmount: txn.shippingAmount } : {}),
         },
       })
 

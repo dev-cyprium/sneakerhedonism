@@ -79,6 +79,7 @@ export interface Config {
     categories: Category;
     media: Media;
     'size-guides': SizeGuide;
+    coupons: Coupon;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -100,6 +101,9 @@ export interface Config {
       cart: 'carts';
       addresses: 'addresses';
     };
+    coupons: {
+      orders: 'orders';
+    };
     variantTypes: {
       options: 'variantOptions';
     };
@@ -115,6 +119,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'size-guides': SizeGuidesSelect<false> | SizeGuidesSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -277,6 +282,14 @@ export interface Order {
   orderStatus?: ('processing' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled') | null;
   trackingCode?: string | null;
   carrier?: string | null;
+  coupon?: (number | null) | Coupon;
+  couponCode?: string | null;
+  couponDiscountPercent?: number | null;
+  couponDiscountAmount?: number | null;
+  couponMinimumSubtotal?: number | null;
+  subtotalBeforeDiscount?: number | null;
+  subtotalAfterDiscount?: number | null;
+  shippingAmount?: number | null;
   emailsSent?:
     | {
         type?: string | null;
@@ -1193,6 +1206,14 @@ export interface Transaction {
   cart?: (number | null) | Cart;
   amount?: number | null;
   currency?: 'RSD' | null;
+  coupon?: (number | null) | Coupon;
+  couponCode?: string | null;
+  couponDiscountPercent?: number | null;
+  couponDiscountAmount?: number | null;
+  couponMinimumSubtotal?: number | null;
+  subtotalBeforeDiscount?: number | null;
+  subtotalAfterDiscount?: number | null;
+  shippingAmount?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1216,6 +1237,45 @@ export interface Cart {
   status?: ('active' | 'purchased' | 'abandoned') | null;
   subtotal?: number | null;
   currency?: 'RSD' | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: number;
+  /**
+   * Coupon code customers enter at checkout (stored uppercase).
+   */
+  code: string;
+  active?: boolean | null;
+  /**
+   * Percentage discount applied to cart subtotal (1-100).
+   */
+  discountPercent: number;
+  /**
+   * Minimum cart subtotal required to use this coupon.
+   */
+  minimumSubtotal: number;
+  /**
+   * Coupon cannot be used after this date/time.
+   */
+  expiresAt?: string | null;
+  /**
+   * If enabled, coupon can be redeemed unlimited times (guests cannot use these).
+   */
+  unlimitedUsage?: boolean | null;
+  /**
+   * Maximum redemptions when unlimited usage is disabled.
+   */
+  usageLimit?: number | null;
+  orders?: {
+    docs?: (number | Order)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -1474,6 +1534,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'size-guides';
         value: number | SizeGuide;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: number | Coupon;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1984,6 +2048,22 @@ export interface SizeGuidesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  code?: T;
+  active?: T;
+  discountPercent?: T;
+  minimumSubtotal?: T;
+  expiresAt?: T;
+  unlimitedUsage?: T;
+  usageLimit?: T;
+  orders?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -2300,6 +2380,14 @@ export interface OrdersSelect<T extends boolean = true> {
   orderStatus?: T;
   trackingCode?: T;
   carrier?: T;
+  coupon?: T;
+  couponCode?: T;
+  couponDiscountPercent?: T;
+  couponDiscountAmount?: T;
+  couponMinimumSubtotal?: T;
+  subtotalBeforeDiscount?: T;
+  subtotalAfterDiscount?: T;
+  shippingAmount?: T;
   emailsSent?:
     | T
     | {
@@ -2362,6 +2450,14 @@ export interface TransactionsSelect<T extends boolean = true> {
   cart?: T;
   amount?: T;
   currency?: T;
+  coupon?: T;
+  couponCode?: T;
+  couponDiscountPercent?: T;
+  couponDiscountAmount?: T;
+  couponMinimumSubtotal?: T;
+  subtotalBeforeDiscount?: T;
+  subtotalAfterDiscount?: T;
+  shippingAmount?: T;
   updatedAt?: T;
   createdAt?: T;
 }

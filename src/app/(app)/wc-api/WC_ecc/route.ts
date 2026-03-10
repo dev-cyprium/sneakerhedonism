@@ -43,6 +43,7 @@ export async function POST(request: Request) {
 
     const serverUrl = getServerSideURL()
     const eccData = { tranCode, approvalCode, proxyPan, rrn, xid }
+    const txn = transaction as Record<string, any>
 
     if (tranCode === '000') {
       // Verify bank signature (non-blocking — errors are logged, not thrown)
@@ -72,8 +73,50 @@ export async function POST(request: Request) {
         }
       }
 
+      const callbackAmount = Number(totalAmount)
+      const expectedBankAmount = Math.round((typeof txn.amount === 'number' ? txn.amount : 0) * 100)
+
+      if (!Number.isFinite(callbackAmount) || callbackAmount !== expectedBankAmount) {
+        payload.logger.warn(
+          `ECC: Amount mismatch for transaction ${orderId}. Callback: ${totalAmount}, expected: ${expectedBankAmount}`,
+        )
+
+        await payload.update({
+          id: transaction.id,
+          collection: 'transactions',
+          data: {
+            status: 'failed',
+            ecc: eccData,
+          } as any,
+        })
+
+        const forwardUrl = `${serverUrl}/checkout?error=payment_failed`
+
+        const responseText = [
+          `MerchantID=${merchantId}`,
+          `TerminalID=${terminalId}`,
+          `OrderID=${orderId}`,
+          `Currency=${currency}`,
+          `TotalAmount=${totalAmount}`,
+          `XID=${xid}`,
+          `PurchaseTime=${purchaseTime}`,
+          `ApprovalCode=${approvalCode}`,
+          `SD=${sd}`,
+          `TranCode=${tranCode}`,
+          `Response.action=reverse`,
+          `Response.reason=amount_mismatch`,
+          `Response.forwardUrl=${forwardUrl}`,
+        ].join('\n')
+
+        return new NextResponse(responseText, {
+          status: 200,
+          headers: { 'Content-Type': 'text/plain' },
+        })
+      }
+
       // Create order
-      const txn = transaction as Record<string, any>
+      const couponID =
+        txn.coupon && typeof txn.coupon === 'object' ? txn.coupon.id : txn.coupon
 
       const order = await payload.create({
         collection: 'orders',
@@ -85,6 +128,24 @@ export async function POST(request: Request) {
           status: 'processing',
           orderStatus: 'processing',
           transactions: [transaction.id],
+          ...(couponID ? { coupon: couponID } : {}),
+          ...(txn.couponCode ? { couponCode: txn.couponCode } : {}),
+          ...(typeof txn.couponDiscountPercent === 'number'
+            ? { couponDiscountPercent: txn.couponDiscountPercent }
+            : {}),
+          ...(typeof txn.couponDiscountAmount === 'number'
+            ? { couponDiscountAmount: txn.couponDiscountAmount }
+            : {}),
+          ...(typeof txn.couponMinimumSubtotal === 'number'
+            ? { couponMinimumSubtotal: txn.couponMinimumSubtotal }
+            : {}),
+          ...(typeof txn.subtotalBeforeDiscount === 'number'
+            ? { subtotalBeforeDiscount: txn.subtotalBeforeDiscount }
+            : {}),
+          ...(typeof txn.subtotalAfterDiscount === 'number'
+            ? { subtotalAfterDiscount: txn.subtotalAfterDiscount }
+            : {}),
+          ...(typeof txn.shippingAmount === 'number' ? { shippingAmount: txn.shippingAmount } : {}),
         },
       })
 

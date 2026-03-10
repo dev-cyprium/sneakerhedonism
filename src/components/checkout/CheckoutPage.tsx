@@ -26,6 +26,28 @@ import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Truck, CreditCard } from 'lucide-react'
 
+type CouponPreviewPricing = {
+  subtotalAmount: number
+  discountAmount: number
+  discountedSubtotalAmount: number
+  shippingAmount: number
+  totalAmount: number
+  hasFreeShipping: boolean
+  remainingForFreeShipping: number
+  progressToFreeShipping: number
+}
+
+type CouponPreviewResponse = {
+  valid: boolean
+  message?: string
+  coupon?: {
+    code: string
+    discountPercent: number
+    minimumSubtotal: number
+  } | null
+  pricing?: CouponPreviewPricing
+}
+
 export const CheckoutPage: React.FC = () => {
   const { user } = useAuth()
   const router = useRouter()
@@ -41,6 +63,14 @@ export const CheckoutPage: React.FC = () => {
   const [billingAddressSameAsShipping, setBillingAddressSameAsShipping] = useState(true)
   const [isProcessingPayment, setProcessingPayment] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string
+    discountPercent: number
+  } | null>(null)
+  const [couponPricing, setCouponPricing] = useState<CouponPreviewPricing | null>(null)
+  const [couponError, setCouponError] = useState<null | string>(null)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
   const addressSectionRef = useRef<HTMLDivElement>(null)
 
   const cartIsEmpty = !cart || !cart.items || !cart.items.length
@@ -55,6 +85,105 @@ export const CheckoutPage: React.FC = () => {
   }, [cart?.items])
 
   const shippingSummary = useMemo(() => getShippingSummary(cartSubtotal), [cartSubtotal])
+
+  const couponItems = useMemo(() => {
+    if (!cart?.items?.length) return []
+
+    return cart.items
+      .map((item) => {
+        const product =
+          typeof item.product === 'object' && item.product ? item.product.id : item.product
+        const variant =
+          item.variant && typeof item.variant === 'object' ? item.variant.id : item.variant
+
+        return {
+          product,
+          quantity: item.quantity ?? 1,
+          ...(variant != null ? { variant } : {}),
+        }
+      })
+      .filter((item) => item.product != null)
+  }, [cart?.items])
+
+  const summaryForDisplay = useMemo<CouponPreviewPricing>(() => {
+    if (couponPricing) return couponPricing
+
+    return {
+      subtotalAmount: shippingSummary.subtotalAmount,
+      discountAmount: 0,
+      discountedSubtotalAmount: shippingSummary.subtotalAmount,
+      shippingAmount: shippingSummary.shippingAmount,
+      totalAmount: shippingSummary.totalAmount,
+      hasFreeShipping: shippingSummary.hasFreeShipping,
+      remainingForFreeShipping: shippingSummary.remainingForFreeShipping,
+      progressToFreeShipping: shippingSummary.progressToFreeShipping,
+    }
+  }, [couponPricing, shippingSummary])
+
+  const applyCoupon = useCallback(
+    async (rawCode: string, options?: { silent?: boolean }) => {
+      const code = rawCode.trim()
+      const silent = Boolean(options?.silent)
+
+      if (!code) {
+        const msg = 'Unesite kupon kod.'
+        setCouponError(msg)
+        if (!silent) toast.error(msg)
+        return
+      }
+
+      if (!couponItems.length) {
+        const msg = 'Korpa je prazna.'
+        setCouponError(msg)
+        if (!silent) toast.error(msg)
+        return
+      }
+
+      if (!silent) setIsApplyingCoupon(true)
+
+      try {
+        const response = await fetch('/api/checkout/coupon', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            couponCode: code,
+            currency: cart?.currency || 'RSD',
+            items: couponItems,
+          }),
+        })
+
+        const result = (await response.json().catch(() => null)) as CouponPreviewResponse | null
+        if (!result?.valid || !result.pricing || !result.coupon || !response.ok) {
+          throw new Error(result?.message || 'Kupon nije moguće primeniti.')
+        }
+
+        setAppliedCoupon({
+          code: result.coupon.code,
+          discountPercent: result.coupon.discountPercent,
+        })
+        setCouponCode(result.coupon.code)
+        setCouponPricing(result.pricing)
+        setCouponError(null)
+
+        if (!silent) {
+          toast.success('Kupon je uspešno primenjen.')
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Kupon nije moguće primeniti.'
+        if (silent) {
+          setAppliedCoupon(null)
+          setCouponPricing(null)
+        }
+        setCouponError(msg)
+        if (!silent) toast.error(msg)
+      } finally {
+        if (!silent) setIsApplyingCoupon(false)
+      }
+    },
+    [cart?.currency, couponItems],
+  )
 
   const canGoToPayment = Boolean(
     (email || user) &&
@@ -81,8 +210,24 @@ export const CheckoutPage: React.FC = () => {
       setBillingAddressSameAsShipping(true)
       setEmail('')
       setEmailEditable(true)
+      setCouponCode('')
+      setAppliedCoupon(null)
+      setCouponPricing(null)
+      setCouponError(null)
     }
   }, [])
+
+  useEffect(() => {
+    if (!appliedCoupon?.code) return
+
+    if (!couponItems.length) {
+      setAppliedCoupon(null)
+      setCouponPricing(null)
+      return
+    }
+
+    void applyCoupon(appliedCoupon.code, { silent: true })
+  }, [appliedCoupon?.code, applyCoupon, couponItems])
 
   useEffect(() => {
     const errorParam = searchParams.get('error')
@@ -102,6 +247,7 @@ export const CheckoutPage: React.FC = () => {
       const paymentData = (await initiatePayment('ecc', {
         additionalData: {
           ...(email ? { customerEmail: email } : {}),
+          ...(appliedCoupon?.code ? { couponCode: appliedCoupon.code } : {}),
           billingAddress,
           shippingAddress: billingAddressSameAsShipping ? billingAddress : shippingAddress,
         },
@@ -136,6 +282,7 @@ export const CheckoutPage: React.FC = () => {
   }, [
     initiatePayment,
     email,
+    appliedCoupon,
     billingAddress,
     billingAddressSameAsShipping,
     shippingAddress,
@@ -149,6 +296,7 @@ export const CheckoutPage: React.FC = () => {
       const paymentData = (await initiatePayment('cod', {
         additionalData: {
           ...(email ? { customerEmail: email } : {}),
+          ...(appliedCoupon?.code ? { couponCode: appliedCoupon.code } : {}),
           billingAddress,
           shippingAddress: billingAddressSameAsShipping ? billingAddress : shippingAddress,
         },
@@ -183,6 +331,7 @@ export const CheckoutPage: React.FC = () => {
     initiatePayment,
     confirmOrder,
     email,
+    appliedCoupon,
     billingAddress,
     billingAddressSameAsShipping,
     shippingAddress,
@@ -457,14 +606,14 @@ export const CheckoutPage: React.FC = () => {
           <div className="rounded-lg border border-primary/20 bg-background/80 p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                {shippingSummary.hasFreeShipping ? (
+                {summaryForDisplay.hasFreeShipping ? (
                   <p className="text-sm font-medium text-foreground">Besplatna dostava je aktivna.</p>
                 ) : (
                   <p className="text-sm font-medium text-foreground">
                     Dodajte još{' '}
                     <Price
                       as="span"
-                      amount={shippingSummary.remainingForFreeShipping}
+                      amount={summaryForDisplay.remainingForFreeShipping}
                       className="inline text-sm font-semibold text-foreground"
                     />{' '}
                     do besplatne dostave.
@@ -474,7 +623,7 @@ export const CheckoutPage: React.FC = () => {
                   Prag: <Price as="span" amount={FREE_SHIPPING_THRESHOLD_RSD} className="inline text-xs" />
                 </p>
               </div>
-              {!shippingSummary.hasFreeShipping && (
+              {!summaryForDisplay.hasFreeShipping && (
                 <Button asChild variant="link" size="clear" className="h-auto p-0 text-xs sm:text-sm">
                   <Link href="/shop">Dodaj još proizvoda</Link>
                 </Button>
@@ -483,9 +632,51 @@ export const CheckoutPage: React.FC = () => {
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-300"
-                style={{ width: `${shippingSummary.progressToFreeShipping}%` }}
+                style={{ width: `${summaryForDisplay.progressToFreeShipping}%` }}
               />
             </div>
+          </div>
+          <div className="rounded-lg border border-primary/20 bg-background/80 p-3">
+            <p className="text-sm font-medium text-foreground">Kupon</p>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+              <Input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Unesite kupon kod"
+                disabled={isProcessingPayment || isApplyingCoupon}
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={isProcessingPayment || isApplyingCoupon || !couponCode.trim()}
+                onClick={() => void applyCoupon(couponCode)}
+              >
+                {isApplyingCoupon ? 'Provera...' : 'Primeni'}
+              </Button>
+            </div>
+            {appliedCoupon && (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-xs text-primary">
+                  Aktivan kupon: {appliedCoupon.code} ({appliedCoupon.discountPercent}%)
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-auto px-2 py-1 text-xs"
+                  disabled={isProcessingPayment}
+                  onClick={() => {
+                    setAppliedCoupon(null)
+                    setCouponPricing(null)
+                    setCouponCode('')
+                    setCouponError(null)
+                  }}
+                >
+                  Ukloni
+                </Button>
+              </div>
+            )}
+            {couponError && <p className="mt-2 text-xs text-destructive">{couponError}</p>}
           </div>
           {cart?.items?.map((item, index) => {
             if (typeof item.product === 'object' && item.product) {
@@ -579,19 +770,31 @@ export const CheckoutPage: React.FC = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center gap-2 text-sm text-muted-foreground">
               <span>Iznos</span>
-              <Price amount={shippingSummary.subtotalAmount} />
+              <Price amount={summaryForDisplay.subtotalAmount} />
             </div>
+            {summaryForDisplay.discountAmount > 0 && (
+              <div className="flex justify-between items-center gap-2 text-sm text-muted-foreground">
+                <span>Popust</span>
+                <Price amount={summaryForDisplay.discountAmount * -1} />
+              </div>
+            )}
+            {summaryForDisplay.discountAmount > 0 && (
+              <div className="flex justify-between items-center gap-2 text-sm text-muted-foreground">
+                <span>Subtotal nakon popusta</span>
+                <Price amount={summaryForDisplay.discountedSubtotalAmount} />
+              </div>
+            )}
             <div className="flex justify-between items-center gap-2 text-sm text-muted-foreground">
               <span>Dostava</span>
-              {shippingSummary.hasFreeShipping ? (
+              {summaryForDisplay.hasFreeShipping ? (
                 <span className="font-medium text-primary">Besplatno</span>
               ) : (
-                <Price amount={shippingSummary.shippingAmount} />
+                <Price amount={summaryForDisplay.shippingAmount} />
               )}
             </div>
             <div className="flex justify-between items-center gap-2">
               <span className="uppercase">Ukupno</span>
-              <Price className="text-3xl font-medium" amount={shippingSummary.totalAmount} />
+              <Price className="text-3xl font-medium" amount={summaryForDisplay.totalAmount} />
             </div>
           </div>
         </div>
