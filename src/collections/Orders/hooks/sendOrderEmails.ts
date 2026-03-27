@@ -75,6 +75,17 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
     (typeof doc.customer === 'object' && doc.customer?.email) ||
     undefined
 
+  const getTrackingCode = (orderDoc: Record<string, any> | null | undefined): string => {
+    const serbianPostTrackingCode =
+      typeof orderDoc?.serbianPostTrackingCode === 'string'
+        ? orderDoc.serbianPostTrackingCode.trim()
+        : ''
+    const legacyTrackingCode =
+      typeof orderDoc?.trackingCode === 'string' ? orderDoc.trackingCode.trim() : ''
+
+    return serbianPostTrackingCode || legacyTrackingCode
+  }
+
   // Build order data for templates. Use doc (and resolve relations by ID) so we
   // never re-fetch the order we just created, which can 404 inside the same create transaction.
   const buildOrderData = async () => {
@@ -199,70 +210,61 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
     }
   }
 
-  // ── Trigger 2: Status Changed to Shipped ──
-  if (
-    operation === 'update' &&
-    doc.orderStatus === 'shipped' &&
-    previousDoc.orderStatus !== 'shipped'
-  ) {
-    if (!doc.trackingCode) {
-      payload.logger.warn(
-        `Order #${doc.id} marked as shipped without tracking code — shipping emails skipped.`,
+  // ── Trigger 2: Tracking Code Added ──
+  const currentTrackingCode = getTrackingCode(doc as Record<string, any>)
+  const previousTrackingCode = getTrackingCode(previousDoc as Record<string, any>)
+  const trackingCodeWasAdded = operation === 'update' && Boolean(currentTrackingCode) && !previousTrackingCode
+
+  if (trackingCodeWasAdded) {
+    const orderData = await buildOrderData()
+
+    // Build tracking URL
+    let trackingUrl: string | undefined
+    const carrierName = doc.carrier || (doc.serbianPostTrackingCode ? 'Pošta Srbije' : undefined)
+
+    if (carrierName && emailSettings.carriers?.length) {
+      const match = emailSettings.carriers.find(
+        (c: { name?: string; trackingUrlTemplate?: string }) =>
+          c.name?.toLowerCase() === carrierName.toLowerCase(),
       )
-    } else {
-      const orderData = await buildOrderData()
-
-      // Build tracking URL
-      let trackingUrl: string | undefined
-      const carrierName = doc.carrier || undefined
-
-      if (carrierName && emailSettings.carriers?.length) {
-        const match = emailSettings.carriers.find(
-          (c: { name?: string; trackingUrlTemplate?: string }) =>
-            c.name?.toLowerCase() === carrierName.toLowerCase(),
-        )
-        if (match?.trackingUrlTemplate) {
-          trackingUrl = match.trackingUrlTemplate.replace('{{trackingCode}}', doc.trackingCode)
-        }
+      if (match?.trackingUrlTemplate) {
+        trackingUrl = match.trackingUrlTemplate.replace('{{trackingCode}}', currentTrackingCode)
       }
-      if (!trackingUrl && emailSettings.trackingUrlTemplate) {
-        trackingUrl = emailSettings.trackingUrlTemplate.replace(
-          '{{trackingCode}}',
-          doc.trackingCode,
-        )
-      }
+    }
+    if (!trackingUrl && emailSettings.trackingUrlTemplate) {
+      trackingUrl = emailSettings.trackingUrlTemplate.replace('{{trackingCode}}', currentTrackingCode)
+    }
 
-      const shippingData = {
-        ...orderData,
-        trackingCode: doc.trackingCode,
-        trackingUrl,
-        carrierName,
-      }
+    const shippingData = {
+      ...orderData,
+      trackingCode: currentTrackingCode,
+      trackingUrl,
+      carrierName,
+    }
 
-      // Send customer shipping confirmation (WITH tracking)
-      if (customerEmail && !alreadySent('shippingConfirmationCustomer')) {
-        const html = shippingConfirmationCustomer(shippingData)
+    // Send customer shipping confirmation (WITH tracking)
+    if (customerEmail && !alreadySent('shippingConfirmationCustomer')) {
+      const html = shippingConfirmationCustomer(shippingData)
+      const log = await sendAndLog(
+        'shippingConfirmationCustomer',
+        customerEmail,
+        `Vaša porudžbina #${doc.id} je poslata — ${storeName}`,
+        html,
+      )
+      newLogs.push(log)
+    }
+
+    // Send admin shipping notification copy
+    if (adminEmails.length > 0 && !alreadySent('shippingNotificationAdmin')) {
+      const html = shippingNotificationAdmin(shippingData)
+      for (const adminEmail of adminEmails) {
         const log = await sendAndLog(
-          'shippingConfirmationCustomer',
-          customerEmail,
-          `Vaša porudžbina #${doc.id} je poslata — ${storeName}`,
+          'shippingNotificationAdmin',
+          adminEmail,
+          `Porudžbina #${doc.id} je poslata`,
           html,
         )
         newLogs.push(log)
-      }
-
-      // Send admin shipping notification (WITHOUT tracking code)
-      if (adminEmails.length > 0 && !alreadySent('shippingNotificationAdmin')) {
-        const html = shippingNotificationAdmin(shippingData)
-        for (const adminEmail of adminEmails) {
-          const log = await sendAndLog(
-            'shippingNotificationAdmin',
-            adminEmail,
-            `Porudžbina #${doc.id} je poslata`,
-            html,
-          )
-          newLogs.push(log)
-        }
       }
     }
   }

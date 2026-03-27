@@ -40,15 +40,32 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
       },
     },
     {
-      name: 'trackingCode',
+      name: 'serbianPostTrackingCode',
       type: 'text',
-      label: 'Tracking Code',
+      label: 'Posta Srbije Tracking Code',
       admin: {
         position: 'sidebar',
+        description:
+          'Enter the Posta Srbije tracking code. The tracking link will be generated automatically in emails.',
         condition: (data) =>
           data?.orderStatus === 'shipped' ||
           data?.orderStatus === 'delivered' ||
+          Boolean(data?.serbianPostTrackingCode) ||
           Boolean(data?.trackingCode),
+      },
+    },
+    {
+      name: 'trackingCode',
+      type: 'text',
+      label: 'Tracking Code (legacy)',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        condition: (data) =>
+          data?.orderStatus === 'shipped' ||
+          data?.orderStatus === 'delivered' ||
+          Boolean(data?.trackingCode) ||
+          Boolean(data?.serbianPostTrackingCode),
       },
     },
     {
@@ -60,7 +77,8 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
         condition: (data) =>
           data?.orderStatus === 'shipped' ||
           data?.orderStatus === 'delivered' ||
-          Boolean(data?.trackingCode),
+          Boolean(data?.trackingCode) ||
+          Boolean(data?.serbianPostTrackingCode),
       },
     },
     {
@@ -156,7 +174,47 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
     ...(defaultCollection.hooks ?? {}),
     beforeChange: [
       ...(defaultCollection.hooks?.beforeChange ?? []),
-      ({ data }) => {
+      ({ data, operation, originalDoc }) => {
+        if (!data) return data
+
+        const hasSerbianTrackingCode = Object.prototype.hasOwnProperty.call(
+          data,
+          'serbianPostTrackingCode',
+        )
+
+        if (hasSerbianTrackingCode) {
+          const normalizedTrackingCode =
+            typeof data.serbianPostTrackingCode === 'string'
+              ? data.serbianPostTrackingCode.trim()
+              : ''
+
+          data.serbianPostTrackingCode = normalizedTrackingCode
+          data.trackingCode = normalizedTrackingCode
+
+          if (normalizedTrackingCode) {
+            data.carrier = 'Pošta Srbije'
+          } else if (
+            operation === 'update' &&
+            typeof originalDoc?.carrier === 'string' &&
+            originalDoc.carrier === 'Pošta Srbije'
+          ) {
+            data.carrier = ''
+          }
+        }
+
+        const hasLegacyTrackingCode = Object.prototype.hasOwnProperty.call(data, 'trackingCode')
+
+        if (!hasSerbianTrackingCode && hasLegacyTrackingCode) {
+          const normalizedLegacyTrackingCode =
+            typeof data.trackingCode === 'string' ? data.trackingCode.trim() : ''
+
+          data.trackingCode = normalizedLegacyTrackingCode
+
+          if (normalizedLegacyTrackingCode) {
+            data.serbianPostTrackingCode = normalizedLegacyTrackingCode
+          }
+        }
+
         // Sync orderStatus → plugin status field
         if (data?.orderStatus) {
           switch (data.orderStatus) {

@@ -322,6 +322,27 @@ export function shippingNotificationAdmin(data: ShippingData): string {
       }
     </table>
 
+    ${
+      data.trackingCode
+        ? `
+    <div style="margin-bottom:24px;padding:20px;background:#f0f7ff;border-radius:4px;text-align:center;">
+      <p style="margin:0 0 8px;font-size:13px;color:#666;font-family:Arial,sans-serif;">BROJ ZA PRAĆENJE</p>
+      <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#000;font-family:Arial,sans-serif;letter-spacing:1px;">
+        ${data.trackingCode}
+      </p>
+      ${
+        data.trackingUrl
+          ? `
+      <a href="${data.trackingUrl}"
+         style="display:inline-block;padding:12px 24px;background:#000;color:#fff;text-decoration:none;border-radius:4px;font-size:14px;font-family:Arial,sans-serif;">
+        Otvori praćenje
+      </a>`
+          : ''
+      }
+    </div>`
+        : ''
+    }
+
     <div style="margin-top:24px;text-align:center;">
       <a href="${data.storeUrl}/admin/collections/orders/${data.orderId}"
          style="display:inline-block;padding:12px 24px;background:#000;color:#fff;text-decoration:none;border-radius:4px;font-size:14px;font-family:Arial,sans-serif;">

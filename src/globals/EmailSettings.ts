@@ -33,8 +33,10 @@ export const EmailSettings: GlobalConfig = {
       type: 'array',
       label: 'Admin Notification Emails',
       minRows: 1,
+      defaultValue: [{ email: 'info@sneakerhedonism.com' }],
       admin: {
-        description: 'Email addresses that receive order notifications.',
+        description:
+          'Email addresses that receive order notifications. Keep info@sneakerhedonism.com in this list.',
       },
       fields: [
         {

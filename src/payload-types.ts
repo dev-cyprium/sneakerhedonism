@@ -280,6 +280,10 @@ export interface Order {
   amount?: number | null;
   currency?: 'RSD' | null;
   orderStatus?: ('processing' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled') | null;
+  /**
+   * Enter the Posta Srbije tracking code. The tracking link will be generated automatically in emails.
+   */
+  serbianPostTrackingCode?: string | null;
   trackingCode?: string | null;
   carrier?: string | null;
   coupon?: (number | null) | Coupon;
@@ -2378,6 +2382,7 @@ export interface OrdersSelect<T extends boolean = true> {
   amount?: T;
   currency?: T;
   orderStatus?: T;
+  serbianPostTrackingCode?: T;
   trackingCode?: T;
   carrier?: T;
   coupon?: T;
@@ -2746,7 +2751,7 @@ export interface EmailSetting {
    */
   fromEmail?: string | null;
   /**
-   * Email addresses that receive order notifications.
+   * Email addresses that receive order notifications. Keep info@sneakerhedonism.com in this list.
    */
   adminEmails?:
     | {
