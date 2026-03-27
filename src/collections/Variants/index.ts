@@ -5,13 +5,32 @@ import {
   revalidateStorefrontAfterChange,
   revalidateStorefrontAfterDelete,
 } from '@/collections/hooks/revalidateStorefront'
+import { updateEffectivePrice } from '@/collections/Products/updateEffectivePrice'
 
 export const VariantsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
   hooks: {
     ...(defaultCollection.hooks ?? {}),
-    afterChange: [...(defaultCollection.hooks?.afterChange ?? []), revalidateStorefrontAfterChange],
-    afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
+    afterChange: [
+      ...(defaultCollection.hooks?.afterChange ?? []),
+      revalidateStorefrontAfterChange,
+      async ({ doc, req }) => {
+        const productId = typeof doc.product === 'number' ? doc.product : doc.product?.id
+        if (productId) {
+          await updateEffectivePrice(req.payload, productId)
+        }
+      },
+    ],
+    afterDelete: [
+      ...(defaultCollection.hooks?.afterDelete ?? []),
+      revalidateStorefrontAfterDelete,
+      async ({ doc, req }) => {
+        const productId = typeof doc.product === 'number' ? doc.product : doc.product?.id
+        if (productId) {
+          await updateEffectivePrice(req.payload, productId)
+        }
+      },
+    ],
   },
   fields: [
     ...((defaultCollection.fields ?? []).map((field) => {

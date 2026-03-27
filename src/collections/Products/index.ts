@@ -23,12 +23,19 @@ import {
   revalidateStorefrontAfterChange,
   revalidateStorefrontAfterDelete,
 } from '@/collections/hooks/revalidateStorefront'
+import { updateEffectivePrice } from '@/collections/Products/updateEffectivePrice'
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
   hooks: {
     ...(defaultCollection.hooks ?? {}),
-    afterChange: [...(defaultCollection.hooks?.afterChange ?? []), revalidateStorefrontAfterChange],
+    afterChange: [
+      ...(defaultCollection.hooks?.afterChange ?? []),
+      revalidateStorefrontAfterChange,
+      async ({ doc, req }) => {
+        await updateEffectivePrice(req.payload, doc.id)
+      },
+    ],
     afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
   },
   admin: {
@@ -61,6 +68,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     gallery: true,
     priceInRSD: true,
     salePriceInRSD: true,
+    effectivePrice: true,
     inventory: true,
     meta: true,
   },
@@ -217,6 +225,13 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               label: 'Sale price (RSD)',
               min: 0,
               required: false,
+            },
+            {
+              name: 'effectivePrice',
+              type: 'number',
+              admin: { hidden: true, readOnly: true },
+              index: true,
+              label: 'Effective price (auto-computed)',
             },
             {
               name: 'relatedProducts',

@@ -368,6 +368,7 @@ export interface Product {
    * Optional sale price. When set, product is shown as on sale with discount badge.
    */
   salePriceInRSD?: number | null;
+  effectivePrice?: number | null;
   relatedProducts?: (number | Product)[] | null;
   meta?: {
     title?: string | null;
@@ -2309,6 +2310,7 @@ export interface ProductsSelect<T extends boolean = true> {
   priceInRSDEnabled?: T;
   priceInRSD?: T;
   salePriceInRSD?: T;
+  effectivePrice?: T;
   relatedProducts?: T;
   meta?:
     | T

@@ -13,6 +13,7 @@ import config from '../src/payload.config.ts'
 const MIGRATION_NAMES = [
   '20260211_015545_rename_linkType_to_navType',
   '20260215_121709',
+  '20260310_112612_add_coupons',
 ] as const
 
 async function main() {

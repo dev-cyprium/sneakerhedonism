@@ -2,8 +2,8 @@ export const SHOP_SORT_OPTIONS = [
   { value: '-createdAt', label: 'Najnovije' },
   { value: 'title', label: 'A..Z' },
   { value: '-title', label: 'Z..A' },
-  { value: '-priceInRSD', label: 'Najskuplja prvo' },
-  { value: 'priceInRSD', label: 'Najjeftinije prvo' },
+  { value: '-effectivePrice', label: 'Najskuplja prvo' },
+  { value: 'effectivePrice', label: 'Najjeftinije prvo' },
 ] as const
 
 export type ShopSortValue = (typeof SHOP_SORT_OPTIONS)[number]['value']

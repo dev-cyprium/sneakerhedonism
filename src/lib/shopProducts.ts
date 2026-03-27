@@ -18,6 +18,7 @@ export const SHOP_PRODUCT_SELECT = {
   categories: true,
   priceInRSD: true,
   salePriceInRSD: true,
+  effectivePrice: true,
   variants: true,
 } as const
 
