@@ -16,9 +16,14 @@ export const VariantsCollection: CollectionOverride = ({ defaultCollection }) =>
       revalidateStorefrontAfterChange,
       async ({ doc, req }) => {
         const productId = typeof doc.product === 'number' ? doc.product : doc.product?.id
-        if (productId) {
-          await updateEffectivePrice(req.payload, productId)
+        const tag = `[Variants.afterChange variant=${doc.id} product=${productId ?? 'none'}]`
+        if (!productId) {
+          req.payload.logger.info(`${tag} no productId — skipping`)
+          return
         }
+        req.payload.logger.info(`${tag} running updateEffectivePrice`)
+        await updateEffectivePrice(req, productId)
+        req.payload.logger.info(`${tag} hook complete`)
       },
     ],
     afterDelete: [
@@ -26,9 +31,14 @@ export const VariantsCollection: CollectionOverride = ({ defaultCollection }) =>
       revalidateStorefrontAfterDelete,
       async ({ doc, req }) => {
         const productId = typeof doc.product === 'number' ? doc.product : doc.product?.id
-        if (productId) {
-          await updateEffectivePrice(req.payload, productId)
+        const tag = `[Variants.afterDelete variant=${doc.id} product=${productId ?? 'none'}]`
+        if (!productId) {
+          req.payload.logger.info(`${tag} no productId — skipping`)
+          return
         }
+        req.payload.logger.info(`${tag} running updateEffectivePrice`)
+        await updateEffectivePrice(req, productId)
+        req.payload.logger.info(`${tag} hook complete`)
       },
     ],
   },

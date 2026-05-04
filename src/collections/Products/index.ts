@@ -33,7 +33,14 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
       ...(defaultCollection.hooks?.afterChange ?? []),
       revalidateStorefrontAfterChange,
       async ({ doc, req }) => {
-        await updateEffectivePrice(req.payload, doc.id)
+        const tag = `[Products.afterChange id=${doc.id}]`
+        if (req.context?.skipUpdateEffectivePrice) {
+          req.payload.logger.info(`${tag} skipped (internal effectivePrice update)`)
+          return
+        }
+        req.payload.logger.info(`${tag} running updateEffectivePrice`)
+        await updateEffectivePrice(req, doc.id)
+        req.payload.logger.info(`${tag} hook complete`)
       },
     ],
     afterDelete: [...(defaultCollection.hooks?.afterDelete ?? []), revalidateStorefrontAfterDelete],
