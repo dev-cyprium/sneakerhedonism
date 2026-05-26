@@ -38,6 +38,10 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
           req.payload.logger.info(`${tag} skipped (internal effectivePrice update)`)
           return
         }
+        if (!doc.title) {
+          req.payload.logger.info(`${tag} skipped (empty autosave shell)`)
+          return
+        }
         req.payload.logger.info(`${tag} running updateEffectivePrice`)
         await updateEffectivePrice(req, doc.id)
         req.payload.logger.info(`${tag} hook complete`)

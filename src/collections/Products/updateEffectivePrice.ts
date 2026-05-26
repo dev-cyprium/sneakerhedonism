@@ -87,6 +87,7 @@ export async function updateEffectivePrice(
         collection: 'products',
         id: productId,
         data: { effectivePrice: effectivePrice ?? 0 },
+        draft: true,
         overrideAccess: true,
         context: { skipUpdateEffectivePrice: true },
         select: {},
