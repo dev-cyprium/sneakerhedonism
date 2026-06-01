@@ -39,7 +39,7 @@ export const VideoHero: React.FC<Page['hero']> = ({ links, media, richText }) =>
         <div className="mx-auto">
           {richText && (
             <RichText
-              className="mb-6 [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:leading-tight [&_h1]:text-[#49aafc] md:[&_h1]:text-6xl md:[&_h1]:whitespace-nowrap [&_p]:text-sm [&_p]:text-[#49aafc] md:[&_p]:text-lg md:[&_p]:whitespace-nowrap"
+              className="mb-6 [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:leading-tight [&_h1]:text-accent-brand md:[&_h1]:text-6xl md:[&_h1]:whitespace-nowrap [&_p]:text-sm [&_p]:text-accent-brand md:[&_p]:text-lg md:[&_p]:whitespace-nowrap"
               data={richText}
               enableGutter={false}
             />

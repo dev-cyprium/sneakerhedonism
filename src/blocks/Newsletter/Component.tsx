@@ -90,7 +90,7 @@ export const NewsletterBlock: React.FC<NewsletterBlockProps> = (props) => {
   )
 
   return (
-    <section className="bg-dropdown-bg py-16 md:py-24 overflow-hidden">
+    <section data-theme="dark" className="bg-dropdown-bg py-16 md:py-24 overflow-hidden">
       <div className="mx-auto max-w-xl px-4">
         {!hasSubmitted ? (
           <>
