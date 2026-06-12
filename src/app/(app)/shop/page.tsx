@@ -6,7 +6,7 @@ import {
 } from '@/components/shop/filters/sortOptions'
 import { ShopProductGridInfinite } from '@/components/shop/ShopProductGridInfinite'
 import { ShopSidebar } from '@/components/shop/ShopSidebar'
-import { buildShopProductWhere, SHOP_PRODUCT_SELECT } from '@/lib/shopProducts'
+import { buildShopProductWhere, SHOP_PRODUCT_SELECT, toShopDbSort } from '@/lib/shopProducts'
 import type { Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 import configPromise from '@payload-config'
@@ -104,7 +104,7 @@ async function ShopProductGrid({
     overrideAccess: false,
     depth: 1,
     select: SHOP_PRODUCT_SELECT,
-    sort,
+    sort: toShopDbSort(sort),
     where: { and: whereConditions },
     limit: INITIAL_PAGE_SIZE,
     page: 1,
@@ -308,17 +308,20 @@ export default async function ShopPage({ searchParams }: Props) {
     const matchingVariants = await payload.find({
       collection: 'variants',
       where: {
-        and: selectedVariantOptions.map((optId) => ({
-          options: { in: [optId] },
-        })),
+        and: [
+          ...selectedVariantOptions.map((optId) => ({
+            options: { in: [optId] },
+          })),
+          { product: { exists: true } },
+        ],
       },
       select: { product: true },
       pagination: false,
       depth: 0,
     })
-    variantProductIds = matchingVariants.docs.map((v) =>
-      typeof v.product === 'number' ? v.product : (v.product as { id: number }).id,
-    )
+    variantProductIds = matchingVariants.docs
+      .map((v) => (typeof v.product === 'number' ? v.product : v.product?.id))
+      .filter((id): id is number => typeof id === 'number')
   }
 
   // --- Price filter values ---

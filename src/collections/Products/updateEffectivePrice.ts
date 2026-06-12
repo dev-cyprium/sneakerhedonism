@@ -82,18 +82,19 @@ export async function updateEffectivePrice(
           : (product.priceInRSD ?? null)
     }
 
+    // Write the column directly on the products table (the row that `draft: false`
+    // storefront queries read and sort on). A versioned update with `draft: true`
+    // only creates a draft version and never touches this row, so sorting by
+    // effectivePrice would stay stale forever. Direct db write also runs no hooks,
+    // so there is no recursion back into this function.
     await withTimeout(
-      payload.update({
+      payload.db.updateOne({
         collection: 'products',
         id: productId,
         data: { effectivePrice: effectivePrice ?? 0 },
-        draft: true,
-        overrideAccess: true,
-        context: { skipUpdateEffectivePrice: true },
-        select: {},
         req,
       }),
-      'update(product.effectivePrice)',
+      'db.updateOne(product.effectivePrice)',
     )
     payload.logger.info(
       `${tag} done effectivePrice=${effectivePrice} total=${Date.now() - start}ms`,

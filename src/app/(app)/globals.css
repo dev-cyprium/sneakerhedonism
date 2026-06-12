@@ -50,8 +50,9 @@
   --font-sans: var(--font-geist-sans);
   --font-nav: var(--font-lato);
 
-  --animate-in: in 0.2s ease-out;
-  --animate-out: out 0.2s ease-out;
+  /* NOTE: do not define --animate-in / --animate-out here — they would override
+     the tw-animate-css `animate-in`/`animate-out` utilities that all Radix
+     popovers/selects/sheets rely on for their enter/exit animations. */
   --animate-fade-in: fadeIn 0.3s ease-in-out;
   --animate-fade-out: fadeOut 0.3s ease-in-out;
   --animate-carousel: marquee 60s linear infinite;
@@ -73,16 +74,6 @@
 @keyframes fadeOut {
   from { opacity: 1; }
   to { opacity: 0; }
-}
-
-@keyframes in {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(0%); }
-}
-
-@keyframes out {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(100%); }
 }
 
 @keyframes slide-in-from-left {

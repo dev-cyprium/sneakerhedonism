@@ -1,5 +1,17 @@
+import type { ShopSortValue } from '@/components/shop/filters/sortOptions'
 import type { Payload } from 'payload'
 import type { Where } from 'payload'
+
+/**
+ * Maps a UI sort value to the DB sort.
+ * - Title sorting uses `slug` (lowercase) because the DB collation (C.UTF-8) is
+ *   case-sensitive and would put e.g. "adidas" after "Z".
+ * - `-id` tiebreaker keeps pagination stable when many rows share the sort value.
+ */
+export function toShopDbSort(sort: ShopSortValue): string[] {
+  const primary = sort === 'title' ? 'slug' : sort === '-title' ? '-slug' : sort
+  return [primary, '-id']
+}
 
 export type ShopProductFilterParams = {
   categoryIds: number[]
@@ -78,16 +90,18 @@ export async function buildShopProductWhere(
   if (onSale) {
     const saleVariantProducts = await payload.find({
       collection: 'variants',
-      where: { salePriceInRSD: { exists: true } },
+      where: {
+        and: [{ salePriceInRSD: { exists: true } }, { product: { exists: true } }],
+      },
       select: { product: true },
       pagination: false,
       depth: 0,
     })
     const productIdsFromVariants = [
       ...new Set(
-        saleVariantProducts.docs.map((v) =>
-          typeof v.product === 'number' ? v.product : (v.product as { id: number }).id,
-        ),
+        saleVariantProducts.docs
+          .map((v) => (typeof v.product === 'number' ? v.product : v.product?.id))
+          .filter((id): id is number => typeof id === 'number'),
       ),
     ]
     const saleConditions: Where[] = [{ salePriceInRSD: { exists: true } }]

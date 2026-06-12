@@ -3,7 +3,7 @@ import {
   isShopSortValue,
   type ShopSortValue,
 } from '@/components/shop/filters/sortOptions'
-import { buildShopProductWhere, SHOP_PRODUCT_SELECT } from '@/lib/shopProducts'
+import { buildShopProductWhere, SHOP_PRODUCT_SELECT, toShopDbSort } from '@/lib/shopProducts'
 import type { Product } from '@/payload-types'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
     overrideAccess: false,
     depth: 1,
     select: SHOP_PRODUCT_SELECT,
-    sort,
+    sort: toShopDbSort(sort),
     where: { and: whereConditions },
     page,
     limit,
