@@ -18,6 +18,8 @@ export type FlattenedCheckoutItem = {
   variant?: number
 }
 
+export type CouponAppliesTo = 'all' | 'categories'
+
 export type CouponSnapshot = {
   id: number
   code: string
@@ -26,10 +28,15 @@ export type CouponSnapshot = {
   usageLimit: number | null
   unlimitedUsage: boolean
   expiresAt: string | null
+  appliesTo: CouponAppliesTo
+  /** Categories the discount is limited to, descendants included. Empty for cart-wide coupons. */
+  categoryIds: number[]
 }
 
 export type CheckoutPricingResult = {
   subtotalAmount: number
+  /** Portion of the subtotal the discount was calculated from; equals subtotalAmount for cart-wide coupons. */
+  discountBaseAmount: number
   discountAmount: number
   discountedSubtotalAmount: number
   shippingAmount: number
@@ -43,6 +50,7 @@ export type CheckoutPricingResult = {
 
 export type ResolveCheckoutPricingArgs = {
   cartItems: CheckoutCartItem[]
+  categoriesSlug?: CollectionSlug
   couponCode?: null | string
   couponsSlug?: CollectionSlug
   currency: string
@@ -54,6 +62,7 @@ export type ResolveCheckoutPricingArgs = {
   variantsSlug?: CollectionSlug
 }
 
+const DEFAULT_CATEGORIES_SLUG = 'categories' as CollectionSlug
 const DEFAULT_COUPONS_SLUG = 'coupons' as CollectionSlug
 const DEFAULT_ORDERS_SLUG = 'orders' as CollectionSlug
 const DEFAULT_PRODUCTS_SLUG = 'products' as CollectionSlug
@@ -121,8 +130,48 @@ async function countCouponUsage({
   return safeNumber(result.totalDocs)
 }
 
+/**
+ * The coupon's categories plus every category beneath them, so scoping a coupon
+ * to a top-level category (Odeća) also covers the brands under it (Patta) even
+ * for a product that was only filed under the brand.
+ */
+async function expandCategoryIds({
+  categoriesSlug,
+  categoryIds,
+  payload,
+  req,
+}: {
+  categoriesSlug: CollectionSlug
+  categoryIds: number[]
+  payload: Payload
+  req?: PayloadRequest
+}): Promise<Set<number>> {
+  const expanded = new Set(categoryIds)
+  if (expanded.size === 0) return expanded
+
+  const children = await payload.find({
+    collection: categoriesSlug,
+    depth: 0,
+    overrideAccess: true,
+    pagination: false,
+    req,
+    where: {
+      parent: {
+        in: categoryIds,
+      },
+    },
+  })
+
+  for (const child of children.docs as { id?: unknown }[]) {
+    if (typeof child.id === 'number') expanded.add(child.id)
+  }
+
+  return expanded
+}
+
 export async function resolveCheckoutPricing({
   cartItems,
+  categoriesSlug = DEFAULT_CATEGORIES_SLUG,
   couponCode,
   couponsSlug = DEFAULT_COUPONS_SLUG,
   currency,
@@ -161,6 +210,8 @@ export async function resolveCheckoutPricing({
       select: {
         [priceField]: true,
         [saleField]: true,
+        // Category-scoped coupons need to know what each line item is.
+        ...(collection === productsSlug ? { categories: true } : {}),
       },
     })) as unknown as Record<string, unknown>
 
@@ -169,8 +220,17 @@ export async function resolveCheckoutPricing({
     return doc
   }
 
+  const toCategoryIds = (value: unknown): number[] => {
+    if (!Array.isArray(value)) return []
+
+    return value
+      .map((entry) => toID(entry as CheckoutCartItem['product']))
+      .filter((entry): entry is number => entry !== null)
+  }
+
   let subtotalAmount = 0
   const flattenedItems: FlattenedCheckoutItem[] = []
+  const lineTotals: { categoryIds: number[]; lineTotal: number }[] = []
 
   for (const item of cartItems) {
     const productID = toID(item.product)
@@ -202,7 +262,12 @@ export async function resolveCheckoutPricing({
       unitPrice = safeNumber(productDoc[saleField]) || safeNumber(productDoc[priceField]) || 0
     }
 
-    subtotalAmount += unitPrice * quantity
+    const lineTotal = unitPrice * quantity
+    subtotalAmount += lineTotal
+    lineTotals.push({
+      categoryIds: toCategoryIds(productDoc.categories),
+      lineTotal,
+    })
     flattenedItems.push({
       product: productID,
       quantity,
@@ -214,6 +279,8 @@ export async function resolveCheckoutPricing({
 
   const normalizedCode = normalizeCouponCode(couponCode)
   let discountAmount = 0
+  let discountBaseAmount = subtotalAmount
+  let couponCategoryIdList: number[] = []
   let couponSnapshot: CheckoutPricingResult['coupon'] = null
 
   if (normalizedCode) {
@@ -232,6 +299,8 @@ export async function resolveCheckoutPricing({
         usageLimit: true,
         unlimitedUsage: true,
         expiresAt: true,
+        appliesTo: true,
+        categories: true,
       },
       where: {
         and: [
@@ -261,8 +330,36 @@ export async function resolveCheckoutPricing({
       throw new Error('Coupon has expired.')
     }
 
+    const appliesTo: CouponAppliesTo = couponDoc.appliesTo === 'categories' ? 'categories' : 'all'
+
+    // A category coupon discounts only the matching lines, so both the minimum
+    // and the discount are measured against those lines rather than the whole
+    // cart — otherwise a 500 RSD Patta coupon could be unlocked by a cart of
+    // Nike and then discount nothing.
+    if (appliesTo === 'categories') {
+      const couponCategoryIds = await expandCategoryIds({
+        categoriesSlug,
+        categoryIds: toCategoryIds(couponDoc.categories),
+        payload,
+        req,
+      })
+
+      if (couponCategoryIds.size === 0) {
+        throw new Error('Coupon is not configured with any categories.')
+      }
+
+      couponCategoryIdList = [...couponCategoryIds]
+      discountBaseAmount = lineTotals
+        .filter((line) => line.categoryIds.some((id) => couponCategoryIds.has(id)))
+        .reduce((total, line) => total + line.lineTotal, 0)
+
+      if (discountBaseAmount <= 0) {
+        throw new Error('Coupon does not apply to any item in the cart.')
+      }
+    }
+
     const minimumSubtotal = safeNumber(couponDoc.minimumSubtotal)
-    if (subtotalAmount < minimumSubtotal) {
+    if (discountBaseAmount < minimumSubtotal) {
       throw new Error('Coupon minimum subtotal has not been reached.')
     }
 
@@ -297,8 +394,8 @@ export async function resolveCheckoutPricing({
       throw new Error('Coupon discount value is invalid.')
     }
 
-    discountAmount = Math.round((subtotalAmount * discountPercent) / 100)
-    discountAmount = Math.min(discountAmount, subtotalAmount)
+    discountAmount = Math.round((discountBaseAmount * discountPercent) / 100)
+    discountAmount = Math.min(discountAmount, discountBaseAmount)
 
     couponSnapshot = {
       id: couponDoc.id as number,
@@ -308,6 +405,8 @@ export async function resolveCheckoutPricing({
       usageLimit,
       unlimitedUsage,
       expiresAt,
+      appliesTo,
+      categoryIds: couponCategoryIdList,
     }
   }
 
@@ -316,6 +415,7 @@ export async function resolveCheckoutPricing({
 
   return {
     subtotalAmount,
+    discountBaseAmount: normalizedCode ? discountBaseAmount : subtotalAmount,
     discountAmount,
     discountedSubtotalAmount,
     shippingAmount: shippingSummary.shippingAmount,

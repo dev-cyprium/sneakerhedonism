@@ -24,6 +24,7 @@ export const Coupons: CollectionConfig = {
     defaultColumns: [
       'code',
       'discountPercent',
+      'appliesTo',
       'minimumSubtotal',
       'expiresAt',
       'unlimitedUsage',
@@ -42,6 +43,12 @@ export const Coupons: CollectionConfig = {
 
         if (data.unlimitedUsage === true) {
           data.usageLimit = null
+        }
+
+        // A cart-wide coupon must not keep a stale category list around: it
+        // would look scoped in the admin while discounting everything.
+        if (data.appliesTo !== 'categories') {
+          data.categories = []
         }
 
         return data
@@ -75,13 +82,57 @@ export const Coupons: CollectionConfig = {
       },
     },
     {
+      name: 'appliesTo',
+      type: 'select',
+      defaultValue: 'all',
+      required: true,
+      options: [
+        {
+          label: 'Entire cart',
+          value: 'all',
+        },
+        {
+          label: 'Selected categories / brands only',
+          value: 'categories',
+        },
+      ],
+      admin: {
+        description:
+          'Whether the discount covers the whole cart or only items from certain categories.',
+      },
+    },
+    {
+      name: 'categories',
+      type: 'relationship',
+      relationTo: 'categories',
+      hasMany: true,
+      admin: {
+        condition: (data) => data?.appliesTo === 'categories',
+        description:
+          'Only items in these categories are discounted. Picking a top-level category (e.g. Odeća) also covers the brands under it.',
+      },
+      validate: (
+        value: unknown,
+        { data }: { data?: { appliesTo?: string } },
+      ): string | true => {
+        if (data?.appliesTo !== 'categories') return true
+
+        if (!Array.isArray(value) || value.length === 0) {
+          return 'Pick at least one category, or set "Applies to" back to the entire cart.'
+        }
+
+        return true
+      },
+    },
+    {
       name: 'minimumSubtotal',
       type: 'number',
       min: 0,
       defaultValue: 0,
       required: true,
       admin: {
-        description: 'Minimum cart subtotal required to use this coupon.',
+        description:
+          'Minimum subtotal required to use this coupon. For a category coupon this is measured against the discounted items only.',
       },
     },
     {

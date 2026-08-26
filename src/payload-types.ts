@@ -1339,7 +1339,15 @@ export interface Coupon {
    */
   discountPercent: number;
   /**
-   * Minimum cart subtotal required to use this coupon.
+   * Whether the discount covers the whole cart or only items from certain categories.
+   */
+  appliesTo: 'all' | 'categories';
+  /**
+   * Only items in these categories are discounted. Picking a top-level category (e.g. Odeća) also covers the brands under it.
+   */
+  categories?: (number | Category)[] | null;
+  /**
+   * Minimum subtotal required to use this coupon. For a category coupon this is measured against the discounted items only.
    */
   minimumSubtotal: number;
   /**
@@ -2175,6 +2183,8 @@ export interface CouponsSelect<T extends boolean = true> {
   code?: T;
   active?: T;
   discountPercent?: T;
+  appliesTo?: T;
+  categories?: T;
   minimumSubtotal?: T;
   expiresAt?: T;
   unlimitedUsage?: T;

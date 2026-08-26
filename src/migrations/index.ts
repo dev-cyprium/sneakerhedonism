@@ -7,6 +7,7 @@ import * as migration_20260817_152010_banner_text_color from './20260817_152010_
 import * as migration_20260818_095142 from './20260818_095142';
 import * as migration_20260818_095513 from './20260818_095513';
 import * as migration_20260818_190618 from './20260818_190618';
+import * as migration_20260826_093306_coupon_category_scope from './20260826_093306_coupon_category_scope';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20260818_190618.up,
     down: migration_20260818_190618.down,
-    name: '20260818_190618'
+    name: '20260818_190618',
+  },
+  {
+    up: migration_20260826_093306_coupon_category_scope.up,
+    down: migration_20260826_093306_coupon_category_scope.down,
+    name: '20260826_093306_coupon_category_scope'
   },
 ];
