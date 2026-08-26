@@ -70,10 +70,10 @@ export const BlogFeedBlock: React.FC<
     .filter((o) => o.slug)
 
   return (
-    <section className="my-16" id={`block-${id}`}>
+    <section id={`block-${id}`}>
       <div className="container">
         {heading && heading !== 'Blog' && (
-          <h2 className="mb-8 text-4xl font-bold tracking-tight">{heading}</h2>
+          <h2 className="mb-6 text-3xl font-bold tracking-tight md:mb-8 md:text-4xl">{heading}</h2>
         )}
 
         {/* Category filters by tag (no "Sve" option) */}

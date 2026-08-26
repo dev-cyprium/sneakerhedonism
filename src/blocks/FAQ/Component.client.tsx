@@ -18,7 +18,7 @@ export const FAQBlock: React.FC<
   if (!items?.length) return null
 
   return (
-    <div className={cn('container py-16', className)}>
+    <div className={cn('container', className)}>
       <div className="flex flex-col gap-3 max-w-3xl mx-auto">
         {items.map((item, index) => {
           const isOpen = openIndex === index

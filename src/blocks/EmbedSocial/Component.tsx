@@ -48,8 +48,8 @@ export const EmbedSocialBlock: React.FC<EmbedSocialBlockProps> = ({
   if (!embedCode) return null
 
   return (
-    <section className="container py-16">
-      <div className="text-center mb-10">
+    <section className="container">
+      <div className="text-center mb-6 md:mb-10">
         {title && <h2 className="text-3xl font-bold">{title}</h2>}
         {showRetry && (
           <button

@@ -39,7 +39,7 @@ export const PogledajPonuduBlock: React.FC<
   const [first, second, third] = items
 
   return (
-    <section className="container py-10 md:py-12">
+    <section className="container">
       {heading && (
         <h2 className="mb-6 text-center text-2xl font-bold uppercase tracking-wide text-foreground md:mb-8 md:text-3xl">
           {heading}

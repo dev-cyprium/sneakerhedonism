@@ -31,7 +31,7 @@ export const LatestPostsBlock: React.FC<
   if (posts.length === 0) return null
 
   return (
-    <section className="my-16" id={`block-${id}`}>
+    <section id={`block-${id}`}>
       <div className="container">
         {heading && <h2 className="mb-8 text-2xl font-bold tracking-tight">{heading}</h2>}
 

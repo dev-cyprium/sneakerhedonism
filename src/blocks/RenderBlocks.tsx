@@ -54,7 +54,10 @@ export const RenderBlocks: React.FC<{
 
   if (hasBlocks) {
     return (
-      <Fragment>
+      // Single source of vertical rhythm between blocks. Blocks must not add their
+      // own outer vertical margin/padding — only internal padding for banded
+      // (background-filled) blocks such as Newsletter.
+      <div className="flex flex-col gap-12 md:gap-20">
         {blocks.map((block, index) => {
           const { blockName, blockType } = block
 
@@ -63,17 +66,17 @@ export const RenderBlocks: React.FC<{
 
             if (Block) {
               return (
-                <div className="my-16" key={index}>
+                <Fragment key={index}>
                   {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                   {/* @ts-ignore - weird type mismatch here */}
                   <Block id={toKebabCase(blockName!)} {...block} searchParams={searchParams} />
-                </div>
+                </Fragment>
               )
             }
           }
           return null
         })}
-      </Fragment>
+      </div>
     )
   }
 

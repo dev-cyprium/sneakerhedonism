@@ -152,7 +152,13 @@ export default async function ProductPage({ params }: Args) {
         )}
       </div>
 
-      {product.layout?.length ? <RenderBlocks blocks={product.layout} /> : <></>}
+      {product.layout?.length ? (
+        <div className="my-12 md:my-20">
+          <RenderBlocks blocks={product.layout} />
+        </div>
+      ) : (
+        <></>
+      )}
 
       {relatedProducts.length ? (
         <div className="container pb-12">

@@ -52,7 +52,7 @@ export const CarouselBlock: React.FC<
 
   if (media.length > 0) {
     return (
-      <div className="w-full pb-6 pt-1">
+      <div className="w-full">
         <CarouselClient media={media} />
       </div>
     )
@@ -61,7 +61,7 @@ export const CarouselBlock: React.FC<
   if (!products?.length) return null
 
   return (
-    <div className="w-full pb-6 pt-1">
+    <div className="w-full">
       <CarouselClient products={products} />
     </div>
   )
