@@ -5,6 +5,7 @@ import { EmbedSocial } from '@/blocks/EmbedSocial/config'
 import { FAQ } from '@/blocks/FAQ/config'
 import { Carousel } from '@/blocks/Carousel/config'
 import { Novo } from '@/blocks/Novo/config'
+import { Lokacija } from '@/blocks/Lokacija/config'
 import { PogledajPonudu } from '@/blocks/PogledajPonudu/config'
 import { Popularno } from '@/blocks/Popularno/config'
 import { ThreeItemGrid } from '@/blocks/ThreeItemGrid/config'
@@ -106,6 +107,7 @@ export const Pages: CollectionConfig = {
                 FAQ,
                 Novo,
                 PogledajPonudu,
+                Lokacija,
                 Popularno,
                 ThreeItemGrid,
                 Banner,

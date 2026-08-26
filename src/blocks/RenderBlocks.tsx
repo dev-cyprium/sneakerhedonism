@@ -12,6 +12,7 @@ import { BlogFeedBlock } from '@/blocks/BlogFeed/Component'
 import { LatestPostsBlock } from '@/blocks/LatestPosts/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { NewsletterBlock } from '@/blocks/Newsletter/Component'
+import { LokacijaBlock } from '@/blocks/Lokacija/Component'
 import { NovoBlock } from '@/blocks/Novo/Component'
 import { PogledajPonuduBlock } from '@/blocks/PogledajPonudu/Component'
 import { PopularnoBlock } from '@/blocks/Popularno/Component'
@@ -37,6 +38,7 @@ const blockComponents = {
   mediaBlock: MediaBlock,
   newsletter: NewsletterBlock,
   novo: NovoBlock,
+  lokacija: LokacijaBlock,
   pogledajPonudu: PogledajPonuduBlock,
   popularno: PopularnoBlock,
   threeItemGrid: ThreeItemGridBlock,
