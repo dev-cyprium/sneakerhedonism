@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { SlidersHorizontal, X } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 
+import type { ShopVariantType } from '@/lib/shopVariantFilters'
+
 import { Button } from '@/components/ui/button'
 import { CategoryFilter } from './filters/CategoryFilter'
 import { BrandFilter } from './filters/BrandFilter'
@@ -14,21 +16,22 @@ import { SaleFilter } from './filters/SaleFilter'
 
 type ParentCategory = { id: number; title: string; slug: string }
 type Brand = { id: number; title: string; slug: string; count: number }
-type FilterVariantType = {
-  id: number
-  label: string
-  name: string
-  options: { id: number; label: string }[]
-}
 
 type Props = {
   parentCategories: ParentCategory[]
   brands: Brand[]
-  variantTypes: FilterVariantType[]
+  variantTypes: ShopVariantType[]
+  variantTypeCompatibility: Record<number, number[]>
   priceRange: { min: number; max: number }
 }
 
-export function ShopSidebar({ parentCategories, brands, variantTypes, priceRange }: Props) {
+export function ShopSidebar({
+  parentCategories,
+  brands,
+  variantTypes,
+  variantTypeCompatibility,
+  priceRange,
+}: Props) {
   const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const searchParams = useSearchParams()
 
@@ -81,7 +84,10 @@ export function ShopSidebar({ parentCategories, brands, variantTypes, priceRange
         <>
           <hr className="border-border" />
           <Suspense fallback={null}>
-            <VariantFilter variantTypes={variantTypes} />
+            <VariantFilter
+              variantTypeCompatibility={variantTypeCompatibility}
+              variantTypes={variantTypes}
+            />
           </Suspense>
         </>
       )}

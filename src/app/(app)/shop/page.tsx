@@ -7,6 +7,12 @@ import {
 import { ShopProductGridInfinite } from '@/components/shop/ShopProductGridInfinite'
 import { ShopSidebar } from '@/components/shop/ShopSidebar'
 import { buildShopProductWhere, SHOP_PRODUCT_SELECT, toShopDbSort } from '@/lib/shopProducts'
+import {
+  getVariantTypeCompatibility,
+  parseVariantSelections,
+  resolveVariantProductIds,
+  type ShopVariantType,
+} from '@/lib/shopVariantFilters'
 import type { Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 import configPromise from '@payload-config'
@@ -282,47 +288,26 @@ export default async function ShopPage({ searchParams }: Props) {
   }
 
   // --- Process variant types ---
-  const variantTypes = variantTypesResult.docs.map((vt) => ({
-    id: vt.id,
-    label: vt.label,
-    name: vt.name,
-    options: (vt.options?.docs ?? [])
-      .filter((o): o is Exclude<typeof o, number> => typeof o === 'object' && o !== null)
-      .map((o) => ({ id: o.id, label: o.label })),
-  }))
+  const variantTypes: ShopVariantType[] = variantTypesResult.docs
+    .map((vt) => ({
+      id: vt.id,
+      label: vt.label,
+      name: vt.name,
+      options: (vt.options?.docs ?? [])
+        .filter((o): o is Exclude<typeof o, number> => typeof o === 'object' && o !== null)
+        .map((o) => ({ id: o.id, label: o.label })),
+    }))
+    // Groups with no options are leftovers from earlier data entry; they'd
+    // render as an empty heading in the sidebar.
+    .filter((vt) => vt.options.length > 0)
 
   // --- Resolve variant option filters ---
-  let variantProductIds: number[] | null = null
-  const selectedVariantOptions: number[] = []
-  for (const vt of variantTypes) {
-    const value = params[vt.name]
-    if (value && value !== 'any') {
-      const optionId = Number(Array.isArray(value) ? value[0] : value)
-      if (!isNaN(optionId)) {
-        selectedVariantOptions.push(optionId)
-      }
-    }
-  }
+  const variantSelections = parseVariantSelections(params, variantTypes)
 
-  if (selectedVariantOptions.length > 0) {
-    const matchingVariants = await payload.find({
-      collection: 'variants',
-      where: {
-        and: [
-          ...selectedVariantOptions.map((optId) => ({
-            options: { in: [optId] },
-          })),
-          { product: { exists: true } },
-        ],
-      },
-      select: { product: true },
-      pagination: false,
-      depth: 0,
-    })
-    variantProductIds = matchingVariants.docs
-      .map((v) => (typeof v.product === 'number' ? v.product : v.product?.id))
-      .filter((id): id is number => typeof id === 'number')
-  }
+  const [variantTypeCompatibility, variantProductIds] = await Promise.all([
+    getVariantTypeCompatibility(),
+    resolveVariantProductIds(payload, variantSelections),
+  ])
 
   // --- Price filter values ---
   const minPriceVal = minPrice ? Number(Array.isArray(minPrice) ? minPrice[0] : minPrice) : null
@@ -335,6 +320,7 @@ export default async function ShopPage({ searchParams }: Props) {
         parentCategories={categoriesForFilter}
         brands={brands}
         variantTypes={variantTypes}
+        variantTypeCompatibility={variantTypeCompatibility}
         priceRange={priceRange}
       />
       <div className="min-h-screen w-full">
