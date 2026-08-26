@@ -2,6 +2,11 @@ import * as migration_20260211_015545_rename_linkType_to_navType from './2026021
 import * as migration_20260215_121709 from './20260215_121709';
 import * as migration_20260310_112612_add_coupons from './20260310_112612_add_coupons';
 import * as migration_20260327_113154 from './20260327_113154';
+import * as migration_20260817_082228_hero_banners_social_strip from './20260817_082228_hero_banners_social_strip';
+import * as migration_20260817_152010_banner_text_color from './20260817_152010_banner_text_color';
+import * as migration_20260818_095142 from './20260818_095142';
+import * as migration_20260818_095513 from './20260818_095513';
+import * as migration_20260818_190618 from './20260818_190618';
 
 export const migrations = [
   {
@@ -22,6 +27,31 @@ export const migrations = [
   {
     up: migration_20260327_113154.up,
     down: migration_20260327_113154.down,
-    name: '20260327_113154'
+    name: '20260327_113154',
+  },
+  {
+    up: migration_20260817_082228_hero_banners_social_strip.up,
+    down: migration_20260817_082228_hero_banners_social_strip.down,
+    name: '20260817_082228_hero_banners_social_strip',
+  },
+  {
+    up: migration_20260817_152010_banner_text_color.up,
+    down: migration_20260817_152010_banner_text_color.down,
+    name: '20260817_152010_banner_text_color',
+  },
+  {
+    up: migration_20260818_095142.up,
+    down: migration_20260818_095142.down,
+    name: '20260818_095142',
+  },
+  {
+    up: migration_20260818_095513.up,
+    down: migration_20260818_095513.down,
+    name: '20260818_095513',
+  },
+  {
+    up: migration_20260818_190618.up,
+    down: migration_20260818_190618.down,
+    name: '20260818_190618'
   },
 ];

@@ -5,6 +5,7 @@ import { Media } from '@/components/Media'
 import { RichText } from '@/components/RichText'
 import { SocialPlatformIcon } from '@/components/Footer/SocialPlatformIcon'
 import { ScrollToTopButton } from '@/components/Footer/ScrollToTopButton'
+import { cn } from '@/utilities/cn'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import React from 'react'
 
@@ -14,10 +15,49 @@ export async function Footer() {
   const hasColumns = columns.length > 0
   const paymentCards = footer.paymentCards || []
   const fallbackNavItems = footer.navItems || []
+  const socialStrip = footer.socialStrip
+  const socialStripLinks = socialStrip?.links || []
+  const showSocialStrip = socialStrip?.enabled !== false && socialStripLinks.length > 0
 
   return (
     <>
-      <footer className="footer-root mt-16 border-t border-border bg-muted text-sm text-muted-foreground">
+      {showSocialStrip && (
+        <section className="footer-social-strip mt-16 border-t border-border bg-muted py-8">
+          <div className="container flex flex-col items-center gap-4">
+            {socialStrip?.heading && (
+              <h2 className="footer-social-strip-title font-nav text-sm font-bold uppercase tracking-[0.2em] text-foreground">
+                {socialStrip.heading}
+              </h2>
+            )}
+            <ul className="footer-social-strip-list flex items-center gap-6">
+              {socialStripLinks.map((socialLink, index) => {
+                const platformLabel = socialLink.platform === 'tiktok' ? 'TikTok' : 'Instagram'
+
+                return (
+                  <li key={socialLink.id || `social-strip-${index}`}>
+                    <a
+                      aria-label={socialLink.ariaLabel || platformLabel}
+                      className="footer-social-strip-link inline-flex items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                      href={socialLink.url}
+                      rel={socialLink.newTab ? 'noopener noreferrer' : undefined}
+                      target={socialLink.newTab ? '_blank' : undefined}
+                    >
+                      <SocialPlatformIcon className="size-6" platform={socialLink.platform} />
+                    </a>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      <footer
+        className={cn(
+          'footer-root border-t border-border bg-muted text-sm text-muted-foreground',
+          !showSocialStrip && 'mt-16',
+        )}
+      >
         <div className="container">
           <div className="footer-layout py-10 md:mx-auto md:max-w-6xl md:py-14">
             {hasColumns ? (

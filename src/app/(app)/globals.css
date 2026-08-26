@@ -251,7 +251,86 @@
   --dropdown-text: oklch(90% 0 0deg);
 }
 
+/* Banner hero text palette — the colors an editor can pick per slide.
+   Deliberately fixed and NOT redefined under [data-theme='dark']: the slider
+   sets data-theme="dark" so the header renders light over the image, which
+   would otherwise flip a picked brown from #592800 to #a0784a. A slide must
+   render the color that was chosen, regardless of surrounding theme. */
+:root {
+  --banner-text-white: oklch(100% 0 0deg);
+  --banner-text-cream: #f5efe6;
+  --banner-text-brand-light: #a0784a;
+  --banner-text-brand: #592800;
+  --banner-text-black: oklch(14.5% 0 0deg);
+
+  --banner-scrim-dark-strong: oklch(0% 0 0deg / 0.6);
+  --banner-scrim-dark-soft: oklch(0% 0 0deg / 0.3);
+  --banner-scrim-light-strong: oklch(100% 0 0deg / 0.66);
+  --banner-scrim-light-soft: oklch(100% 0 0deg / 0.32);
+
+  --banner-shadow-dark: oklch(0% 0 0deg / 0.55);
+  --banner-shadow-light: oklch(100% 0 0deg / 0.6);
+}
+
+@layer utilities {
+  /* Soft gradient behind the banner text column only — the photo stays bright
+     while the copy keeps contrast, unlike the full-image overlay slider.
+     Polarity follows the picked text color: light copy gets a dark scrim,
+     dark copy a light one. */
+  .banner-scrim {
+    --scrim-strong: var(--banner-scrim-dark-strong);
+    --scrim-soft: var(--banner-scrim-dark-soft);
+  }
+
+  .banner-scrim[data-polarity='onLight'] {
+    --scrim-strong: var(--banner-scrim-light-strong);
+    --scrim-soft: var(--banner-scrim-light-soft);
+  }
+
+  .banner-scrim[data-position='left'] {
+    background-image: linear-gradient(
+      to right,
+      var(--scrim-strong) 0%,
+      var(--scrim-soft) 42%,
+      transparent 74%
+    );
+  }
+
+  .banner-scrim[data-position='right'] {
+    background-image: linear-gradient(
+      to left,
+      var(--scrim-strong) 0%,
+      var(--scrim-soft) 42%,
+      transparent 74%
+    );
+  }
+
+  .banner-scrim[data-position='center'] {
+    background-image: linear-gradient(
+      to right,
+      transparent 0%,
+      var(--scrim-soft) 22%,
+      var(--scrim-strong) 50%,
+      var(--scrim-soft) 78%,
+      transparent 100%
+    );
+  }
+
+  .banner-text-shadow {
+    text-shadow: 0 1px 3px var(--banner-shadow-dark);
+  }
+
+  .banner-text-shadow[data-polarity='onLight'] {
+    text-shadow: 0 1px 2px var(--banner-shadow-light);
+  }
+}
+
 @theme inline {
+  --color-banner-white: var(--banner-text-white);
+  --color-banner-cream: var(--banner-text-cream);
+  --color-banner-brand-light: var(--banner-text-brand-light);
+  --color-banner-brand: var(--banner-text-brand);
+  --color-banner-black: var(--banner-text-black);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

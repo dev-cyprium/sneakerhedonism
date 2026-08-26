@@ -514,7 +514,7 @@ export interface Page {
   title: string;
   publishedOn?: string | null;
   hero: {
-    type: 'none' | 'videoHero' | 'highImpact' | 'mediumImpact' | 'lowImpact';
+    type: 'none' | 'videoHero' | 'bannerHero' | 'highImpact' | 'mediumImpact' | 'lowImpact';
     richText?: {
       root: {
         type: string;
@@ -550,6 +550,53 @@ export interface Page {
         }[]
       | null;
     media?: (number | null) | Media;
+    /**
+     * Baneri koji se smenjuju u heru. Svaki baner ima svoju sliku, tekst i dugme (npr. jedan za radnju, jedan za kategoriju).
+     */
+    banners?:
+      | {
+          /**
+           * Pozadinska slika banera (preporuka: široka slika, npr. 2000x1000).
+           */
+          image: number | Media;
+          /**
+           * Opciono. Uspravna slika za telefone. Ako je prazno, koristi se glavna slika.
+           */
+          mobileImage?: (number | null) | Media;
+          /**
+           * Opciono. Mali tekst iznad naslova, npr. "NOVO".
+           */
+          eyebrow?: string | null;
+          heading: string;
+          subheading?: string | null;
+          /**
+           * Tekst na dugmetu, npr. "Pogledaj kolekciju". Ako je prazno, ceo baner je klikabilan bez dugmeta.
+           */
+          ctaLabel?: string | null;
+          ctaType?: ('category' | 'page' | 'url') | null;
+          ctaCategory?: (number | null) | Category;
+          ctaPage?: (number | null) | Page;
+          /**
+           * Npr. Google Maps lokacija radnje, tel: broj ili spoljni link.
+           */
+          ctaUrl?: string | null;
+          newTab?: boolean | null;
+          textPosition?: ('left' | 'center' | 'right') | null;
+          /**
+           * Izaberi boju koja se najbolje vidi na ovoj slici.
+           */
+          textColor?: ('white' | 'cream' | 'brandLight' | 'brand' | 'black') | null;
+          /**
+           * Zatamnjenje cele slike (0–80).
+           */
+          overlayOpacity?: number | null;
+          /**
+           * Blaga senka samo ispod teksta (ne preko cele slike), da tekst ostane čitljiv. Isključi ako je slika mirna i tekst se i bez toga dobro vidi.
+           */
+          textScrim?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
   };
   layout: (
     | CallToActionBlock
@@ -561,6 +608,7 @@ export interface Page {
     | FAQBlock
     | NovoBlock
     | PogledajPonuduBlock
+    | LokacijaBlock
     | PopularnoBlock
     | ThreeItemGridBlock
     | BannerBlock
@@ -586,6 +634,29 @@ export interface Page {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  title: string;
+  /**
+   * Leave empty for top-level categories
+   */
+  parent?: (number | null) | Category;
+  /**
+   * Shows a "NEW" badge in navigation
+   */
+  isNew?: boolean | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -719,29 +790,6 @@ export interface ArchiveBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
- */
-export interface Category {
-  id: number;
-  title: string;
-  /**
-   * Leave empty for top-level categories
-   */
-  parent?: (number | null) | Category;
-  /**
-   * Shows a "NEW" badge in navigation
-   */
-  isNew?: boolean | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "CarouselBlock".
  */
 export interface CarouselBlock {
@@ -840,6 +888,36 @@ export interface PogledajPonuduBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'pogledajPonudu';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LokacijaBlock".
+ */
+export interface LokacijaBlock {
+  heading?: string | null;
+  /**
+   * Fotografija lokala. Ako se ne postavi, mapa zauzima celu širinu.
+   */
+  image?: (number | null) | Media;
+  /**
+   * Sa koje strane stoji slika (na mobilnom je uvek iznad mape).
+   */
+  imagePosition?: ('left' | 'right') | null;
+  /**
+   * Google Maps: Share → Embed a map. Nalepi ceo <iframe ...> kod, link, ili prosto upiši adresu — sve tri varijante rade.
+   */
+  mapEmbed: string;
+  address: string;
+  city: string;
+  /**
+   * Npr. „Ponedeljak–Subota 10–20h, Nedelja zatvoreno“.
+   */
+  hours?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'lokacija';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1688,6 +1766,26 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
             };
         media?: T;
+        banners?:
+          | T
+          | {
+              image?: T;
+              mobileImage?: T;
+              eyebrow?: T;
+              heading?: T;
+              subheading?: T;
+              ctaLabel?: T;
+              ctaType?: T;
+              ctaCategory?: T;
+              ctaPage?: T;
+              ctaUrl?: T;
+              newTab?: T;
+              textPosition?: T;
+              textColor?: T;
+              overlayOpacity?: T;
+              textScrim?: T;
+              id?: T;
+            };
       };
   layout?:
     | T
@@ -1701,6 +1799,7 @@ export interface PagesSelect<T extends boolean = true> {
         faq?: T | FAQBlockSelect<T>;
         novo?: T | NovoBlockSelect<T>;
         pogledajPonudu?: T | PogledajPonuduBlockSelect<T>;
+        lokacija?: T | LokacijaBlockSelect<T>;
         popularno?: T | PopularnoBlockSelect<T>;
         threeItemGrid?: T | ThreeItemGridBlockSelect<T>;
         banner?: T | BannerBlockSelect<T>;
@@ -1872,6 +1971,23 @@ export interface PogledajPonuduBlockSelect<T extends boolean = true> {
         link?: T;
         id?: T;
       };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LokacijaBlock_select".
+ */
+export interface LokacijaBlockSelect<T extends boolean = true> {
+  heading?: T;
+  image?: T;
+  imagePosition?: T;
+  mapEmbed?: T;
+  address?: T;
+  city?: T;
+  hours?: T;
+  phone?: T;
+  email?: T;
   id?: T;
   blockName?: T;
 }
@@ -2645,6 +2761,28 @@ export interface Footer {
       }[]
     | null;
   /**
+   * Row of social icons shown on every page, just above the footer. Leave disabled to hide it.
+   */
+  socialStrip?: {
+    enabled?: boolean | null;
+    /**
+     * Optional. Leave empty to show only the icons.
+     */
+    heading?: string | null;
+    links?:
+      | {
+          platform: 'instagram' | 'tiktok';
+          url: string;
+          newTab?: boolean | null;
+          /**
+           * Optional. Falls back to platform name.
+           */
+          ariaLabel?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
    * Displayed in one row at the footer bottom on desktop and wrapped into multiple rows on smaller screens.
    */
   paymentCards?:
@@ -2894,6 +3032,21 @@ export interface FooterSelect<T extends boolean = true> {
               id?: T;
             };
         id?: T;
+      };
+  socialStrip?:
+    | T
+    | {
+        enabled?: T;
+        heading?: T;
+        links?:
+          | T
+          | {
+              platform?: T;
+              url?: T;
+              newTab?: T;
+              ariaLabel?: T;
+              id?: T;
+            };
       };
   paymentCards?:
     | T

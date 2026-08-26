@@ -150,6 +150,73 @@ export const Footer: GlobalConfig = {
       ],
     },
     {
+      name: 'socialStrip',
+      type: 'group',
+      label: 'Social Strip',
+      admin: {
+        description:
+          'Row of social icons shown on every page, just above the footer. Leave disabled to hide it.',
+      },
+      fields: [
+        {
+          name: 'enabled',
+          type: 'checkbox',
+          label: 'Show social strip',
+          defaultValue: true,
+        },
+        {
+          name: 'heading',
+          type: 'text',
+          label: 'Heading',
+          defaultValue: 'Pratite nas',
+          admin: {
+            description: 'Optional. Leave empty to show only the icons.',
+          },
+        },
+        {
+          name: 'links',
+          type: 'array',
+          fields: [
+            {
+              name: 'platform',
+              type: 'select',
+              required: true,
+              defaultValue: 'instagram',
+              options: [
+                {
+                  label: 'Instagram',
+                  value: 'instagram',
+                },
+                {
+                  label: 'TikTok',
+                  value: 'tiktok',
+                },
+              ],
+            },
+            {
+              name: 'url',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'newTab',
+              type: 'checkbox',
+              label: 'Open in new tab',
+              defaultValue: true,
+            },
+            {
+              name: 'ariaLabel',
+              type: 'text',
+              label: 'Accessibility label',
+              admin: {
+                description: 'Optional. Falls back to platform name.',
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
       name: 'paymentCards',
       type: 'array',
       label: 'Payment Card Images',
