@@ -29,6 +29,10 @@ import { Truck, CreditCard } from 'lucide-react'
 type CouponPreviewPricing = {
   subtotalAmount: number
   discountAmount: number
+  // The part of the subtotal the coupon actually applies to. Equal to
+  // subtotalAmount for a cart-wide coupon, smaller for one scoped to
+  // categories when the cart also holds items outside that scope.
+  discountBaseAmount: number
   discountedSubtotalAmount: number
   shippingAmount: number
   totalAmount: number
@@ -111,6 +115,7 @@ export const CheckoutPage: React.FC = () => {
     return {
       subtotalAmount: shippingSummary.subtotalAmount,
       discountAmount: 0,
+      discountBaseAmount: shippingSummary.subtotalAmount,
       discountedSubtotalAmount: shippingSummary.subtotalAmount,
       shippingAmount: shippingSummary.shippingAmount,
       totalAmount: shippingSummary.totalAmount,
@@ -119,6 +124,14 @@ export const CheckoutPage: React.FC = () => {
       progressToFreeShipping: shippingSummary.progressToFreeShipping,
     }
   }, [couponPricing, shippingSummary])
+
+  // A category-scoped coupon discounts only the qualifying lines, so the amount
+  // taken off is smaller than the headline percent of the cart. Say so, rather
+  // than leaving the shopper to wonder whether the coupon half-failed.
+  const isCouponPartiallyApplied =
+    summaryForDisplay.discountAmount > 0 &&
+    summaryForDisplay.discountBaseAmount > 0 &&
+    summaryForDisplay.discountBaseAmount < summaryForDisplay.subtotalAmount
 
   const applyCoupon = useCallback(
     async (rawCode: string, options?: { silent?: boolean }) => {
@@ -676,6 +689,13 @@ export const CheckoutPage: React.FC = () => {
                 </Button>
               </div>
             )}
+            {appliedCoupon && isCouponPartiallyApplied && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Kupon važi samo na deo porudžbine:{' '}
+                <Price as="span" amount={summaryForDisplay.discountBaseAmount} /> od{' '}
+                <Price as="span" amount={summaryForDisplay.subtotalAmount} />.
+              </p>
+            )}
             {couponError && <p className="mt-2 text-xs text-destructive">{couponError}</p>}
           </div>
           {cart?.items?.map((item, index) => {
@@ -774,7 +794,7 @@ export const CheckoutPage: React.FC = () => {
             </div>
             {summaryForDisplay.discountAmount > 0 && (
               <div className="flex justify-between items-center gap-2 text-sm text-muted-foreground">
-                <span>Popust</span>
+                <span>{isCouponPartiallyApplied ? 'Popust (na deo porudžbine)' : 'Popust'}</span>
                 <Price amount={summaryForDisplay.discountAmount * -1} />
               </div>
             )}
