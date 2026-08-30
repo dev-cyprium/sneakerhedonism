@@ -1,0 +1,8 @@
+packages:
+  - '.'
+
+allowBuilds:
+  '@vercel/git-hooks': true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true

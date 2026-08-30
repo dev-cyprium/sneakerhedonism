@@ -1,16 +1,23 @@
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
-import { FlatCompat } from '@eslint/eslintrc'
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
+import nextTypescript from 'eslint-config-next/typescript'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-})
-
+// eslint-config-next 16 ships flat configs. Loading them through FlatCompat
+// (the legacy .eslintrc bridge) makes the schema validator walk the plugin
+// object and die on a circular reference, so import them directly.
 const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  {
+    ignores: [
+      '.next/**',
+      'build/**',
+      'dist/**',
+      'node_modules/**',
+      'src/app/(payload)/admin/importMap.js',
+      'src/migrations/**',
+      'src/payload-types.ts',
+    ],
+  },
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   {
     rules: {
       '@typescript-eslint/ban-ts-comment': 'warn',

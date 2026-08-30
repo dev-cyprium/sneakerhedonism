@@ -221,7 +221,7 @@ export default async function ShopPage({ searchParams }: Props) {
   ]
 
   // --- Resolve selected parent category ---
-  let categoryIds: number[] = []
+  const categoryIds: number[] = []
   let childCategories = allCategories.docs.filter(() => false)
   let selectedCategoryId: number | null = null
 
