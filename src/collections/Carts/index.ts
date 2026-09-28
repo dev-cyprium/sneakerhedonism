@@ -1,5 +1,5 @@
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
-import type { CollectionBeforeChangeHook, CollectionAfterReadHook, Payload } from 'payload'
+import type { CollectionBeforeChangeHook, CollectionAfterReadHook, PayloadRequest } from 'payload'
 
 import { isResolvedCartLine } from '@/lib/cartLines'
 
@@ -18,13 +18,14 @@ const toID = (value: RawCartItem['product']): null | number => {
 }
 
 async function publishedIDs(
-  payload: Payload,
+  req: PayloadRequest,
   collection: 'products' | 'variants',
   ids: number[],
 ): Promise<Set<number>> {
   if (ids.length === 0) return new Set()
 
-  const result = await payload.find({
+  const result = await req.payload.find({
+    req,
     collection,
     depth: 0,
     limit: ids.length,
@@ -57,8 +58,8 @@ export const pruneUnavailableCartItems: CollectionBeforeChangeHook = async ({ da
   const variantIDs = [...new Set(items.map((item) => toID(item.variant)).filter((id): id is number => id != null))]
 
   const [products, variants] = await Promise.all([
-    publishedIDs(req.payload, 'products', productIDs),
-    publishedIDs(req.payload, 'variants', variantIDs),
+    publishedIDs(req, 'products', productIDs),
+    publishedIDs(req, 'variants', variantIDs),
   ])
 
   data.items = items.filter((item) => {

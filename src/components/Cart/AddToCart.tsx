@@ -26,7 +26,7 @@ export function AddToCart({ product, variant: variantOverride }: Props) {
   const searchParams = useSearchParams()
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
 
-  const variants = product.variants?.docs || []
+  const variants = useMemo(() => product.variants?.docs || [], [product.variants?.docs])
   const hasVariantDocs = variants.length > 0
 
   const selectedVariant = useMemo<Variant | undefined>(() => {
@@ -55,7 +55,7 @@ export function AddToCart({ product, variant: variantOverride }: Props) {
     const metaImage = typeof product.meta?.image === 'object' ? product.meta.image : undefined
 
     return firstGalleryImage || metaImage
-  }, [product.gallery, product.meta?.image])
+  }, [product.gallery, product.meta])
 
   const handleContinueShopping = useCallback(() => {
     setIsConfirmModalOpen(false)
@@ -84,7 +84,7 @@ export function AddToCart({ product, variant: variantOverride }: Props) {
         toast.error('Došlo je do greške pri dodavanju u korpu.')
       }
     },
-    [addItem, product.id, selectedVariant?.id],
+    [addItem, product.id, selectedVariant],
   )
 
   const disabled = useMemo<boolean>(() => {

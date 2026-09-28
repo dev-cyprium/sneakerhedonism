@@ -55,9 +55,12 @@ export function SortFilter({ className }: Props) {
     }
   }, [])
 
-  useEffect(() => {
+  const routeKey = searchParams.toString()
+  const [previousRoute, setPreviousRoute] = useState(routeKey)
+  if (routeKey !== previousRoute) {
+    setPreviousRoute(routeKey)
     setIsOpen(false)
-  }, [searchParams])
+  }
 
   return (
     <div ref={rootRef} className={cn('flex w-full items-center gap-3 md:w-auto', className)}>

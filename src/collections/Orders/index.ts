@@ -5,11 +5,19 @@ import {
   revalidateStorefrontAfterChange,
   revalidateStorefrontAfterDelete,
 } from '@/collections/hooks/revalidateStorefront'
+import { manageInventory } from './hooks/manageInventory'
 import { sendOrderEmails } from './hooks/sendOrderEmails'
 
 export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
   fields: [
+    {
+      name: 'inventoryDeducted',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { hidden: true },
+      access: { create: () => false, update: () => false },
+    },
     {
       name: 'couponBanner',
       type: 'ui',
@@ -187,6 +195,7 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
     ...(defaultCollection.hooks ?? {}),
     beforeChange: [
       ...(defaultCollection.hooks?.beforeChange ?? []),
+      manageInventory,
       ({ data, operation, originalDoc }) => {
         if (!data) return data
 
@@ -257,6 +266,14 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
   admin: {
     ...defaultCollection?.admin,
     group: 'Ecommerce',
-    defaultColumns: ['id', 'createdAt', 'orderStatus', 'amount', 'couponCode', 'currency', 'customer'],
+    defaultColumns: [
+      'id',
+      'createdAt',
+      'orderStatus',
+      'amount',
+      'couponCode',
+      'currency',
+      'customer',
+    ],
   },
 })

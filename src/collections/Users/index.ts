@@ -69,6 +69,9 @@ export const Users: CollectionConfig = {
       type: 'join',
       collection: 'carts',
       on: 'customer',
+      // EcommerceProvider resumes the first joined cart on login.
+      // Completed carts belong to order history, never to a new checkout.
+      where: { purchasedAt: { exists: false } },
       admin: {
         allowCreate: false,
         defaultColumns: ['id', 'createdAt', 'total', 'currency', 'items'],

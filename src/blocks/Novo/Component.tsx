@@ -1,3 +1,4 @@
+import { inStockWhere } from '@/lib/inStock'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
@@ -16,9 +17,7 @@ export const NovoBlock: React.FC<NovoBlockProps> = async ({ limit }) => {
     sort: '-createdAt',
     limit: limit || 8,
     where: {
-      _status: {
-        equals: 'published',
-      },
+      and: [inStockWhere],
     },
   })
 

@@ -1,3 +1,4 @@
+import { inStockWhere } from '@/lib/inStock'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
@@ -53,7 +54,7 @@ export const PopularnoBlock: React.FC<PopularnoBlockProps> = async ({ limit }) =
       overrideAccess: false,
       limit: topProductIds.length,
       where: {
-        _status: { equals: 'published' },
+        and: [inStockWhere],
         id: { in: topProductIds },
       },
     })
@@ -75,7 +76,7 @@ export const PopularnoBlock: React.FC<PopularnoBlockProps> = async ({ limit }) =
       sort: '-createdAt',
       limit: remaining,
       where: {
-        _status: { equals: 'published' },
+        and: [inStockWhere],
         ...(existingIds.length > 0 && {
           id: { not_in: existingIds },
         }),

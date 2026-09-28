@@ -1,3 +1,4 @@
+import { availableSelection } from '@/lib/inStock'
 import type { Category, Media, Product } from '@/payload-types'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
@@ -102,10 +103,9 @@ export default async function ProductPage({ params }: Args) {
         : undefined,
   }
 
-  const relatedProducts =
-    product.relatedProducts?.filter((relatedProduct) => typeof relatedProduct === 'object') ?? []
-
   const payload = await getPayload({ config: configPromise })
+  const relatedProducts = await availableSelection(payload,
+    (product.relatedProducts ?? []).map((p) => typeof p === 'object' ? p.id : p))
   const sizeGuide = await resolveSizeGuideForProduct(payload, product)
 
   const categories = product.categories?.filter((cat): cat is Category => typeof cat === 'object')
@@ -255,6 +255,7 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
         ...(draft ? [] : [{ _status: { equals: 'published' } }]),
       ],
     },
+    joins: { variants: { limit: 1000, ...(draft ? {} : { where: { _status: { equals: 'published' } } }) } },
     populate: {
       variants: {
         title: true,

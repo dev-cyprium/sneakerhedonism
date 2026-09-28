@@ -1,3 +1,4 @@
+import * as orderInventory from './20260928_160000_order_inventory';
 import * as migration_20260211_015545_rename_linkType_to_navType from './20260211_015545_rename_linkType_to_navType';
 import * as migration_20260215_121709 from './20260215_121709';
 import * as migration_20260310_112612_add_coupons from './20260310_112612_add_coupons';
@@ -60,4 +61,5 @@ export const migrations = [
     down: migration_20260826_093306_coupon_category_scope.down,
     name: '20260826_093306_coupon_category_scope'
   },
+  { up: orderInventory.up, down: orderInventory.down, name: '20260928_160000_order_inventory' },
 ];

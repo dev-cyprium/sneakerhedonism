@@ -1,4 +1,2 @@
-// Any setup scripts you might need go here
-
-// Load .env files
-import 'dotenv/config'
+// Load only the guarded test environment, never application credentials.
+import './tests/env'

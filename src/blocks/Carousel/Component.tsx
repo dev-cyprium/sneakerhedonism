@@ -1,3 +1,4 @@
+import { inStockWhere, availableSelection } from '@/lib/inStock'
 import type { Media, Product, CarouselBlock as CarouselBlockProps } from '@/payload-types'
 
 import configPromise from '@payload-config'
@@ -30,22 +31,21 @@ export const CarouselBlock: React.FC<
       collection: 'products',
       depth: 1,
       limit: limit || undefined,
-      ...(flattenedCategories && flattenedCategories.length > 0
-        ? {
-            where: {
-              categories: {
-                in: flattenedCategories,
-              },
-            },
-          }
-        : {}),
+      draft: false,
+      overrideAccess: false,
+      where: {
+        and: [
+          inStockWhere,
+          ...(flattenedCategories?.length ? [{ categories: { in: flattenedCategories } }] : []),
+        ],
+      },
     })
 
     products = fetchedProducts.docs
   } else if (populateBy === 'selection' && selectedDocs?.length) {
-    products = selectedDocs
-      .map((post) => (typeof post.value !== 'string' ? post.value : null))
-      .filter(Boolean) as Product[]
+    const payload = await getPayload({ config: configPromise })
+    products = await availableSelection(payload, selectedDocs.flatMap(({ value }) =>
+      typeof value === 'object' ? [value.id] : typeof value === 'number' ? [value] : []))
   } else if (populateBy === 'media' && selectedMedia?.length) {
     media = selectedMedia
   }

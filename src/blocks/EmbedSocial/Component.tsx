@@ -10,13 +10,17 @@ export const EmbedSocialBlock: React.FC<EmbedSocialBlockProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [showRetry, setShowRetry] = useState(false)
+  const [previousEmbedCode, setPreviousEmbedCode] = useState(embedCode)
+  if (embedCode !== previousEmbedCode) {
+    setPreviousEmbedCode(embedCode)
+    setShowRetry(false)
+  }
 
   const injectEmbed = useCallback(() => {
     const container = containerRef.current
     if (!container || !embedCode) return
 
     container.innerHTML = ''
-    setShowRetry(false)
 
     // Remove any existing EmbedSocial script so it re-initializes
     const existingScript = document.getElementById('EmbedSocialHashtagScript')
@@ -38,10 +42,11 @@ export const EmbedSocialBlock: React.FC<EmbedSocialBlockProps> = ({
   }, [embedCode])
 
   useEffect(() => {
+    const container = containerRef.current
     const cleanup = injectEmbed()
     return () => {
       cleanup?.()
-      if (containerRef.current) containerRef.current.innerHTML = ''
+      if (container) container.innerHTML = ''
     }
   }, [injectEmbed])
 
@@ -54,7 +59,10 @@ export const EmbedSocialBlock: React.FC<EmbedSocialBlockProps> = ({
         {showRetry && (
           <button
             type="button"
-            onClick={injectEmbed}
+            onClick={() => {
+              setShowRetry(false)
+              injectEmbed()
+            }}
             className="mt-4 inline-flex items-center justify-center rounded-md bg-accent-brand px-6 py-3 text-sm font-medium text-white hover:bg-accent-brand/90 transition-colors"
           >
             Učitaj feed

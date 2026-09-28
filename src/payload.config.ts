@@ -103,15 +103,18 @@ export default buildConfig({
   email: nodemailerAdapter({
     defaultFromAddress: 'info@mail.sneakerhedonism.com',
     defaultFromName: 'Sneaker Hedonism',
-    transportOptions: {
-      host: 'smtp.resend.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: 'resend',
-        pass: process.env.RESEND_API_KEY || '',
-      },
-    },
+    transportOptions:
+      process.env.LOCAL_SERVICES_ONLY === 'true'
+        ? { jsonTransport: true }
+        : {
+            host: 'smtp.resend.com',
+            port: 465,
+            secure: true,
+            auth: {
+              user: 'resend',
+              pass: process.env.RESEND_API_KEY || '',
+            },
+          },
   }),
   endpoints: [],
   globals: [Header, Footer, SiteSettings, EccSettings, EmailSettings],

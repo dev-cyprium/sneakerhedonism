@@ -1,3 +1,4 @@
+import { confirmOrderEndpoint } from '@/payments/confirmOrderEndpoint'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { s3Storage } from '@payloadcms/storage-s3'
@@ -46,6 +47,8 @@ const generateURL: GenerateURL<Product | Page | Post> = ({ doc, collectionSlug }
 
 export const plugins: Plugin[] = [
   s3Storage({
+    enabled: process.env.LOCAL_SERVICES_ONLY !== 'true',
+    alwaysInsertFields: true,
     collections: {
       media: {
         prefix: 'media',
@@ -233,5 +236,15 @@ export const plugins: Plugin[] = [
         },
       },
     },
+  }),
+  (config) => ({
+    ...config,
+    endpoints: [
+      ...(config.endpoints ?? []).filter((endpoint) =>
+        !['/payments/cod/confirm-order', '/payments/ecc/confirm-order'].includes(endpoint.path),
+      ),
+      confirmOrderEndpoint(codAdapter()),
+      confirmOrderEndpoint(eccAdapter()),
+    ],
   }),
 ]

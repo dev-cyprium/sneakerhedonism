@@ -3,12 +3,7 @@ import type { CollectionSlug } from 'payload'
 
 import { resolveCheckoutPricing } from '@/lib/checkoutPricing'
 
-import {
-  buildOutgoingSignData,
-  formatPurchaseTime,
-  getPrivateKey,
-  signRequest,
-} from './ecc/crypto'
+import { buildOutgoingSignData, formatPurchaseTime, getPrivateKey, signRequest } from './ecc/crypto'
 import { couponCodeFromRequest, orderPricingFromTransaction } from './orderPricing'
 
 export const eccAdapter = (): PaymentAdapter => {
@@ -72,19 +67,28 @@ export const eccAdapter = (): PaymentAdapter => {
       })
 
       // Fetch ECC settings from CMS
-      const eccSettings = await payload.findGlobal({
+      const eccSettings = (await payload.findGlobal({
         slug: 'ecc-settings' as any,
-      }) as Record<string, any>
+      })) as Record<string, any>
 
-      const { merchantId, terminalId, currency: eccCurrency, delay, gatewayUrl, locale } =
-        eccSettings
+      const {
+        merchantId,
+        terminalId,
+        currency: eccCurrency,
+        delay,
+        gatewayUrl,
+        locale,
+      } = eccSettings
 
       if (!merchantId || !terminalId || !gatewayUrl) {
-        throw new Error('ECC payment gateway is not configured. Please set up ECC Settings in the admin panel.')
+        throw new Error(
+          'ECC payment gateway is not configured. Please set up ECC Settings in the admin panel.',
+        )
       }
 
       // Create pending transaction
       const transaction = await payload.create({
+        req,
         collection: transactionsSlug as CollectionSlug,
         data: {
           ...(req.user ? { customer: req.user.id } : { customerEmail }),
@@ -181,6 +185,7 @@ export const eccAdapter = (): PaymentAdapter => {
       }
 
       const transaction = await payload.findByID({
+        req,
         id: transactionID as number,
         collection: transactionsSlug as CollectionSlug,
         depth: 0,
@@ -193,10 +198,13 @@ export const eccAdapter = (): PaymentAdapter => {
       const txn = transaction as Record<string, any>
 
       const order = await payload.create({
+        req,
         collection: ordersSlug as CollectionSlug,
         data: {
           ...orderPricingFromTransaction(txn),
-          ...(txn.customer ? { customer: txn.customer } : { customerEmail: customerEmail || txn.customerEmail }),
+          ...(txn.customer
+            ? { customer: txn.customer }
+            : { customerEmail: customerEmail || txn.customerEmail }),
           items: txn.items,
           ...(data.shippingAddress ? { shippingAddress: data.shippingAddress } : {}),
           status: 'processing',
@@ -208,6 +216,7 @@ export const eccAdapter = (): PaymentAdapter => {
       const cartID = txn.cart
       if (cartID) {
         await payload.update({
+          req,
           id: typeof cartID === 'object' ? cartID.id : cartID,
           collection: cartsSlug as CollectionSlug,
           data: {
@@ -227,6 +236,7 @@ export const eccAdapter = (): PaymentAdapter => {
       }
 
       await payload.update({
+        req,
         id: transaction.id,
         collection: transactionsSlug as CollectionSlug,
         data: updateData as any,

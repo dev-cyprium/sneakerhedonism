@@ -50,9 +50,12 @@ export function ShopSidebar({
     }
   }, [isMobileDrawerOpen])
 
-  useEffect(() => {
+  const routeKey = searchParams.toString()
+  const [previousRoute, setPreviousRoute] = useState(routeKey)
+  if (routeKey !== previousRoute) {
+    setPreviousRoute(routeKey)
     setMobileDrawerOpen(false)
-  }, [searchParams])
+  }
 
   useEffect(() => {
     if (!isMobileDrawerOpen) return

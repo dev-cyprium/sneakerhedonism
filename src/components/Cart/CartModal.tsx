@@ -31,10 +31,12 @@ export function CartModal() {
 
   const pathname = usePathname()
 
-  useEffect(() => {
-    // Close the cart modal when the pathname changes.
+  const routeKey = pathname
+  const [previousRoute, setPreviousRoute] = useState(routeKey)
+  if (routeKey !== previousRoute) {
+    setPreviousRoute(routeKey)
     setIsOpen(false)
-  }, [pathname])
+  }
 
   useEffect(() => {
     const handleOpenCart = () => {

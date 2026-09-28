@@ -13,6 +13,8 @@ playwright-report/index.html
 
 # next.js
 /.next/
+/.next-test/
+/test-results/
 /out/
 
 # production
@@ -40,4 +42,4 @@ yarn-error.log*
 next-env.d.ts
 
 public/media
-
+/media/

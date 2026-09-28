@@ -1,3 +1,4 @@
+import { inStockWhere } from './inStock'
 import type { ShopSortValue } from '@/components/shop/filters/sortOptions'
 import type { Payload } from 'payload'
 import type { Where } from 'payload'
@@ -38,17 +39,10 @@ export async function buildShopProductWhere(
   params: ShopProductFilterParams,
   payload: Payload,
 ): Promise<Where[]> {
-  const {
-    categoryIds,
-    brandId,
-    searchValue,
-    variantProductIds,
-    minPriceVal,
-    maxPriceVal,
-    onSale,
-  } = params
+  const { categoryIds, brandId, searchValue, variantProductIds, minPriceVal, maxPriceVal, onSale } =
+    params
 
-  const whereConditions: Where[] = [{ _status: { equals: 'published' } }]
+  const whereConditions: Where[] = [inStockWhere]
 
   if (brandId) {
     whereConditions.push({ categories: { in: [brandId] } })
@@ -68,7 +62,10 @@ export async function buildShopProductWhere(
     }
   }
 
-  if ((minPriceVal != null && !isNaN(minPriceVal)) || (maxPriceVal != null && !isNaN(maxPriceVal))) {
+  if (
+    (minPriceVal != null && !isNaN(minPriceVal)) ||
+    (maxPriceVal != null && !isNaN(maxPriceVal))
+  ) {
     // Filter by effective price: use salePriceInRSD when it exists, otherwise priceInRSD
     const saleConditions: Where[] = [{ salePriceInRSD: { exists: true } }]
     const regularConditions: Where[] = [{ salePriceInRSD: { exists: false } }]

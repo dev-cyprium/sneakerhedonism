@@ -46,6 +46,7 @@ export const codAdapter = (): PaymentAdapter => {
       })
 
       const transaction = await payload.create({
+        req,
         collection: transactionsSlug as CollectionSlug,
         data: {
           ...(req.user ? { customer: req.user.id } : { customerEmail }),
@@ -93,6 +94,7 @@ export const codAdapter = (): PaymentAdapter => {
       }
 
       const transaction = await payload.findByID({
+        req,
         id: transactionID as number,
         collection: transactionsSlug as CollectionSlug,
         depth: 0,
@@ -105,6 +107,7 @@ export const codAdapter = (): PaymentAdapter => {
       const txn = transaction as Record<string, any>
 
       const order = await payload.create({
+        req,
         collection: ordersSlug as CollectionSlug,
         data: {
           ...orderPricingFromTransaction(txn),
@@ -120,6 +123,7 @@ export const codAdapter = (): PaymentAdapter => {
       const cartID = txn.cart
       if (cartID) {
         await payload.update({
+          req,
           id: typeof cartID === 'object' ? cartID.id : cartID,
           collection: cartsSlug as CollectionSlug,
           data: {
@@ -129,6 +133,7 @@ export const codAdapter = (): PaymentAdapter => {
       }
 
       await payload.update({
+        req,
         id: transaction.id,
         collection: transactionsSlug as CollectionSlug,
         data: {

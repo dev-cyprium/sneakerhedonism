@@ -23,7 +23,7 @@ export const Media: CollectionConfig = {
   hooks: {
     afterRead: [
       ({ doc }) => {
-        if (!doc?.filename) return doc
+        if (!doc?.filename || process.env.LOCAL_SERVICES_ONLY === 'true') return doc
         const prefix = (doc as { prefix?: string }).prefix ?? 'media'
         const url = getR2PublicURL(doc.filename, prefix)
         return { ...doc, url }

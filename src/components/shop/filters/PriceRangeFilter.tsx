@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { createUrl } from '@/utilities/createUrl'
 import { Slider } from '@/components/ui/slider'
@@ -20,13 +20,12 @@ export function PriceRangeFilter({ min, max }: Props) {
   const urlMax = Number(searchParams.get('maxPrice')) || max
   const [range, setRange] = useState([urlMin, urlMax])
 
-  // Sync local state when URL changes externally
-  useEffect(() => {
-    setRange([
-      Number(searchParams.get('minPrice')) || min,
-      Number(searchParams.get('maxPrice')) || max,
-    ])
-  }, [searchParams, min, max])
+  const urlRangeKey = `${urlMin}:${urlMax}`
+  const [previousRangeKey, setPreviousRangeKey] = useState(urlRangeKey)
+  if (urlRangeKey !== previousRangeKey) {
+    setPreviousRangeKey(urlRangeKey)
+    setRange([urlMin, urlMax])
+  }
 
   if (min >= max) return null
 

@@ -4,6 +4,7 @@ import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'paylo
 const STOREFRONT_PATHS = ['/', '/shop'] as const
 
 const revalidateStorefrontPaths = () => {
+  revalidatePath('/products/[slug]', 'page')
   for (const path of STOREFRONT_PATHS) {
     revalidatePath(path)
   }

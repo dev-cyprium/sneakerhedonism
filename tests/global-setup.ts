@@ -1,7 +1,8 @@
+import './env'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 import config from '../src/payload.config.js'
 import {
   ADMIN_USER,
@@ -20,9 +21,35 @@ const __dirname = path.dirname(__filename)
 export default async function globalSetup() {
   process.env.PAYLOAD_MIGRATING = 'true'
   const payload = await getPayload({ config })
+  try {
+    await seed(payload)
+  } finally {
+    await payload.destroy()
+  }
+}
 
+async function seed(payload: Payload) {
   // Running outside Next.js — disable revalidatePath hooks
   const ctx = { disableRevalidate: true }
+
+  const home = await payload.find({
+    collection: 'pages',
+    where: { slug: { equals: 'home' } },
+    limit: 1,
+  })
+  if (!home.docs.length) {
+    await payload.create({
+      collection: 'pages',
+      data: {
+        title: 'Home',
+        slug: 'home',
+        hero: { type: 'none' },
+        layout: [{ blockType: 'content', columns: [] }],
+        _status: 'published',
+      },
+      context: ctx,
+    })
+  }
 
   // ─── Cleanup ──────────────────────────────────────────────────
 

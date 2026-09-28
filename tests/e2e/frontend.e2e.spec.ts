@@ -15,7 +15,8 @@ test.describe('Frontend', () => {
   // ─── Basic pages ────────────────────────────────────────────────
 
   test('can go on homepage', async ({ page }) => {
-    await page.goto(BASE_URL)
+    const response = await page.goto(BASE_URL)
+    expect(response?.status()).toBe(200)
     await expect(page).toHaveTitle(/.+/)
   })
 
@@ -114,10 +115,14 @@ test.describe('Frontend', () => {
 
     const sortOption = page.getByRole('option', { name: UI.cheapestFirst })
     await sortOption.click()
-    await expect(page).toHaveURL(/\/shop\?.*sort=priceInRSD/)
+    await expect(page).toHaveURL(/\/shop\?.*sort=effectivePrice/)
 
     // Products should still be visible after sorting
     await expect(productCard).toBeVisible()
+    await expect(page.locator('a[href^="/products/"] h3')).toHaveText([
+      SIMPLE_PRODUCT.title,
+      VARIANT_PRODUCT.title,
+    ])
   })
 
   // ─── Account ────────────────────────────────────────────────────
@@ -140,10 +145,10 @@ test.describe('Frontend', () => {
     await expect(heading).toHaveText(UI.accountSettings)
 
     // Wait for form to hydrate and load user data before interacting
-    const emailInput = page.locator('input[name="email"]')
+    const emailInput = page.getByRole('textbox', { name: /Email Address/ })
     await expect(emailInput).toHaveValue(ADMIN_USER.email, { timeout: 10000 })
 
-    const nameInput = page.locator('input[name="name"]')
+    const nameInput = page.getByRole('textbox', { name: /^Name/ })
     await nameInput.fill(`E2E User ${Date.now()}`)
 
     const updateButton = page.getByRole('button', { name: UI.updateAccount })
@@ -196,8 +201,24 @@ test.describe('Frontend', () => {
     })
     await page.keyboard.press('Escape')
 
+    const readStock = async () => {
+      const response = await page.request.get(`${BASE_URL}/api/products`, {
+        params: { 'where[slug][equals]': SIMPLE_PRODUCT.slug },
+      })
+      return (await response.json()).docs[0].inventory
+    }
+    const before = await readStock()
+    const confirmation = page.waitForResponse((response) =>
+      response.url().endsWith('/api/payments/cod/confirm-order') && response.request().method() === 'POST')
     await checkout(page, 'guest@test.com')
     await expectOrderIsDisplayed(page)
+    expect(await readStock()).toBe(before)
+    const confirmed = await confirmation
+    const result = await confirmed.json()
+    const replay = await page.request.post(confirmed.url(), { data: confirmed.request().postDataJSON() })
+    expect(replay.ok()).toBeTruthy()
+    expect((await replay.json()).orderID).toBe(result.orderID)
+    expect(await readStock()).toBe(before)
   })
 
   test('Guest can view their order using /find-order', async ({ page }) => {
@@ -316,6 +337,7 @@ test.describe('Frontend', () => {
     const titleInput = page.locator('input#field-title')
     await titleInput.fill('New Product with Variants')
     // Slug auto-generates from title ("new-product-with-variants")
+    await page.getByRole('button', { name: 'Add Gallery', exact: true }).click()
     const chooseFromExistingButton = page.getByRole('button', { name: 'Choose from existing' })
     await chooseFromExistingButton.click()
     const firstFileButton = page.locator('button.default-cell__first-cell').first()
@@ -329,7 +351,7 @@ test.describe('Frontend', () => {
 
     // create a new variant type
     const addNewVariantTypeButton = page.locator(
-      'button.relationship-add-new__add-button.doc-drawer__toggler[aria-label="Add new Variant Type"]',
+      'button.relationship-add-new__add-button.doc-drawer__toggler[aria-label="Add new Variant Group"]',
     )
     await addNewVariantTypeButton.click()
 
@@ -364,7 +386,22 @@ test.describe('Frontend', () => {
 
     await page.goto(`${BASE_URL}/shop`)
     const newProductCard = page.locator(`a[href="/products/new-product-with-variants"]`).first()
-    await newProductCard.waitFor({ state: 'visible' })
+    // A variant group alone has no sellable stock.
+    await expect(newProductCard).toHaveCount(0)
+    const products = await page.request.get(`${BASE_URL}/api/products`, {
+      params: { 'where[slug][equals]': 'new-product-with-variants' },
+    })
+    const product = (await products.json()).docs[0]
+    const options = await page.request.get(`${BASE_URL}/api/variantOptions`, {
+      params: { 'where[value][equals]': 'striped' },
+    })
+    const option = (await options.json()).docs[0]
+    const variant = await page.request.post(`${BASE_URL}/api/variants`, {
+      data: { product: product.id, options: [option.id], inventory: 2,
+        priceInRSDEnabled: true, priceInRSD: 2000, _status: 'published' },
+    })
+    expect(variant.ok()).toBeTruthy()
+    await page.reload()
     await expect(newProductCard).toBeVisible()
   })
 
@@ -385,6 +422,7 @@ test.describe('Frontend', () => {
     expect(rowCount).toBeGreaterThan(0)
 
     await page.goto(`${BASE_URL}/admin/collections/orders/${orderNumber}`)
+    await page.getByRole('button', { name: 'Show All', exact: true }).first().click()
     const product = page.locator('div.rs__control', { hasText: SIMPLE_PRODUCT.title })
     await expect(product).toBeVisible()
 
@@ -395,44 +433,66 @@ test.describe('Frontend', () => {
 
   // ─── Inventory ──────────────────────────────────────────────────
 
+
+  test('refreshes stock on focus and keeps sold-out product pages crawlable', async ({ page }) => {
+    await loginToAdmin(page, ADMIN_USER.email, ADMIN_USER.password)
+    const response = await page.request.get(`${BASE_URL}/api/products`, {
+      params: { 'where[slug][equals]': SIMPLE_PRODUCT.slug },
+    })
+    const product = (await response.json()).docs[0]
+    const update = async (inventory: number) => {
+      const result = await page.request.patch(`${BASE_URL}/api/products/${product.id}`, {
+        data: { inventory, _status: 'published' },
+      })
+      expect(result.ok()).toBeTruthy()
+    }
+    try {
+      await page.goto(`${BASE_URL}/products/${SIMPLE_PRODUCT.slug}`)
+      await expect(page.getByRole('button', { name: UI.addToCart, exact: true })).toBeEnabled()
+      await update(0)
+      await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+      await expect(page.getByText('Nema na stanju', { exact: true })).toBeVisible()
+      await expect(page.getByRole('button', { name: UI.addToCart, exact: true })).toBeDisabled()
+      const html = await page.request.get(`${BASE_URL}/products/${SIMPLE_PRODUCT.slug}`)
+      expect(html.status()).toBe(200)
+      expect(await html.text()).toContain('https://schema.org/OutOfStock')
+      await update(1)
+      await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+      await expect(page.getByText('Samo 1 na stanju', { exact: true })).toBeVisible()
+      await expect(page.getByRole('button', { name: UI.addToCart, exact: true })).toBeEnabled()
+    } finally { await update(product.inventory) }
+  })
+
   test('should disable add to cart when product has no inventory', async ({ page }) => {
     await page.goto(`${BASE_URL}/products/${NO_INVENTORY_PRODUCT.slug}`)
     const addToCartButton = page.getByRole('button', { name: UI.addToCart })
     await expect(addToCartButton).toBeDisabled()
   })
 
-  // This test fails, it should not let you checkout but it does
-  test.skip('should fail checkout when inventory is 0', async ({ page }) => {
+  test('should fail checkout when inventory is 0', async ({ page }) => {
     await loginFromUI(page, ADMIN_USER.email, ADMIN_USER.password)
-
-    // update inventory to 1
-    await page.goto(`${BASE_URL}/admin/collections/products`)
-    const testProductLink = page.getByRole('link', {
-      name: NO_INVENTORY_PRODUCT.title,
-      exact: true,
+    const response = await page.request.get(`${BASE_URL}/api/products`, {
+      params: { 'where[slug][equals]': NO_INVENTORY_PRODUCT.slug },
     })
-    await testProductLink.click()
-    const productDetailsButton = page.getByRole('button', { name: 'Product Details' })
-    await productDetailsButton.click()
-    const inventoryInput = page.locator('input[name="inventory"]')
-    await inventoryInput.fill('1')
-    await saveAndConfirmSuccess(page)
+    expect(response.ok()).toBe(true)
+    const { docs: [product] } = await response.json()
+    const updateStock = async (inventory: number) => {
+      const update = await page.request.patch(`${BASE_URL}/api/products/${product.id}`, {
+        data: { inventory, _status: 'published' },
+      })
+      expect(update.ok()).toBe(true)
+    }
 
-    await page.goto(`${BASE_URL}/products/${NO_INVENTORY_PRODUCT.slug}`)
-    const addToCartButton = page.getByRole('button', { name: UI.addToCart })
-    await expect(addToCartButton).toBeVisible()
-    await addToCartButton.click()
+    await updateStock(1)
+    await addToCartAndConfirm(page, {
+      productName: NO_INVENTORY_PRODUCT.title,
+      productSlug: NO_INVENTORY_PRODUCT.slug,
+    })
+    await page.keyboard.press('Escape')
+    await updateStock(0)
 
-    // update inventory to 0
-    await page.goto(`${BASE_URL}/admin/collections/products`)
-    await testProductLink.click()
-    await productDetailsButton.click()
-    await inventoryInput.fill('')
-    await saveAndConfirmSuccess(page)
-
-    await checkout(page)
-    const errorMessage = page.locator('text=This product is out of stock')
-    await expect(errorMessage).toBeVisible()
+    await checkout(page, undefined, { expectOutOfStock: true })
+    await expect(page).toHaveURL(/\/checkout/)
   })
 
   // ═══════════════════════════════════════════════════════════════
@@ -493,6 +553,7 @@ test.describe('Frontend', () => {
       couponCode?: string
       expectCouponError?: RegExp | string
       placeOrder?: boolean
+      expectOutOfStock?: boolean
     },
   ): Promise<void> {
     await page.goto(`${BASE_URL}/checkout`)
@@ -543,7 +604,7 @@ test.describe('Frontend', () => {
       await applyCouponButton.click()
 
       if (options.expectCouponError) {
-        await expect(page.getByText(options.expectCouponError)).toBeVisible({ timeout: 10000 })
+        await expect(page.getByRole('main').getByText(options.expectCouponError)).toBeVisible({ timeout: 10000 })
       } else {
         await expect(page.getByText(new RegExp(`Aktivan kupon:\\s*${options.couponCode}`, 'i'))).toBeVisible({
           timeout: 10000,
@@ -560,7 +621,18 @@ test.describe('Frontend', () => {
 
     // Choose Cash on Delivery (card payments are temporarily disabled)
     const codButton = page.locator('button', { hasText: UI.cashOnDelivery })
+    const paymentResponse = options?.expectOutOfStock
+      ? page.waitForResponse((response) => response.url().endsWith('/api/payments/cod/initiate'))
+      : null
     await codButton.click()
+    if (paymentResponse) {
+      const response = await paymentResponse
+      expect(response.status()).toBe(400)
+      const body = await response.json()
+      expect(body.cause?.code).toBe('OutOfStock')
+      await expect(page.getByRole('main').getByText(/OutOfStock/)).toBeVisible()
+      return
+    }
 
     // Wait for redirect to order page
     await page.waitForURL(/\/orders\//, { timeout: 30000 })

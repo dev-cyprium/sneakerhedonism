@@ -1,4 +1,5 @@
 'use client'
+import { useLiveStock } from './useLiveStock'
 import { AddToCart } from '@/components/Cart/AddToCart'
 import { Price } from '@/components/Price'
 import { RichText } from '@/components/RichText'
@@ -37,22 +38,20 @@ function hasShortDescriptionContent(
   data: Product['shortDescription'],
 ): data is NonNullable<Product['shortDescription']> {
   if (!data?.root?.children?.length) return false
-  const allText = data.root.children
-    .map(extractTextFromLexicalNode)
-    .join('')
-    .trim()
+  const allText = data.root.children.map(extractTextFromLexicalNode).join('').trim()
   if (!allText) return false
   if (allText === DEFAULT_PLACEHOLDER) return false
   return true
 }
 
 export function ProductDescription({
-  product,
+  product: initialProduct,
   sizeGuide,
 }: {
   product: Product
   sizeGuide?: ResolvedSizeGuide | null
 }) {
+  const product = useLiveStock(initialProduct)
   const { currency } = useCurrency()
   const priceField = `priceIn${currency.code}` as keyof Product
   const searchParams = useSearchParams()
@@ -140,11 +139,7 @@ export function ProductDescription({
             <AddToCart product={product} />
           </Suspense>
         </div>
-        <AddToWishlist
-          productId={product.id}
-          variantId={selectedVariant?.id}
-          size="lg"
-        />
+        <AddToWishlist productId={product.id} variantId={selectedVariant?.id} size="lg" />
       </div>
 
       {/* Size guide + Stock */}

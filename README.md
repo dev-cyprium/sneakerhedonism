@@ -185,27 +185,52 @@ By default we ship with the Stripe adapter configured, so you'll need to setup t
 
 ## Tests
 
-We provide automated tests out of the box for both E2E and Int tests along with this template. They are being run in our CI to ensure the stability of this template over time. You can integrate them into your CI or run them locally as well via:
-
-To run Int tests wtih Vitest:
-
-```bash
-pnpm test:int
-```
-
-To run E2Es with Playwright:
+Use Node 22 (Volta automatically selects the version pinned in `package.json`).
+Install dependencies and the matching browser once:
 
 ```bash
-pnpm test:e2e
+pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
 ```
 
-or
+Tests load `test.env`, overriding application database and server URLs. The database
+must be on a loopback host and its name must end in `_test`; the test runner rejects
+other targets before loading Payload. Uploads stay in the ignored `media/` directory
+and email uses an in-memory transport. No R2 or email credentials are needed.
+
+Start a separate PostgreSQL 17 instance on port 55432 with user `sneaker_test` and
+database `sneakerhedonism_test`. With PostgreSQL command-line tools on your PATH:
 
 ```bash
-pnpm test
+# First-time setup only:
+initdb -D /tmp/sneakerhedonism-test-pg -A trust -U sneaker_test
+pg_ctl -D /tmp/sneakerhedonism-test-pg -l /tmp/sneakerhedonism-test-pg.log -o '-p 55432 -h 127.0.0.1' start
+createdb -h 127.0.0.1 -p 55432 -U sneaker_test sneakerhedonism_test
 ```
 
-To run both.
+On macOS with Postgres.app, its tools are in
+`/Applications/Postgres.app/Contents/Versions/17/bin`. On subsequent runs, only
+`pg_ctl ... start` is needed if the server is stopped. The temporary database can
+be recreated with the commands above after the OS clears `/tmp`. To use another
+local test database, edit `test.env`; never use a development or production database.
+
+```bash
+pnpm test             # unit/integration tests, then browser tests
+pnpm test:int         # Vitest only
+pnpm test:e2e         # Playwright only
+pnpm exec tsc --noEmit
+pnpm lint
+```
+
+Playwright starts its own app at `http://localhost:3001` and refuses to reuse an
+existing server. Its `.next-test` cache is separate from the development `.next`
+cache, so cached CMS content cannot leak between environments. Fixtures include a
+homepage, users, products, variants, and an address; the suite works on an empty
+test database. Browser failures retain traces in `test-results/` and an HTML report
+in `playwright-report/`.
+
+For ordinary local development, use a local PostgreSQL URL in `.env` and keep
+`LOCAL_SERVICES_ONLY=true`. Set it to `false` in deployments that need R2 and SMTP.
 
 ## Jobs and Scheduled Publish
 
@@ -366,3 +391,38 @@ If you have any issues or questions, reach out to us on [Discord](https://discor
 #ae5c21
 
 #9c6c3c
+
+### Inventory and order status
+
+New checkouts create **Processing** orders without reserving or deducting stock.
+Changing an order to **Confirmed** deducts its quantities once, in the same PostgreSQL
+transaction as the status change. Products with variants use variant inventory.
+Confirmation fails if any line lacks stock; all changes roll back. Concurrent
+confirmations lock stock rows, so only one order can claim the last item.
+
+Shipping/delivery requires prior confirmation and does not deduct again.
+Cancelling a confirmed order restores its stock once; cancelling a new Processing
+order changes no stock. Cancelled orders cannot be reopened, and placed order
+items cannot be edited: create a replacement order instead. Cancellation after
+shipping should only be used when the items can actually be returned to sellable stock.
+Payment status is separate from the admin's **Confirmed** order status.
+
+Public product pages remain accessible (HTTP 200) with server-rendered stock
+structured data. Their purchase controls refresh stock on mount, focus, visibility,
+back/forward restoration, and every 15 seconds while visible. Failed refreshes
+disable purchasing until stock can be verified. Shop/home product listings exclude
+sold-out products, including products whose variants are all sold out.
+
+Before releasing this change, run the normal production migration command
+(`pnpm payload migrate`) with checkout/admin writes paused during migration and
+deployment. The `20260928_160000_order_inventory` migration marks existing
+non-cancelled orders linked to successful COD transactions as already deducted,
+matching the former COD checkout behavior;
+it does not alter product quantities. Confirming these legacy COD Processing orders
+does not deduct twice; cancelling them restores their previous deduction.
+Audit historical card orders and manually created/adjusted orders before rollout.
+The old ECC bank callback did not deduct stock; its historical orders are not marked
+as deducted by this migration.
+Previously cancelled orders require a physical-stock reconciliation; no automatic
+backfill restores them, since some quantities may already have been corrected.
+Do not roll back to the old checkout implementation while accepting orders.

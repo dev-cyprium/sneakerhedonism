@@ -26,6 +26,7 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
   let emailSettings: Record<string, any>
   try {
     emailSettings = await payload.findGlobal({
+      req,
       slug: 'email-settings' as any,
       overrideAccess: true,
     })
@@ -45,7 +46,8 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
   const existingLogs: EmailLogEntry[] = doc.emailsSent || []
 
   // Helper: check if email of this type was already sent
-  const alreadySent = (type: string) => existingLogs.some((entry: EmailLogEntry) => entry.type === type)
+  const alreadySent = (type: string) =>
+    existingLogs.some((entry: EmailLogEntry) => entry.type === type)
 
   // Helper: send email and log result
   const sendAndLog = async (
@@ -71,9 +73,7 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
 
   // Resolve customer email
   const customerEmail: string | undefined =
-    doc.customerEmail ||
-    (typeof doc.customer === 'object' && doc.customer?.email) ||
-    undefined
+    doc.customerEmail || (typeof doc.customer === 'object' && doc.customer?.email) || undefined
 
   const getTrackingCode = (orderDoc: Record<string, any> | null | undefined): string => {
     const serbianPostTrackingCode =
@@ -236,7 +236,8 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
   // ── Trigger 2: Tracking Code Added ──
   const currentTrackingCode = getTrackingCode(doc as Record<string, any>)
   const previousTrackingCode = getTrackingCode(previousDoc as Record<string, any>)
-  const trackingCodeWasAdded = operation === 'update' && Boolean(currentTrackingCode) && !previousTrackingCode
+  const trackingCodeWasAdded =
+    operation === 'update' && Boolean(currentTrackingCode) && !previousTrackingCode
 
   if (trackingCodeWasAdded) {
     const orderData = await buildOrderData()
@@ -255,7 +256,10 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
       }
     }
     if (!trackingUrl && emailSettings.trackingUrlTemplate) {
-      trackingUrl = emailSettings.trackingUrlTemplate.replace('{{trackingCode}}', currentTrackingCode)
+      trackingUrl = emailSettings.trackingUrlTemplate.replace(
+        '{{trackingCode}}',
+        currentTrackingCode,
+      )
     }
 
     const shippingData = {

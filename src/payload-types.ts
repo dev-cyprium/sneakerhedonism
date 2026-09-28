@@ -252,6 +252,7 @@ export interface User {
  */
 export interface Order {
   id: number;
+  inventoryDeducted?: boolean | null;
   items?:
     | {
         product?: (number | null) | Product;
@@ -568,6 +569,9 @@ export interface Page {
            */
           eyebrow?: string | null;
           heading: string;
+          /**
+           * Pritisni Enter za novi red — tekst se prikazuje u onoliko redova koliko ovde upišeš.
+           */
           subheading?: string | null;
           /**
            * Tekst na dugmetu, npr. "Pogledaj kolekciju". Ako je prazno, ceo baner je klikabilan bez dugmeta.
@@ -2480,6 +2484,7 @@ export interface CartsSelect<T extends boolean = true> {
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
+  inventoryDeducted?: T;
   items?:
     | T
     | {

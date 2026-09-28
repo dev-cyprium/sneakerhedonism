@@ -1,3 +1,4 @@
+import { inStockWhere, availableSelection } from '@/lib/inStock'
 import type { Product, ArchiveBlock as ArchiveBlockProps } from '@/payload-types'
 
 import configPromise from '@payload-config'
@@ -31,25 +32,22 @@ export const ArchiveBlock: React.FC<
       collection: 'products',
       depth: 1,
       limit,
-      ...(flattenedCategories && flattenedCategories.length > 0
-        ? {
-            where: {
-              categories: {
-                in: flattenedCategories,
-              },
-            },
-          }
-        : {}),
+      draft: false,
+      overrideAccess: false,
+      where: {
+        and: [
+          inStockWhere,
+          ...(flattenedCategories?.length ? [{ categories: { in: flattenedCategories } }] : []),
+        ],
+      },
     })
 
     posts = fetchedProducts.docs
   } else {
     if (selectedDocs?.length) {
-      const filteredSelectedPosts = selectedDocs.map((post) => {
-        if (typeof post.value === 'object') return post.value
-      }) as Product[]
-
-      posts = filteredSelectedPosts
+      const payload = await getPayload({ config: configPromise })
+      posts = await availableSelection(payload, selectedDocs.flatMap(({ value }) =>
+        typeof value === 'object' ? [value.id] : typeof value === 'number' ? [value] : []))
     }
   }
 

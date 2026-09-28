@@ -46,9 +46,12 @@ export function MobileMenu({ menu }: Props) {
     return () => window.removeEventListener('resize', handleResize)
   }, [isOpen])
 
-  useEffect(() => {
+  const routeKey = `${pathname}?${searchParams.toString()}`
+  const [previousRoute, setPreviousRoute] = useState(routeKey)
+  if (routeKey !== previousRoute) {
+    setPreviousRoute(routeKey)
     setIsOpen(false)
-  }, [pathname, searchParams])
+  }
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>

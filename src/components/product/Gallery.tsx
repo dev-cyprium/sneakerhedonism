@@ -60,7 +60,6 @@ export const Gallery: React.FC<Props> = ({ gallery }) => {
         return Boolean(values.find((value) => value === String(variantID)))
       })
       if (index !== -1) {
-        setCurrent(index)
         mainApi.scrollTo(index, true)
       }
     }

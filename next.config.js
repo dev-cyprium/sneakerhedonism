@@ -7,6 +7,7 @@ const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || ''
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   serverExternalPackages: ['sharp'],
   images: {
     qualities: [75, 90],
