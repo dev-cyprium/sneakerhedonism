@@ -130,6 +130,11 @@ export const hero: Field = {
         {
           name: 'subheading',
           type: 'textarea',
+          label: 'Podnaslov',
+          admin: {
+            description:
+              'Pritisni Enter za novi red — tekst se prikazuje u onoliko redova koliko ovde upišeš.',
+          },
         },
         {
           name: 'ctaLabel',
