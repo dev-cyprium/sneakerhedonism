@@ -19,6 +19,8 @@ type MockCoupon = {
 type MockProduct = {
   categories?: number[]
   price: number
+  /** Omit for published; 'draft' for unpublished; 'deleted' to make findByID throw NotFound. */
+  status?: 'deleted' | 'draft'
 }
 
 function buildMockPayload({
@@ -38,9 +40,11 @@ function buildMockPayload({
   const findByID = vi.fn(async ({ collection, id }: { collection: string; id: number | string }) => {
     if (collection === 'products') {
       const product = products[Number(id)]
+      if (product?.status === 'deleted') throw new Error('Not Found')
 
       return {
         id,
+        _status: product?.status === 'draft' ? 'draft' : 'published',
         priceInRSD: product?.price ?? productPrice,
         ...(product?.categories ? { categories: product.categories } : {}),
       }
@@ -384,6 +388,40 @@ describe('resolveCheckoutPricing', () => {
       expect(result.discountBaseAmount).toBe(17000)
       expect(result.discountAmount).toBe(1700)
       expect(result.coupon?.appliesTo).toBe('all')
+    })
+  })
+  describe('unavailable products', () => {
+    it('does not charge for a deleted or unpublished product even if its id reaches the server', async () => {
+      // The storefront hides such lines; a public reader gets a bare id for
+      // an unpublished product and the checkout used to price it anyway.
+      const payload = buildMockPayload({
+        products: {
+          1: { price: 5000 },
+          2: { price: 3600, status: 'draft' },
+          3: { price: 9999, status: 'deleted' },
+        },
+      })
+
+      const result = await resolveCheckoutPricing({
+        cartItems: [
+          { product: 1, quantity: 1 },
+          { product: 2, quantity: 1 },
+          { product: 3, quantity: 1 },
+        ],
+        currency: 'RSD',
+        payload,
+      })
+
+      expect(result.subtotalAmount).toBe(5000)
+      expect(result.flattenedItems).toEqual([{ product: 1, quantity: 1 }])
+    })
+
+    it('refuses a cart whose every line is unavailable', async () => {
+      const payload = buildMockPayload({ products: { 2: { price: 1, status: 'draft' } } })
+
+      await expect(
+        resolveCheckoutPricing({ cartItems: [{ product: 2, quantity: 1 }], currency: 'RSD', payload }),
+      ).rejects.toThrow('Cart has no purchasable items.')
     })
   })
 })

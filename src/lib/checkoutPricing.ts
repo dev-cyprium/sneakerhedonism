@@ -68,6 +68,9 @@ const DEFAULT_ORDERS_SLUG = 'orders' as CollectionSlug
 const DEFAULT_PRODUCTS_SLUG = 'products' as CollectionSlug
 const DEFAULT_VARIANTS_SLUG = 'variants' as CollectionSlug
 
+/** Sentinel for a product / variant that was deleted or unpublished. */
+const UNAVAILABLE: Record<string, unknown> = Object.freeze({})
+
 function toID(value: CheckoutCartItem['product']): null | number {
   if (value == null) return null
 
@@ -201,23 +204,30 @@ export async function resolveCheckoutPricing({
     const cached = documentCache.get(cacheKey)
     if (cached) return cached
 
-    const doc = (await payload.findByID({
-      id,
-      collection,
-      depth: 0,
-      overrideAccess: true,
-      req,
-      select: {
-        [priceField]: true,
-        [saleField]: true,
-        // Category-scoped coupons need to know what each line item is.
-        ...(collection === productsSlug ? { categories: true } : {}),
-      },
-    })) as unknown as Record<string, unknown>
+    const doc = (await payload
+      .findByID({
+        id,
+        collection,
+        depth: 0,
+        overrideAccess: true,
+        req,
+        select: {
+          _status: true,
+          [priceField]: true,
+          [saleField]: true,
+          // Category-scoped coupons need to know what each line item is.
+          ...(collection === productsSlug ? { categories: true } : {}),
+        },
+      })
+      .catch(() => null)) as unknown as null | Record<string, unknown>
 
-    documentCache.set(cacheKey, doc)
+    // Deleted or unpublished: the storefront never showed this line, so it
+    // must not be charged for either. Treated the same as a missing product.
+    const sellable = doc != null && (doc._status == null || doc._status === 'published') ? doc : null
 
-    return doc
+    documentCache.set(cacheKey, sellable ?? UNAVAILABLE)
+
+    return sellable ?? UNAVAILABLE
   }
 
   const toCategoryIds = (value: unknown): number[] => {
@@ -243,6 +253,7 @@ export async function resolveCheckoutPricing({
       collection: productsSlug,
       id: productID,
     })
+    if (productDoc === UNAVAILABLE) continue
 
     let unitPrice = 0
 
@@ -251,6 +262,7 @@ export async function resolveCheckoutPricing({
         collection: variantsSlug,
         id: variantID,
       })
+      if (variantDoc === UNAVAILABLE) continue
 
       unitPrice =
         safeNumber(variantDoc[saleField]) ||
@@ -273,6 +285,10 @@ export async function resolveCheckoutPricing({
       quantity,
       ...(variantID != null ? { variant: variantID } : {}),
     })
+  }
+
+  if (flattenedItems.length === 0) {
+    throw new Error('Cart has no purchasable items.')
   }
 
   const shippingSummary = getShippingSummary(subtotalAmount)

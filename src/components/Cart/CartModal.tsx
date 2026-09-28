@@ -1,6 +1,7 @@
 'use client'
 
 import { Price } from '@/components/Price'
+import { countCartQuantity, resolveCartLines } from '@/lib/cartLines'
 import { resolveItemPrice } from '@/lib/resolvePrice'
 import { FREE_SHIPPING_THRESHOLD_RSD, getShippingSummary } from '@/lib/shipping'
 import {
@@ -47,19 +48,24 @@ export function CartModal() {
     }
   }, [])
 
-  const totalQuantity = useMemo(() => {
-    if (!cart || !cart.items || !cart.items.length) return undefined
-    return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
-  }, [cart])
+  // Everything below — badge, empty state, list, subtotal — reads from the same
+  // resolved lines, so a product that vanished from the catalogue can't be
+  // counted in one place and hidden in another.
+  const lines = useMemo(() => resolveCartLines(cart), [cart])
 
-  const cartSubtotal = useMemo(() => {
-    if (!cart?.items?.length) return 0
-    return cart.items.reduce((total, item) => {
-      if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
-      const price = resolveItemPrice(item.product, item.variant)
-      return total + (price ?? 0) * item.quantity
-    }, 0)
-  }, [cart?.items])
+  const totalQuantity = useMemo(() => {
+    const quantity = countCartQuantity(lines)
+    return quantity > 0 ? quantity : undefined
+  }, [lines])
+
+  const cartSubtotal = useMemo(
+    () =>
+      lines.reduce((total, item) => {
+        const price = resolveItemPrice(item.product, item.variant)
+        return total + (price ?? 0) * (item.quantity || 0)
+      }, 0),
+    [lines],
+  )
 
   const shippingSummary = useMemo(() => getShippingSummary(cartSubtotal), [cartSubtotal])
 
@@ -78,7 +84,7 @@ export function CartModal() {
           </SheetDescription>
         </SheetHeader>
 
-        {!cart || cart?.items?.length === 0 ? (
+        {lines.length === 0 ? (
           <div className="text-center flex flex-col items-center gap-2">
             <ShoppingCart className="h-16" />
             <p className="text-center text-2xl font-bold">Vaša korpa je prazna.</p>
@@ -90,12 +96,9 @@ export function CartModal() {
           <div className="grow flex px-4">
             <div className="flex flex-col justify-between w-full">
               <ul className="grow overflow-auto py-4">
-                {cart?.items?.map((item, i) => {
+                {lines.map((item, i) => {
                   const product = item.product
                   const variant = item.variant
-
-                  if (typeof product !== 'object' || !item || !product || !product.slug)
-                    return <React.Fragment key={i} />
 
                   const metaImage =
                     product.meta?.image && typeof product.meta?.image === 'object'

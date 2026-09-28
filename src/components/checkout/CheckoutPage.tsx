@@ -3,6 +3,7 @@
 import { Media } from '@/components/Media'
 import { Message } from '@/components/Message'
 import { Price } from '@/components/Price'
+import { resolveCartLines } from '@/lib/cartLines'
 import { resolveItemPrice } from '@/lib/resolvePrice'
 import { FREE_SHIPPING_THRESHOLD_RSD, getShippingSummary } from '@/lib/shipping'
 import { Button } from '@/components/ui/button'
@@ -77,37 +78,32 @@ export const CheckoutPage: React.FC = () => {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
   const addressSectionRef = useRef<HTMLDivElement>(null)
 
-  const cartIsEmpty = !cart || !cart.items || !cart.items.length
+  // The lines the shopper can see are the only lines that get listed, summed
+  // and sent for coupon pricing — a product that disappeared from the catalogue
+  // must not inflate the total behind their back.
+  const lines = useMemo(() => resolveCartLines(cart), [cart])
+  const cartIsEmpty = lines.length === 0
 
-  const cartSubtotal = useMemo(() => {
-    if (!cart?.items?.length) return 0
-    return cart.items.reduce((total, item) => {
-      if (typeof item.product !== 'object' || !item.product || !item.quantity) return total
-      const price = resolveItemPrice(item.product, item.variant)
-      return total + (price ?? 0) * item.quantity
-    }, 0)
-  }, [cart?.items])
+  const cartSubtotal = useMemo(
+    () =>
+      lines.reduce((total, item) => {
+        const price = resolveItemPrice(item.product, item.variant)
+        return total + (price ?? 0) * (item.quantity || 0)
+      }, 0),
+    [lines],
+  )
 
   const shippingSummary = useMemo(() => getShippingSummary(cartSubtotal), [cartSubtotal])
 
-  const couponItems = useMemo(() => {
-    if (!cart?.items?.length) return []
-
-    return cart.items
-      .map((item) => {
-        const product =
-          typeof item.product === 'object' && item.product ? item.product.id : item.product
-        const variant =
-          item.variant && typeof item.variant === 'object' ? item.variant.id : item.variant
-
-        return {
-          product,
-          quantity: item.quantity ?? 1,
-          ...(variant != null ? { variant } : {}),
-        }
-      })
-      .filter((item) => item.product != null)
-  }, [cart?.items])
+  const couponItems = useMemo(
+    () =>
+      lines.map((item) => ({
+        product: item.product.id,
+        quantity: item.quantity ?? 1,
+        ...(item.variant ? { variant: item.variant.id } : {}),
+      })),
+    [lines],
+  )
 
   const summaryForDisplay = useMemo<CouponPreviewPricing>(() => {
     if (couponPricing) return couponPricing
@@ -698,7 +694,7 @@ export const CheckoutPage: React.FC = () => {
             )}
             {couponError && <p className="mt-2 text-xs text-destructive">{couponError}</p>}
           </div>
-          {cart?.items?.map((item, index) => {
+          {lines.map((item, index) => {
             if (typeof item.product === 'object' && item.product) {
               const {
                 product,

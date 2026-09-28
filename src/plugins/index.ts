@@ -13,6 +13,7 @@ import { eccAdapter } from '@/payments/ecc-adapter'
 import { Page, Post, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 import { AddressesCollection } from '@/collections/Addresses'
+import { CartsCollection } from '@/collections/Carts'
 import { OrdersCollection } from '@/collections/Orders'
 import { ProductsCollection } from '@/collections/Products'
 import { TransactionsCollection } from '@/collections/Transactions'
@@ -151,6 +152,9 @@ export const plugins: Plugin[] = [
         { label: 'Serbia', value: 'RS' },
         ...defaultCountries,
       ],
+    },
+    carts: {
+      cartsCollectionOverride: CartsCollection,
     },
     customers: {
       slug: 'users',
