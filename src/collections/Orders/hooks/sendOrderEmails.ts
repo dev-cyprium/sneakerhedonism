@@ -127,9 +127,13 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
           productTitle: product?.title || `Proizvod #${item.product}`,
           variantLabel: variant?.title || (variant as Record<string, any>)?.label || undefined,
           quantity: item.quantity || 1,
+          // Same precedence as resolveCheckoutPricing, so the lines add up to
+          // the subtotal the customer was actually charged.
           price:
-            (variant as Record<string, any>)?.priceInRSD ??
-            (product as Record<string, any>)?.priceInRSD ??
+            (variant as Record<string, any>)?.salePriceInRSD ||
+            (product as Record<string, any>)?.salePriceInRSD ||
+            (variant as Record<string, any>)?.priceInRSD ||
+            (product as Record<string, any>)?.priceInRSD ||
             0,
         }
       }),
@@ -160,11 +164,30 @@ export const sendOrderEmails: CollectionAfterChangeHook = async ({
         ? [addr.firstName, addr.lastName].filter(Boolean).join(' ')
         : undefined
 
+    const orderDoc = doc as Record<string, any>
+    const discount =
+      typeof orderDoc.couponCode === 'string' &&
+      orderDoc.couponCode &&
+      typeof orderDoc.couponDiscountAmount === 'number'
+        ? {
+            code: orderDoc.couponCode,
+            ...(typeof orderDoc.couponDiscountPercent === 'number'
+              ? { percent: orderDoc.couponDiscountPercent }
+              : {}),
+            amount: orderDoc.couponDiscountAmount,
+          }
+        : undefined
+
     return {
       orderId: doc.id,
       orderDate: doc.createdAt,
       items,
       total: doc.amount || 0,
+      ...(typeof orderDoc.subtotalBeforeDiscount === 'number'
+        ? { subtotal: orderDoc.subtotalBeforeDiscount }
+        : {}),
+      ...(discount ? { discount } : {}),
+      ...(typeof orderDoc.shippingAmount === 'number' ? { shipping: orderDoc.shippingAmount } : {}),
       currency: doc.currency || 'RSD',
       shippingAddress: order.shippingAddress,
       customerName,

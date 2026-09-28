@@ -3,6 +3,8 @@ import type { CollectionSlug } from 'payload'
 
 import { resolveCheckoutPricing } from '@/lib/checkoutPricing'
 
+import { couponCodeFromRequest, orderPricingFromTransaction } from './orderPricing'
+
 export const codAdapter = (): PaymentAdapter => {
   return {
     name: 'cod',
@@ -24,7 +26,7 @@ export const codAdapter = (): PaymentAdapter => {
     initiatePayment: async ({ data, req, transactionsSlug }) => {
       const payload = req.payload
       const { cart, currency, customerEmail, billingAddress } = data
-      const couponCode = (data as Record<string, unknown>).couponCode
+      const couponCode = couponCodeFromRequest(req, data)
 
       if (!cart || !cart.items || cart.items.length === 0) {
         throw new Error('Cart is empty or not provided.')
@@ -36,7 +38,7 @@ export const codAdapter = (): PaymentAdapter => {
 
       const pricing = await resolveCheckoutPricing({
         cartItems: cart.items,
-        couponCode: typeof couponCode === 'string' ? couponCode : undefined,
+        couponCode,
         currency,
         payload,
         req,
@@ -101,38 +103,17 @@ export const codAdapter = (): PaymentAdapter => {
       }
 
       const txn = transaction as Record<string, any>
-      const couponID =
-        txn.coupon && typeof txn.coupon === 'object' ? txn.coupon.id : txn.coupon
 
       const order = await payload.create({
         collection: ordersSlug as CollectionSlug,
         data: {
-          amount: txn.amount,
-          currency: txn.currency,
+          ...orderPricingFromTransaction(txn),
           ...(req.user ? { customer: req.user.id } : { customerEmail }),
           items: txn.items,
           ...(shippingAddress ? { shippingAddress } : {}),
           status: 'processing',
           orderStatus: 'processing',
           transactions: [transaction.id],
-          ...(couponID ? { coupon: couponID } : {}),
-          ...(txn.couponCode ? { couponCode: txn.couponCode } : {}),
-          ...(typeof txn.couponDiscountPercent === 'number'
-            ? { couponDiscountPercent: txn.couponDiscountPercent }
-            : {}),
-          ...(typeof txn.couponDiscountAmount === 'number'
-            ? { couponDiscountAmount: txn.couponDiscountAmount }
-            : {}),
-          ...(typeof txn.couponMinimumSubtotal === 'number'
-            ? { couponMinimumSubtotal: txn.couponMinimumSubtotal }
-            : {}),
-          ...(typeof txn.subtotalBeforeDiscount === 'number'
-            ? { subtotalBeforeDiscount: txn.subtotalBeforeDiscount }
-            : {}),
-          ...(typeof txn.subtotalAfterDiscount === 'number'
-            ? { subtotalAfterDiscount: txn.subtotalAfterDiscount }
-            : {}),
-          ...(typeof txn.shippingAmount === 'number' ? { shippingAmount: txn.shippingAmount } : {}),
         },
       })
 

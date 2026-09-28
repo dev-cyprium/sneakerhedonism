@@ -10,6 +10,15 @@ import { sendOrderEmails } from './hooks/sendOrderEmails'
 export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
   fields: [
+    {
+      name: 'couponBanner',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/admin/OrderCouponBanner#OrderCouponBanner',
+        },
+      },
+    },
     ...(defaultCollection.fields ?? []).map((field): Field => {
       // Hide the plugin's default `status` field from admin — we use `orderStatus` instead
       if ('name' in field && field.name === 'status') {
@@ -94,10 +103,14 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
     {
       name: 'couponCode',
       type: 'text',
+      label: 'Kupon',
       admin: {
         readOnly: true,
         position: 'sidebar',
         condition: (data) => Boolean(data?.couponCode),
+        components: {
+          Cell: '@/components/admin/OrderCouponCell#OrderCouponCell',
+        },
       },
     },
     {
@@ -244,6 +257,6 @@ export const OrdersCollection: CollectionOverride = ({ defaultCollection }) => (
   admin: {
     ...defaultCollection?.admin,
     group: 'Ecommerce',
-    defaultColumns: ['id', 'createdAt', 'orderStatus', 'amount', 'currency', 'customer'],
+    defaultColumns: ['id', 'createdAt', 'orderStatus', 'amount', 'couponCode', 'currency', 'customer'],
   },
 })

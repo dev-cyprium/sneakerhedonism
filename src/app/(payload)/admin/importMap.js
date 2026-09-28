@@ -28,6 +28,8 @@ import { PriceInput as PriceInput_b91672ccd6e8b071c11142ab941fedfb } from '@payl
 import { UnusedVariantsManager as UnusedVariantsManager_2d40f86d64dbd92bbc8f3854389c3451 } from '@/components/admin/UnusedVariantsManager'
 import { VariantTypeOptionsCountCell as VariantTypeOptionsCountCell_ef9f5e8fc83d42ea9267f22d63922466 } from '@/components/admin/VariantTypeOptionsCountCell'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { OrderCouponBanner as OrderCouponBanner_2191b0e9abeaee2c274e8585da286372 } from '@/components/admin/OrderCouponBanner'
+import { OrderCouponCell as OrderCouponCell_aaa18f6bc95a369569dd0c334da2a35f } from '@/components/admin/OrderCouponCell'
 import { BeforeDashboard as BeforeDashboard_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { BeforeLogin as BeforeLogin_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
@@ -64,6 +66,8 @@ export const importMap = {
   "@/components/admin/UnusedVariantsManager#UnusedVariantsManager": UnusedVariantsManager_2d40f86d64dbd92bbc8f3854389c3451,
   "@/components/admin/VariantTypeOptionsCountCell#VariantTypeOptionsCountCell": VariantTypeOptionsCountCell_ef9f5e8fc83d42ea9267f22d63922466,
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@/components/admin/OrderCouponBanner#OrderCouponBanner": OrderCouponBanner_2191b0e9abeaee2c274e8585da286372,
+  "@/components/admin/OrderCouponCell#OrderCouponCell": OrderCouponCell_aaa18f6bc95a369569dd0c334da2a35f,
   "@/components/BeforeDashboard#BeforeDashboard": BeforeDashboard_1a7510af427896d367a49dbf838d2de6,
   "@/components/BeforeLogin#BeforeLogin": BeforeLogin_8a7ab0eb7ab5c511aba12e68480bfe5e,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,

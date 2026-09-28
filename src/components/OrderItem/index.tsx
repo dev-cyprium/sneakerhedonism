@@ -1,4 +1,5 @@
 import { OrderStatus } from '@/components/OrderStatus'
+import { OrderCouponBadge } from '@/components/OrderTotals'
 import { Price } from '@/components/Price'
 import { Button } from '@/components/ui/button'
 import { Order } from '@/payload-types'
@@ -37,6 +38,7 @@ export const OrderItem: React.FC<Props> = ({ order }) => {
               <Price as="span" amount={order.amount} currencyCode={order.currency ?? undefined} />
             </>
           )}
+          <OrderCouponBadge className="ml-1" order={order} />
         </p>
       </div>
 

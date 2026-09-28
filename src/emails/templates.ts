@@ -5,11 +5,21 @@ type OrderItem = {
   price: number
 }
 
+type OrderDiscount = {
+  code: string
+  percent?: number
+  amount: number
+}
+
 type OrderData = {
   orderId: number
   orderDate: string
   items: OrderItem[]
   total: number
+  /** Item total before any coupon. Omitted for legacy orders that never stored it. */
+  subtotal?: number
+  discount?: OrderDiscount
+  shipping?: number
   currency: string
   shippingAddress?: {
     firstName?: string | null
@@ -93,6 +103,57 @@ function itemsTable(items: OrderItem[]): string {
     </table>`
 }
 
+/**
+ * Subtotal → coupon → shipping → total. A coupon line only appears when the
+ * order actually carries one, so both the customer and the shop can see at a
+ * glance that the total is a discounted one.
+ */
+function totalsTable(data: OrderData): string {
+  const rowStyle = 'padding:6px 12px;font-size:14px;color:#333;font-family:Arial,sans-serif;'
+  const labelStyle = `${rowStyle}text-align:left;color:#666;`
+  const valueStyle = `${rowStyle}text-align:right;`
+
+  const rows: string[] = []
+
+  if (typeof data.subtotal === 'number' && (data.discount || typeof data.shipping === 'number')) {
+    rows.push(`
+      <tr>
+        <td style="${labelStyle}">Međuzbir</td>
+        <td style="${valueStyle}">${formatCurrency(data.subtotal)}</td>
+      </tr>`)
+  }
+
+  if (data.discount) {
+    const percent = typeof data.discount.percent === 'number' ? ` (−${data.discount.percent}%)` : ''
+    rows.push(`
+      <tr>
+        <td style="${labelStyle}">
+          Kupon
+          <span style="display:inline-block;margin-left:6px;padding:1px 8px;border:1px solid #2e7d32;border-radius:3px;background:#e8f5e9;color:#1b5e20;font-size:12px;font-weight:bold;letter-spacing:0.5px;">${data.discount.code}</span>${percent}
+        </td>
+        <td style="${valueStyle}color:#1b5e20;font-weight:bold;">−${formatCurrency(data.discount.amount)}</td>
+      </tr>`)
+  }
+
+  if (typeof data.shipping === 'number') {
+    rows.push(`
+      <tr>
+        <td style="${labelStyle}">Dostava</td>
+        <td style="${valueStyle}">${data.shipping === 0 ? 'Besplatna' : formatCurrency(data.shipping)}</td>
+      </tr>`)
+  }
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+      ${rows.join('')}
+      <tr>
+        <td colspan="2" style="padding:12px;font-size:16px;font-weight:bold;font-family:Arial,sans-serif;text-align:right;border-top:2px solid #000;">
+          Ukupno: ${formatCurrency(data.total)}
+        </td>
+      </tr>
+    </table>`
+}
+
 function baseLayout(content: string, storeName: string = 'Sneaker Hedonism'): string {
   return `<!DOCTYPE html>
 <html lang="sr">
@@ -160,13 +221,7 @@ export function orderConfirmationCustomer(data: OrderData): string {
 
     ${itemsTable(data.items)}
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
-      <tr>
-        <td style="padding:12px;font-size:16px;font-weight:bold;font-family:Arial,sans-serif;text-align:right;border-top:2px solid #000;">
-          Ukupno: ${formatCurrency(data.total)}
-        </td>
-      </tr>
-    </table>
+    ${totalsTable(data)}
 
     ${
       data.shippingAddress
@@ -212,13 +267,7 @@ export function orderNotificationAdmin(data: OrderData): string {
 
     ${itemsTable(data.items)}
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
-      <tr>
-        <td style="padding:12px;font-size:16px;font-weight:bold;font-family:Arial,sans-serif;text-align:right;border-top:2px solid #000;">
-          Ukupno: ${formatCurrency(data.total)}
-        </td>
-      </tr>
-    </table>
+    ${totalsTable(data)}
 
     ${
       data.shippingAddress
@@ -275,13 +324,7 @@ export function shippingConfirmationCustomer(data: ShippingData): string {
 
     ${itemsTable(data.items)}
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
-      <tr>
-        <td style="padding:12px;font-size:16px;font-weight:bold;font-family:Arial,sans-serif;text-align:right;border-top:2px solid #000;">
-          Ukupno: ${formatCurrency(data.total)}
-        </td>
-      </tr>
-    </table>
+    ${totalsTable(data)}
 
     <p style="margin:24px 0 0;font-size:13px;color:#666;line-height:1.5;font-family:Arial,sans-serif;">
       Za sva pitanja kontaktirajte nas na info@sneakerhedonism.com

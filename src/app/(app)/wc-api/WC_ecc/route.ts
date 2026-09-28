@@ -4,6 +4,7 @@ import config from '@payload-config'
 
 import { getServerSideURL } from '@/utilities/getURL'
 import { buildVerificationData, getPublicKey, verifyResponse } from '@/payments/ecc/crypto'
+import { orderPricingFromTransaction } from '@/payments/orderPricing'
 
 export async function POST(request: Request) {
   const payload = await getPayload({ config })
@@ -115,38 +116,16 @@ export async function POST(request: Request) {
       }
 
       // Create order
-      const couponID =
-        txn.coupon && typeof txn.coupon === 'object' ? txn.coupon.id : txn.coupon
-
       const order = await payload.create({
         collection: 'orders',
         data: {
-          amount: txn.amount,
-          currency: txn.currency,
+          ...orderPricingFromTransaction(txn),
           ...(txn.customer ? { customer: txn.customer } : { customerEmail: txn.customerEmail }),
           items: txn.items,
           status: 'processing',
           orderStatus: 'processing',
           transactions: [transaction.id],
-          ...(couponID ? { coupon: couponID } : {}),
-          ...(txn.couponCode ? { couponCode: txn.couponCode } : {}),
-          ...(typeof txn.couponDiscountPercent === 'number'
-            ? { couponDiscountPercent: txn.couponDiscountPercent }
-            : {}),
-          ...(typeof txn.couponDiscountAmount === 'number'
-            ? { couponDiscountAmount: txn.couponDiscountAmount }
-            : {}),
-          ...(typeof txn.couponMinimumSubtotal === 'number'
-            ? { couponMinimumSubtotal: txn.couponMinimumSubtotal }
-            : {}),
-          ...(typeof txn.subtotalBeforeDiscount === 'number'
-            ? { subtotalBeforeDiscount: txn.subtotalBeforeDiscount }
-            : {}),
-          ...(typeof txn.subtotalAfterDiscount === 'number'
-            ? { subtotalAfterDiscount: txn.subtotalAfterDiscount }
-            : {}),
-          ...(typeof txn.shippingAmount === 'number' ? { shippingAmount: txn.shippingAmount } : {}),
-        },
+        } as any,
       })
 
       const cartID = txn.cart
