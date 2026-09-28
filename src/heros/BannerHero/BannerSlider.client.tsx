@@ -196,9 +196,9 @@ export const BannerSlider: React.FC<{ slides: BannerSlide[] }> = ({ slides }) =>
                       {slide.heading}
                     </Heading>
 
+                    {/* whitespace-pre-line: an Enter in the CMS textarea becomes a
+                        line break here, so a subheading can sit on two rows. */}
                     {slide.subheading && (
-                      {/* whitespace-pre-line: an Enter in the CMS textarea becomes a
-                          line break here, so a subheading can sit on two rows. */}
                       <p className="max-w-prose whitespace-pre-line text-sm opacity-90 md:text-lg">
                         {slide.subheading}
                       </p>
